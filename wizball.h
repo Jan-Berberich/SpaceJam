@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "utils.h"
 
@@ -26,12 +27,12 @@
 
 #define WB_SUBPIXEL_X_CNT 0.5 /*2*/
 #define WB_SUBPIXEL_Y_CNT 2
-#define WB_VELOCITY_FACTOR 2
 
 #define WB_MAP_VIEW_WIDTH 640 /*570*/
 #define WB_MAP_VIEW_OFFSET_Y 0 /*70*/
 #define WB_MAP_CEIL_HEIGHT 4
 #define WB_MAP_FLOOR_HEIGHT 288
+#define WB_MAP_HORIZON_HEIGHT 240
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
@@ -60,13 +61,13 @@
 
 #define WB_PLAYER_WIZ_ACC_X (0.5f * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_DEC_X (0.125f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_0 (0.0f        * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_1 (1.0f / 8.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_2 (1.0f / 4.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_3 (1.0f / 2.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_4 (1.0f / 1.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_5 (1.5f / 1.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_X_6 (2.0f / 1.0f * 50 / WB_FPS)
+#define WB_PLAYER_WIZ_VEL_X_0 (0.0f        * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_1 (1.0f / 8.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_2 (1.0f / 4.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_3 (1.0f / 2.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_4 (1.0f / 1.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_5 (1.5f / 1.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_X_6 (2.0f / 1.0f * 50 / WB_FPS * 2)
 #define WB_PLAYER_WIZ_VEL_X_CNT 7
 #define WB_PLAYER_WIZ_ANIMATION_SPEED_0 (0.0f          * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_ANIMATION_SPEED_1 (1.0f / 21.00f * 50 / WB_FPS)
@@ -78,11 +79,11 @@
 
 #define WB_PLAYER_WIZ_ACC_Y (0.33333333333333333 * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_DEC_Y (0.33333333333333333 * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_Y_0 (0.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_Y_1 (1.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_Y_2 (2.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_Y_3 (3.0f * 50 / WB_FPS)
-#define WB_PLAYER_WIZ_VEL_Y_4 (4.0f * 50 / WB_FPS)
+#define WB_PLAYER_WIZ_VEL_Y_0 (0.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_Y_1 (1.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_Y_2 (2.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_Y_3 (3.0f * 50 / WB_FPS * 2)
+#define WB_PLAYER_WIZ_VEL_Y_4 (4.0f * 50 / WB_FPS * 2)
 #define WB_PLAYER_WIZ_VEL_Y_CNT 5
 // ~movement
 
@@ -90,8 +91,8 @@
 
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_Y (0 * WB_SPRITE_SIZE)
-#define WB_PLAYER_CAT_SPRITE_ATLAS_X (1 * WB_SPRITE_SIZE)
-#define WB_PLAYER_CAT_SPRITE_ATLAS_Y (0 * WB_SPRITE_SIZE)
+#define WB_PLAYER_CAT_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
+#define WB_PLAYER_CAT_SPRITE_ATLAS_Y (1 * WB_SPRITE_SIZE)
 
 #define WB_PLAYER_WIZ_ANIMATION_FRAME_CNT 16
 #define WB_PLAYER_CAT_SPRITE_ATLAS_FRAME_CNT 3
@@ -100,6 +101,20 @@
 
 #define WB_ENEMY_CNT_MAX 64
 #define WB_PARTICLE_CNT_MAX 64
+#define WB_PROJECTILE_CNT_MAX 64
+#define WB_PROJECTILE_VEL (4.0f * 50 / WB_FPS * 2) 
+#define WB_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X (1 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_X (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_X (3 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_X (4 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_X (5 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
 
 // Key Bindings
 #define WB_KEY_WIZ_LEFT GLFW_KEY_A
@@ -127,13 +142,7 @@ typedef enum {
 } WBGamestateType;
 
 typedef enum {
-    WB_SPRITE_PLAYER,
-    WB_SPRITE_ENEMY,
-    WB_SPRITE_PARTICLE,
-    WB_SPRITE_CNT
-} WBSpriteType;
-
-typedef enum {
+    WB_ENEMY_NONE,
     WB_ENEMY_BLOB,
     WB_ENEMY_SPINNERYELLOW,
     WB_ENEMY_SPINNERBLUE,
@@ -147,14 +156,23 @@ typedef enum {
 } WBEnemyType;
 
 typedef enum {
-    WB_PARTICLE_DROP,
-    WB_PARTICLE_PROJECTILE,
+    WB_PARTICLE_NONE,
     WB_PARTICLE_BEAM,
     WB_PARTICLE_POWERUP,
     WB_PARTICLE_DECAY,
-    WB_PARTICLE_BLINKER,
+    WB_PARTICLE_DROP,
     WB_PARTICLE_CNT
 } WBParticleType;
+
+typedef enum {
+    WB_PROJECTILE_NONE,
+    WB_PROJECTILE_BULLET,
+    WB_PROJECTILE_BLAZER,
+    WB_PROJECTILE_SPRAY_NW,
+    WB_PROJECTILE_SPRAY_N,
+    WB_PROJECTILE_SPRAY_NE,
+    WB_PROJECTILE_BLINKER
+} WBProjectileType;
 
 typedef enum {
     WB_MAP_0,
@@ -173,6 +191,11 @@ typedef enum {
     WB_MOVEPATTERN_BOUNCE_FLOOR,
     WB_MOVEPATTERN_BOUNCE_CEIL
 } WBMovepatternType;
+
+typedef enum {
+    WB_DIRECTION_LEFT = -1,
+    WB_DIRECTION_RIGHT = 1,
+} WBDirectionType;
 
 typedef enum {
     WB_POWERUP_NONE     = 0b0000000000000000,
@@ -209,7 +232,6 @@ typedef struct {
 } WBTexture;
 
 typedef struct {
-    WBSpriteType type;
     int atlas_x, atlas_y;
 } WBSprite;
 
@@ -231,6 +253,7 @@ typedef struct {
     int pos_y_buffer[WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT];
     float* collider_angles;
     float collision_angle;
+    WBDirectionType next_bullet_direction;
 } WBPlayerWiz;
 
 typedef struct {
@@ -245,14 +268,22 @@ typedef struct {
 
 typedef struct {
     WBEntityHead head;
+    WBEnemyType type;
     int attack_period;
 } WBEnemy;
 
 typedef struct {
     WBSprite sprite;
     WBParticleType type;
-    int pos_x, pos_y;
+    float pos_x, pos_y;
 } WBParticle;
+
+typedef struct {
+    WBSprite sprite;
+    WBProjectileType type;
+    float pos_x, pos_y;
+    float vel_x, vel_y;
+} WBProjectile;
 
 typedef struct {
     WBTexture background;
@@ -262,9 +293,9 @@ typedef struct {
 
 typedef struct {
     WBMapAtlas atlas;
-    int atlas_y;
     bool* collider;
     WBMapType type;
+    float view_center_x;
 } WBMap;
 
 typedef struct {
@@ -282,8 +313,6 @@ typedef struct {
 typedef struct {
     WBGamestateType type;
     int score;
-    int enemy_cnt;
-    int particle_cnt;
     int powerup_pos;
     int level;
     WBPowerupType powerup_unlocked;
@@ -301,7 +330,11 @@ typedef struct {
     WBPlayerWiz player_wiz;
     WBPlayerCat player_cat;
     WBEnemy enemies[WB_ENEMY_CNT_MAX];
+    int enemy_cnt;
     WBParticle particles[WB_PARTICLE_CNT_MAX];
+    int particle_cnt;
+    WBProjectile projectiles[WB_PROJECTILE_CNT_MAX];
+    int projectile_cnt;
 } WBGame;
 
 bool wbWindowInit(WBWindow* window);
@@ -309,8 +342,11 @@ void wbWindowLockAspectRatio(WBWindow* window);
 bool wbPlayerWizInit(WBPlayerWiz* wiz);
 void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
 void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup);
+void wbProjectileAppend(WBProjectile* projectiles, int* projectile_cnt, WBProjectileType type, float pos_x, float pos_y, float vel_x, float vel_y);
+void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz);
 void wbShaderInit(WBShader* shader);
 bool wbMapInit(WBMap* map);
+bool wbMapGetCollision(WBMap* map, int x, int y);
 void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
 int wbGameRun();
 

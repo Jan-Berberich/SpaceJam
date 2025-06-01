@@ -33,8 +33,6 @@ bool wbGameInit(WBGame* game) {
     WBGamestate* gamestate = &game->gamestate;
     gamestate->type = WB_GAMESTATE_TITLESCREEN;
     gamestate->score = 0;
-    gamestate->enemy_cnt = 0;
-    gamestate->particle_cnt = 0;
     gamestate->powerup_pos = 0;
     gamestate->level = 0;
     gamestate->powerup_unlocked = WB_POWERUP_NONE;
@@ -44,6 +42,27 @@ bool wbGameInit(WBGame* game) {
     if (!wbPlayerWizInit(&game->player_wiz)) {
         fprintf(stderr, "Failed to initialize players\n");
         return false;
+    }
+
+    // Initialize enemies
+    game->enemy_cnt = 0;
+    WBEnemy* enemies = game->enemies;
+    for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
+        enemies[i].type = WB_ENEMY_NONE;
+    }
+
+    // Initialize particles
+    game->particle_cnt = 0;
+    WBParticle* particles = game->particles;
+    for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
+        particles[i].type = WB_PARTICLE_NONE;
+    }
+
+    // Initialize projectiles
+    game->projectile_cnt = 0;
+    WBProjectile* projectiles = game->projectiles;
+    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
+        projectiles[i].type = WB_PROJECTILE_NONE;
     }
 
     game->last_frame_time = 0;
@@ -63,9 +82,12 @@ void wbGameProcessInput(WBGame* game) {
     WBPlayerWiz* wiz = &game->player_wiz;
 
     // TODO: for debug
-    if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT])
+    bool debug_shift = glfwGetKey(game->window.handle, GLFW_KEY_LEFT_SHIFT);
+    if (debug_shift && !prev_key_state[GLFW_KEY_LEFT_SHIFT])
         game->gamestate.powerup_unlocked = (game->gamestate.powerup_unlocked + 1) % 3;
+    prev_key_state[GLFW_KEY_LEFT_SHIFT] = debug_shift;
 
+    // wbPlayerWizProcessInput
     if (wiz_right) {
         wiz->vel_x_key += WB_PLAYER_WIZ_ACC_X;
         wiz->vel_x_key = fminf(wiz->vel_x_key, WB_PLAYER_WIZ_VEL_X_CNT - 1);
@@ -77,29 +99,27 @@ void wbGameProcessInput(WBGame* game) {
 
     float vel_x, vel_y;
     WBPowerupType movement_powerup = game->gamestate.powerup_unlocked & WB_POWERUP_MAXED;
-    switch(movement_powerup) {
-        case WB_POWERUP_NONE: {
-            break;
+    if (movement_powerup == WB_POWERUP_ANTIGRAV) {
+        if (wiz_down) {
+            wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y;
+            wiz->vel_y_key = fminf(wiz->vel_y_key, WB_PLAYER_WIZ_VEL_Y_CNT - 1);
         }
-        case WB_POWERUP_THRUST: {
-            break;
+        if (wiz_up) {
+            wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y;
+            wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_PLAYER_WIZ_VEL_Y_CNT + 1);
         }
-        case WB_POWERUP_ANTIGRAV: {
-            if (wiz_down) {
-                wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y;
-                wiz->vel_y_key = fminf(wiz->vel_y_key, WB_PLAYER_WIZ_VEL_Y_CNT - 1);
-            }
-            if (wiz_up) {
-                wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y;
-                wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_PLAYER_WIZ_VEL_Y_CNT + 1);
-            }
+        vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
+        wiz->vel_x_key -= fsgnf(vel_x) * WB_PLAYER_WIZ_DEC_X * (!wiz_left && !wiz_right);
+        vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
+        wiz->vel_y_key -= fsgnf(vel_y) * WB_PLAYER_WIZ_DEC_Y * (!wiz_up && !wiz_down);
+    }
 
-            vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
-            wiz->vel_x_key -= fsgnf(vel_x) * WB_PLAYER_WIZ_DEC_X * (!wiz_left && !wiz_right);
-            vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
-            wiz->vel_y_key -= fsgnf(vel_y) * WB_PLAYER_WIZ_DEC_Y * (!wiz_up && !wiz_down);
-            break;
-        }
+    wiz->next_bullet_direction = game->gamestate.powerup_unlocked & WB_POWERUP_DOUBLE ? -wiz->next_bullet_direction :
+        fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->next_bullet_direction;
+    if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT] && wiz->onscreen_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
+        float projectile_vel_x = (float)wiz->next_bullet_direction * WB_PROJECTILE_VEL;
+        float projectile_vel_y = 0.0f;
+        wbProjectileAppend(game->projectiles, &game->projectile_cnt, WB_PROJECTILE_BULLET, wiz->head.pos_x, wiz->head.pos_y, projectile_vel_x, projectile_vel_y);
     }
     prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
 }
@@ -109,39 +129,80 @@ void wbGameRender(WBGame* game) {
     glClearColor(0.0, 0.0f, 0.0f, 1.0f); // black color
     glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer with the set clear color
 
+    WBMap* map = &game->map;
+    WBPlayerWiz* wiz = &game->player_wiz;
+    WBProjectile* projectile;
+
     // Draw background
     float map_view_width = WB_MAP_VIEW_WIDTH;
     float window_width = WB_WINDOW_WIDTH;
     float window_height = WB_WINDOW_HEIGHT;
-    float map_height = (float)game->map.atlas.background.height / WB_MAP_CNT;
+    float map_height = (float)map->atlas.background.height / WB_MAP_CNT;
+    float width_x = map_view_width / window_width;
+    float height_y = map_height / window_height;
     float offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height;
-    float uv_width = map_view_width / game->map.atlas.background.width;
-    float offset_u = roundf(game->player_wiz.head.pos_x / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / game->map.atlas.background.width;
+    float width_u = map_view_width / map->atlas.background.width;
+    float offset_u = map->view_center_x / map->atlas.background.width;
+    float height_v = 1.0f / WB_MAP_CNT;
+    float offset_v = game->gamestate.level / WB_MAP_CNT;
     float map_vertices[] = {
         //  x, y, u, v
-        -1.0f + (window_width - map_view_width) / window_width, -1.0f + 2.0f * map_height / window_height + offset_y, offset_u - 0.5f * uv_width, 0.0f,
-            1.0f - (window_width - map_view_width) / window_width, -1.0f + 2.0f * map_height / window_height + offset_y, offset_u + 0.5f * uv_width, 0.0f,
-            1.0f - (window_width - map_view_width) / window_width, -1.0f                                     + offset_y, offset_u + 0.5f * uv_width, 1.0f / WB_MAP_CNT,
-        -1.0f + (window_width - map_view_width) / window_width, -1.0f                                     + offset_y, offset_u - 0.5f * uv_width, 1.0f / WB_MAP_CNT
+        -width_x, -1.0f + 2.0f * height_y + offset_y, offset_u - 0.5f * width_u, offset_v,
+         width_x, -1.0f + 2.0f * height_y + offset_y, offset_u + 0.5f * width_u, offset_v,
+         width_x, -1.0f                   + offset_y, offset_u + 0.5f * width_u, offset_v + height_v,
+        -width_x, -1.0f                   + offset_y, offset_u - 0.5f * width_u, offset_v + height_v
     };
-    glBindTexture(GL_TEXTURE_2D, game->map.atlas.background.texture_id);
+    glBindTexture(GL_TEXTURE_2D, map->atlas.background.texture_id);
     glBindBuffer(GL_ARRAY_BUFFER, game->shader.vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(map_vertices), map_vertices);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw quad
 
-    // Animate the sprite
+    // Draw Projectiles
+    float offset_x;
     float sprite_atlas_width = (float)game->sprite_atlas.width;
     float sprite_atlas_height = (float)game->sprite_atlas.height;
     float sprite_size = (float)WB_SPRITE_SIZE;
-    offset_y += (2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
-                - 2.0f * roundf(game->player_wiz.head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
-    offset_u = roundf(game->player_wiz.animation_angle);
+    width_x = sprite_size / window_width;
+    height_y = sprite_size / window_height;
+    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
+        projectile = &game->projectiles[i];
+        if (projectile->type == WB_PROJECTILE_NONE) continue;
+        offset_x = 2.0f * roundf((projectile->pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
+        offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+                 +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
+                 - 2.0f * roundf(projectile->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
+        width_u = sprite_size / sprite_atlas_width;
+        offset_u = projectile->sprite.atlas_x / sprite_atlas_width;
+        height_v = sprite_size / sprite_atlas_height;
+        offset_v = projectile->sprite.atlas_y / sprite_atlas_height;
+        float sprite_vertices[] = {
+            //  x, y, u, v
+            -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
+             width_x + offset_x, -1.0f + 2.0f * height_y + offset_y, width_u + offset_u, offset_v,
+             width_x + offset_x, -1.0f                   + offset_y, width_u + offset_u, offset_v + height_v,
+            -width_x + offset_x, -1.0f                   + offset_y,           offset_u, offset_v + height_v
+        };
+        glBindTexture(GL_TEXTURE_2D, game->sprite_atlas.texture_id);
+        glBindBuffer(GL_ARRAY_BUFFER, game->shader.vbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprite_vertices), sprite_vertices);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw quad
+    }
+
+    // Draw Player Wiz
+    offset_x = 2.0f * roundf((wiz->head.pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
+    offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+             +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
+             - 2.0f * roundf(wiz->head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
+    width_u = sprite_size / sprite_atlas_width;
+    offset_u = roundf(wiz->animation_angle) * width_u + wiz->head.sprite.atlas_x / sprite_atlas_width;
+    height_v = sprite_size / sprite_atlas_height;
+    offset_v = wiz->head.sprite.atlas_y / sprite_atlas_height;
     float sprite_vertices[] = {
         //  x, y, u, v
-        -sprite_size / window_width, -1.0f + 2.0f * sprite_size / window_height + offset_y,  offset_u         * sprite_size / sprite_atlas_width, 0.0f,
-            sprite_size / window_width, -1.0f + 2.0f * sprite_size / window_height + offset_y, (offset_u + 1.0f) * sprite_size / sprite_atlas_width, 0.0f,
-            sprite_size / window_width, -1.0f                                      + offset_y, (offset_u + 1.0f) * sprite_size / sprite_atlas_width, sprite_size / sprite_atlas_height,
-        -sprite_size / window_width, -1.0f                                      + offset_y,  offset_u         * sprite_size / sprite_atlas_width, sprite_size / sprite_atlas_height
+        -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
+         width_x + offset_x, -1.0f + 2.0f * height_y + offset_y, width_u + offset_u, offset_v,
+         width_x + offset_x, -1.0f                   + offset_y, width_u + offset_u, offset_v + height_v,
+        -width_x + offset_x, -1.0f                   + offset_y,           offset_u, offset_v + height_v
     };
     glBindTexture(GL_TEXTURE_2D, game->sprite_atlas.texture_id);
     glBindBuffer(GL_ARRAY_BUFFER, game->shader.vbo);
@@ -194,6 +255,10 @@ int wbGameRun() {
         wbPlayerWizHandleCollision(&game.player_wiz, &game.map, movement_powerup);
 
         wbPlayerWizUpdate(&game.player_wiz, movement_powerup);
+        game.map.view_center_x = roundf(game.player_wiz.head.pos_x / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT;
+        game.map.view_center_x = fmaxf(game.map.view_center_x, WB_MAP_VIEW_WIDTH / 2);
+        game.map.view_center_x = fminf(game.map.view_center_x, game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
+        wbProjectileUpdate(game.projectiles, &game.projectile_cnt, &game.map, &game.player_wiz);
 
         wbGameRender(&game);
 

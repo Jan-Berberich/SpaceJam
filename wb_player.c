@@ -17,11 +17,11 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz) {
     sprite->atlas_y = WB_PLAYER_WIZ_SPRITE_ATLAS_Y;
     entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
 
-    sprite->type = WB_SPRITE_PLAYER;
     entity->pos_x = WB_WINDOW_WIDTH / 2;
     entity->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;
     wiz->vel_y = 0.0f;
+    wiz->next_bullet_direction = WB_DIRECTION_RIGHT;
 
     wiz->vel_x_values[0] = WB_PLAYER_WIZ_VEL_X_0;
     wiz->vel_x_values[1] = WB_PLAYER_WIZ_VEL_X_1;
@@ -64,7 +64,7 @@ void wbPlayerWizSetCollisionAngle(WBPlayerWiz* wiz, WBMap* map) {
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
         x = xc + (int)roundf(WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
         y = yc + (int)roundf(WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
-        collision = map->collider[y * map->atlas.foreground.width + x];
+        collision = wbMapGetCollision(map, x, y);
         collision_cnt += collision;
         collision_x += collision * (x - xc);
         collision_y += collision * (y - yc);
@@ -111,10 +111,10 @@ void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType move
 
 void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup) {
     if (movement_powerup == WB_POWERUP_NONE && !isnan(wiz->collision_angle) || movement_powerup != WB_POWERUP_NONE) {
-        wiz->vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))] * WB_VELOCITY_FACTOR;
+        wiz->vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
     if (movement_powerup == WB_POWERUP_ANTIGRAV) {
-        wiz->vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))] * WB_VELOCITY_FACTOR;
+        wiz->vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
     if (movement_powerup == WB_POWERUP_NONE || movement_powerup == WB_POWERUP_THRUST) {
         wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;

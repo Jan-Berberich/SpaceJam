@@ -27,10 +27,13 @@ bool wbMapInit(WBMap* map) {
         map_atlas->collider[i] = !!data[i * 4 + 3]; // Alpha channel
     }
     stbi_image_free(data);
-
-    map->atlas_y = 0;
+    
     map->type = WB_MAP_0;
     map->collider = map_atlas->collider;
 
     return true;
+}
+
+bool wbMapGetCollision(WBMap* map, int x, int y) {
+    return map->collider[y * map->atlas.foreground.width + x];
 }
