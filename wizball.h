@@ -304,6 +304,7 @@ typedef struct {
     WBParticle particles[WB_PARTICLE_CNT_MAX];
 } WBGame;
 
+bool wbWindowInit(WBWindow* window);
 void wbWindowLockAspectRatio(WBWindow* window);
 bool wbPlayerWizInit(WBPlayerWiz* wiz);
 void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType movement_powerup);

@@ -1,4 +1,4 @@
-#include "wb.h"
+#include "wizball.h"
 
 void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height) {
     texture->width = width;

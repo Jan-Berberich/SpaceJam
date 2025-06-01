@@ -1,4 +1,4 @@
-#include "wb.h"
+#include "wizball.h"
 
 bool wbMapInit(WBMap* map) {
     WBMapAtlas* map_atlas = &map->atlas;

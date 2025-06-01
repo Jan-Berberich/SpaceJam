@@ -1,4 +1,4 @@
-#include "wb.h"
+#include "wizball.h"
 
 // --- Helper function to check shader compilation/linking errors ---
 void wbShaderCheckError(GLuint shader, const char* type) {

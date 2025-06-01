@@ -1,4 +1,4 @@
-#include "wb.h"
+#include "wizball.h"
 
 bool wbPlayerWizInit(WBPlayerWiz* wiz) {
     wiz->collider_angles = malloc(WB_PLAYER_WIZ_COLLISION_ANGLE_CNT * (sizeof *wiz->collider_angles));
