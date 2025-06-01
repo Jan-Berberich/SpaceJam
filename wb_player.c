@@ -11,12 +11,14 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz) {
     }
 
     WBEntityHead* entity = &wiz->head;
-    
+
     entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
 
     entity->pos_x = WB_WINDOW_WIDTH / 2;
     entity->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;
+    wiz->vel_x = 0.0f;
+    wiz->vel_y_key = 0.0f;
     wiz->vel_y = 0.0f;
     wiz->next_bullet_direction = WB_DIRECTION_RIGHT;
 
