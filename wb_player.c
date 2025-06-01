@@ -11,10 +11,7 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz) {
     }
 
     WBEntityHead* entity = &wiz->head;
-    WBSprite* sprite = &entity->sprite;
-
-    sprite->atlas_x = WB_PLAYER_WIZ_SPRITE_ATLAS_X;
-    sprite->atlas_y = WB_PLAYER_WIZ_SPRITE_ATLAS_Y;
+    
     entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
 
     entity->pos_x = WB_WINDOW_WIDTH / 2;

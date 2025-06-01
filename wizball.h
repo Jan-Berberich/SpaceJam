@@ -232,11 +232,6 @@ typedef struct {
 } WBTexture;
 
 typedef struct {
-    int atlas_x, atlas_y;
-} WBSprite;
-
-typedef struct {
-    WBSprite sprite;
     float pos_x, pos_y;
     int health;
 } WBEntityHead;
@@ -273,13 +268,12 @@ typedef struct {
 } WBEnemy;
 
 typedef struct {
-    WBSprite sprite;
     WBParticleType type;
     float pos_x, pos_y;
+    double creation_time;
 } WBParticle;
 
 typedef struct {
-    WBSprite sprite;
     WBProjectileType type;
     float pos_x, pos_y;
     float vel_x, vel_y;

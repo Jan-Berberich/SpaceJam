@@ -13,12 +13,6 @@ void wbProjectileAppend(WBProjectile* projectiles, int* projectile_cnt, WBProjec
     projectile->vel_x = vel_x;
     projectile->vel_y = vel_y;
     projectile->type = type;
-    switch (type) {
-        case WB_PROJECTILE_BULLET:
-        projectile->sprite.atlas_x = WB_PROJECTILE_BULLET_SPRITE_ATLAS_X;
-        projectile->sprite.atlas_y = WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y;
-        break;
-    }
 }
 
 void wbProjectileRemove(WBProjectile* projectiles, int* projectile_cnt, int idx) {

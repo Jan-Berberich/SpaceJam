@@ -172,9 +172,9 @@ void wbGameRender(WBGame* game) {
                  +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
                  - 2.0f * roundf(projectile->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
         width_u = sprite_size / sprite_atlas_width;
-        offset_u = projectile->sprite.atlas_x / sprite_atlas_width;
+        offset_u = WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
         height_v = sprite_size / sprite_atlas_height;
-        offset_v = projectile->sprite.atlas_y / sprite_atlas_height;
+        offset_v = WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
         float sprite_vertices[] = {
             //  x, y, u, v
             -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
@@ -194,9 +194,9 @@ void wbGameRender(WBGame* game) {
              +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
              - 2.0f * roundf(wiz->head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
     width_u = sprite_size / sprite_atlas_width;
-    offset_u = roundf(wiz->animation_angle) * width_u + wiz->head.sprite.atlas_x / sprite_atlas_width;
+    offset_u = roundf(wiz->animation_angle) * width_u + WB_PLAYER_WIZ_SPRITE_ATLAS_X / sprite_atlas_width;
     height_v = sprite_size / sprite_atlas_height;
-    offset_v = wiz->head.sprite.atlas_y / sprite_atlas_height;
+    offset_v = WB_PLAYER_WIZ_SPRITE_ATLAS_X / sprite_atlas_height;
     float sprite_vertices[] = {
         //  x, y, u, v
         -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
