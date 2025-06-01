@@ -4,9 +4,20 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-#include <math.h>
-#include <stdbool.h>
+
+#include "stb_image.h"
+
 #define M_2PI (2.0 * 3.141592653589793)
+#include <math.h>
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "utils.h"
+
+
 
 #define WB_FPS 1000 /*50*/
 
@@ -187,7 +198,7 @@ typedef enum {
 
     WB_POWERUP_SHIELD   = 0b0001000000000000,
     //################# = 0b0010000000000000,
-} WBPowerup;
+} WBPowerupType;
 
 // Structs
 
@@ -206,10 +217,10 @@ typedef struct {
     WBSprite sprite;
     float pos_x, pos_y;
     int health;
-} WBEntityHeader;
+} WBEntityHead;
 
 typedef struct {
-    WBEntityHeader head;
+    WBEntityHead head;
     float vel_x_values[WB_PLAYER_WIZ_VEL_X_CNT];
     float animation_speed_values[WB_PLAYER_WIZ_VEL_X_CNT];
     float vel_y_values[WB_PLAYER_WIZ_VEL_Y_CNT];
@@ -219,10 +230,11 @@ typedef struct {
     int pos_x_buffer[WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT];
     int pos_y_buffer[WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT];
     float* collider_angles;
+    float collision_angle;
 } WBPlayerWiz;
 
 typedef struct {
-    WBEntityHeader head;
+    WBEntityHead head;
     int onscreen_bullet_cnt;
 } WBPlayerCat;
 
@@ -232,7 +244,7 @@ typedef struct {
 } WBMovepattern;
 
 typedef struct {
-    WBEntityHeader head;
+    WBEntityHead head;
     int attack_period;
 } WBEnemy;
 
@@ -274,8 +286,8 @@ typedef struct {
     int particle_cnt;
     int powerup_pos;
     int level;
-    WBPowerup powerup_unlocked;
-    WBPowerup powerup_permanent;
+    WBPowerupType powerup_unlocked;
+    WBPowerupType powerup_permanent;
 } WBGamestate;
 
 typedef struct {
@@ -292,6 +304,13 @@ typedef struct {
     WBParticle particles[WB_PARTICLE_CNT_MAX];
 } WBGame;
 
-int wbRun();
+void wbWindowLockAspectRatio(WBWindow* window);
+bool wbPlayerWizInit(WBPlayerWiz* wiz);
+void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
+void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup);
+void wbShaderInit(WBShader* shader);
+bool wbMapInit(WBMap* map);
+void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
+int wbGameRun();
 
 #endif // WB_H
