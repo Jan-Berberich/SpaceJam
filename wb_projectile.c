@@ -13,6 +13,7 @@ void wbProjectileAppend(WBProjectile* projectiles, int* projectile_cnt, WBProjec
     projectile->vel_x = vel_x;
     projectile->vel_y = vel_y;
     projectile->type = type;
+    (*projectile_cnt)++;
 }
 
 void wbProjectileRemove(WBProjectile* projectiles, int* projectile_cnt, int idx) {
@@ -20,7 +21,7 @@ void wbProjectileRemove(WBProjectile* projectiles, int* projectile_cnt, int idx)
     (*projectile_cnt)--;
 }
 
-void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz, WBParticle* particles) {
+void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz, WBEnemy* enemies, int* enemy_cnt, WBParticle* particles, int* particle_cnt) {
     WBProjectile* projectile;
     wiz->onscreen_bullet_cnt = 0;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
@@ -39,10 +40,22 @@ void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* m
             continue;
         }
 
+        for (int j = 0; j < WB_ENEMY_CNT_MAX; j++) {
+            if (
+                projectile->pos_x > enemies[j].head.pos_x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_x <= enemies[j].head.pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
+                projectile->pos_y > enemies[j].head.pos_y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_y <= enemies[j].head.pos_y + WB_ENEMY_HITBOX_SIZE / 2
+            ) {
+                wbEnemyRemove(enemies, enemy_cnt, j, particles, particle_cnt);
+                wbProjectileRemove(projectiles, projectile_cnt, i);
+                break;
+            }
+        }
+
         for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
-            if (particles[j].type == WB_PARTICLE_POWERUP &&
-                projectile->pos_x > particles[j].pos_x - WB_HITBOX_SIZE / 2 && projectile->pos_x <= particles[j].pos_x + WB_HITBOX_SIZE / 2 &&
-                projectile->pos_y > particles[j].pos_y - WB_HITBOX_SIZE / 2 && projectile->pos_y <= particles[j].pos_y + WB_HITBOX_SIZE / 2
+            if (
+                particles[j].type == WB_PARTICLE_POWERUP &&
+                projectile->pos_x > particles[j].pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_x <= particles[j].pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
+                projectile->pos_y > particles[j].pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_y <= particles[j].pos_y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
                 wbProjectileRemove(projectiles, projectile_cnt, i);
                 break;

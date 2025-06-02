@@ -10,7 +10,9 @@ void wbParticleAppend(WBParticle* particles, int* particle_cnt, WBParticleType t
     WBParticle* particle = particles;
     particle->pos_x = pos_x;
     particle->pos_y = pos_y;
+    particle->animation_frame = -0.5f;
     particle->type = type;
+    (*particle_cnt)++;
 }
 
 void wbParticleRemove(WBParticle* particles, int* particle_cnt, int idx) {
@@ -18,7 +20,7 @@ void wbParticleRemove(WBParticle* particles, int* particle_cnt, int idx) {
     (*particle_cnt)--;
 }
 
-void wbParticleUpdate(WBParticle* particles, int* particle_cnt, WBPlayerWiz* wiz, int* powerup_slot, unsigned long long frame_cnt) {
+void wbParticleUpdate(WBParticle* particles, int* particle_cnt, WBPlayerWiz* wiz, int* powerup_slot) {
     WBParticle* particle;
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
         particle = &particles[i];
@@ -27,8 +29,8 @@ void wbParticleUpdate(WBParticle* particles, int* particle_cnt, WBPlayerWiz* wiz
         switch (particle->type) {
             case WB_PARTICLE_POWERUP:
             if (
-                particle->pos_x > wiz->head.pos_x - WB_HITBOX_SIZE / 2 && particle->pos_x <= wiz->head.pos_x + WB_HITBOX_SIZE / 2 &&
-                particle->pos_y > wiz->head.pos_y - WB_HITBOX_SIZE / 2 && particle->pos_y <= wiz->head.pos_y + WB_HITBOX_SIZE / 2
+                particle->pos_x > wiz->head.pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && particle->pos_x <= wiz->head.pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
+                particle->pos_y > wiz->head.pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->pos_y <= wiz->head.pos_y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
                 wbParticleRemove(particles, particle_cnt, i);
                 *powerup_slot = (*powerup_slot + 1) % WB_POWERUP_SLOT_CNT;
@@ -37,11 +39,12 @@ void wbParticleUpdate(WBParticle* particles, int* particle_cnt, WBPlayerWiz* wiz
 
             /*
             case X:
-            if (frame_cnt - particle->creation_frame >= X_LIFETIME_FRAME_CNT) {
+            particle->animation_frame += WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED
+            if (particle->animation_frame >= X_ANIMATION_FRAME_CNT - 0.5f) {
                 wbParticleRemove(particles, particle_cnt, i);
             }
             */
-
+            
         }
 
     }
