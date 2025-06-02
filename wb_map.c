@@ -3,7 +3,7 @@
 bool wbMapInit(WBMap* map) {
     WBMapAtlas* map_atlas = &map->atlas;
     int width, height, channel_cnt;
-    uint8_t* data = stbi_load("sprite/map_background_atlas.png", &width, &height, &channel_cnt, 4);
+    uint8_t* data = stbi_load(WB_MAP_BACKGROUND_ATLAS_PATH, &width, &height, &channel_cnt, 4);
     if (!data) {
         fprintf(stderr, "Failed to load map background atlas image\n");
         return false;
@@ -11,15 +11,15 @@ bool wbMapInit(WBMap* map) {
     wbTextureInit(&map_atlas->background, data, width, height);
     stbi_image_free(data);
 
-    data = stbi_load("sprite/map_foreground_atlas.png", &width, &height, &channel_cnt, 4);
+    data = stbi_load(WB_MAP_COLLIDER_ATLAS_PATH, &width, &height, &channel_cnt, 4);
     if (!data) {
-        fprintf(stderr, "Failed to load map foreground atlas image\n");
+        fprintf(stderr, "Failed to load map collider atlas image\n");
         return false;
     }
-    wbTextureInit(&map_atlas->foreground, data, width, height);
+    wbTextureInit(&map_atlas->collider_texture, data, width, height);
     map_atlas->collider = malloc(width * height * (sizeof *map_atlas->collider));
     if (!map_atlas->collider) {
-        fprintf(stderr, "Failed to allocate memory for foreground collider\n");
+        fprintf(stderr, "Failed to allocate memory for collider texture\n");
         stbi_image_free(data);
         return false;
     }
@@ -35,5 +35,5 @@ bool wbMapInit(WBMap* map) {
 }
 
 bool wbMapGetCollision(WBMap* map, int x, int y) {
-    return map->collider[y * map->atlas.foreground.width + x];
+    return map->collider[y * map->atlas.collider_texture.width + x];
 }

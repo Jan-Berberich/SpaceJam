@@ -15,7 +15,7 @@ bool wbGameInit(WBGame* game) {
 
     // Initialize sprite atlas
     int width, height, channel_cnt;
-    uint8_t* data = stbi_load("sprite/sprite_atlas.png", &width, &height, &channel_cnt, 4);
+    uint8_t* data = stbi_load(WB_SPRITE_ATLAS_PATH, &width, &height, &channel_cnt, 4);
     if (!data) {
         fprintf(stderr, "Failed to load sprite atlas image\n");
         return false;
@@ -39,7 +39,9 @@ bool wbGameInit(WBGame* game) {
     gamestate->powerup_permanent = WB_POWERUP_NONE;
 
     // Initialize players
-    if (!wbPlayerWizInit(&game->player_wiz)) {
+    int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
+    int pos_x_max = game->map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
+    if (!wbPlayerWizInit(&game->player_wiz, pos_x_min, pos_x_max)) {
         fprintf(stderr, "Failed to initialize players\n");
         return false;
     }

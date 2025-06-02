@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-bool wbPlayerWizInit(WBPlayerWiz* wiz) {
+bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max) {
     wiz->collider_angles = malloc(WB_PLAYER_WIZ_COLLISION_ANGLE_CNT * (sizeof *wiz->collider_angles));
     if (!wiz->collider_angles) {
         fprintf(stderr, "Failed to allocate memory for collider_angles");
@@ -13,8 +13,9 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz) {
     WBEntityHead* entity = &wiz->head;
 
     entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
-
-    entity->pos_x = WB_WINDOW_WIDTH / 2;
+    
+    //entity->pos_x = WB_MAP_VIEW_WIDTH / 2 - 1;
+    entity->pos_x = randfin(time(NULL), pos_x_min, pos_x_max);
     entity->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;
     wiz->vel_x = 0.0f;
