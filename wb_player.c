@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max) {
+bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
     wiz->collider_angles = malloc(WB_PLAYER_WIZ_COLLISION_ANGLE_CNT * (sizeof *wiz->collider_angles));
     if (!wiz->collider_angles) {
         fprintf(stderr, "Failed to allocate memory for collider_angles");
@@ -10,12 +10,9 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max) {
         wiz->collider_angles[i] = (float)i * M_2PI / WB_PLAYER_WIZ_COLLISION_ANGLE_CNT;
     }
 
-    WBEntityHead* entity = &wiz->head;
-
-    entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
-    
-    entity->pos_x = randfin(time(NULL), pos_x_min, pos_x_max);
-    entity->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
+    wiz->health = WB_PLAYER_WIZ_HEALTH_MAX;
+    wiz->pos_x = randfin(time(NULL), pos_x_min, pos_x_max);
+    wiz->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;
     wiz->vel_x = 0.0f;
     wiz->vel_y_key = 0.0f;
@@ -48,10 +45,9 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max) {
     return true;
 }
 
-void wbPlayerWizSetCollisionAngle(WBPlayerWiz* wiz, WBMap* map) {
-    WBEntityHead* wizh = &wiz->head;
-    int xc = wizh->pos_x;
-    int yc = wizh->pos_y;
+void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
+    int xc = wiz->pos_x;
+    int yc = wiz->pos_y;
     bool collision;
     int collision_cnt = 0;
     float collision_x = 0.0f;
@@ -72,8 +68,8 @@ void wbPlayerWizSetCollisionAngle(WBPlayerWiz* wiz, WBMap* map) {
     wiz->collision_angle = atan2f(collision_y / collision_cnt, collision_x / collision_cnt);
 }
 
-void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType movement_powerup) {
-    int pos_y = roundf(wiz->head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT;
+void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup) {
+    int pos_y = roundf(wiz->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT;
     bool map_ceil_collision = pos_y - WB_PLAYER_WIZ_COLLISION_RADIUS < WB_MAP_CEIL_HEIGHT;
     bool map_floor_collision = pos_y + WB_PLAYER_WIZ_COLLISION_RADIUS > WB_MAP_FLOOR_HEIGHT;
     if (map_ceil_collision || map_floor_collision) {
@@ -108,7 +104,7 @@ void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType move
     }
 }
 
-void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup) {
+void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup) {
     if (movement_powerup == WB_POWERUP_NONE && !isnan(wiz->collision_angle) || movement_powerup != WB_POWERUP_NONE) {
         wiz->vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
@@ -118,8 +114,8 @@ void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup) {
     if (movement_powerup == WB_POWERUP_NONE || movement_powerup == WB_POWERUP_THRUST) {
         wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;
     }
-    wiz->head.pos_x += wiz->vel_x;
-    wiz->head.pos_y += wiz->vel_y;
+    wiz->pos_x += wiz->vel_x;
+    wiz->pos_y += wiz->vel_y;
 
     wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))];
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;

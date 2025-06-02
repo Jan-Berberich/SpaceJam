@@ -42,28 +42,31 @@ bool wbGameInit(WBGame* game) {
     // Initialize players
     int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
     int pos_x_max = game->map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
-    if (!wbPlayerWizInit(&game->player_wiz, pos_x_min, pos_x_max)) {
+    if (!wbPlayerWizInit(&game->player.wiz, pos_x_min, pos_x_max)) {
         fprintf(stderr, "Failed to initialize players\n");
         return false;
     }
 
     // Initialize enemies
-    game->enemy_cnt = 0;
-    WBEnemy* enemies = game->enemies;
+    game->enemy_buffer.head.cnt = 0;
+    game->enemy_buffer.head.type = WB_BUFFER_ENEMY;
+    WBEnemy* enemies = game->enemy_buffer.entries;
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
         enemies[i].type = WB_ENEMY_NONE;
     }
 
     // Initialize particles
-    game->particle_cnt = 0;
-    WBParticle* particles = game->particles;
+    game->particle_buffer.head.cnt = 0;
+    game->particle_buffer.head.type = WB_BUFFER_PARTICLE;
+    WBParticle* particles = game->particle_buffer.entries;
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
         particles[i].type = WB_PARTICLE_NONE;
     }
 
     // Initialize projectiles
-    game->projectile_cnt = 0;
-    WBProjectile* projectiles = game->projectiles;
+    game->projectile_buffer.head.cnt = 0;
+    game->projectile_buffer.head.type = WB_BUFFER_PROJECTILE;
+    WBProjectile* projectiles = game->projectile_buffer.entries;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
         projectiles[i].type = WB_PROJECTILE_NONE;
     }
@@ -82,7 +85,7 @@ void wbGameProcessInput(WBGame* game) {
     bool wiz_right = glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT);
     bool wiz_shoot = glfwGetKey(game->window.handle, WB_KEY_WIZ_SHOOT);
 
-    WBPlayerWiz* wiz = &game->player_wiz;
+    WBWiz* wiz = &game->player.wiz;
 
     // TODO: for debug
     bool debug_shift = glfwGetKey(game->window.handle, GLFW_KEY_LEFT_SHIFT);
@@ -122,7 +125,7 @@ void wbGameProcessInput(WBGame* game) {
     if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT] && wiz->onscreen_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
         float projectile_vel_x = (float)wiz->next_bullet_direction * WB_PROJECTILE_VEL;
         float projectile_vel_y = 0.0f;
-        wbProjectileAppend(game->projectiles, &game->projectile_cnt, WB_PROJECTILE_BULLET, wiz->head.pos_x, wiz->head.pos_y, projectile_vel_x, projectile_vel_y);
+        wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BULLET, wiz->pos_x, wiz->pos_y, projectile_vel_x, projectile_vel_y);
     }
     prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
 }
@@ -133,7 +136,7 @@ void wbGameRender(WBGame* game) {
     glClear(GL_COLOR_BUFFER_BIT); // Clear the color buffer with the set clear color
 
     WBMap* map = &game->map;
-    WBPlayerWiz* wiz = &game->player_wiz;
+    WBWiz* wiz = &game->player.wiz;
     WBProjectile* projectile;
     WBParticle* particle;
     WBEnemy* enemy;
@@ -172,7 +175,7 @@ void wbGameRender(WBGame* game) {
     width_u = sprite_size / sprite_atlas_width;
     height_v = sprite_size / sprite_atlas_height;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
-        projectile = &game->projectiles[i];
+        projectile = &game->projectile_buffer.entries[i];
         switch (projectile->type) {
             case WB_PROJECTILE_NONE:
             continue;
@@ -201,7 +204,7 @@ void wbGameRender(WBGame* game) {
 
     // Draw Particles
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
-        particle = &game->particles[i];
+        particle = &game->particle_buffer.entries[i];
         switch (particle->type) {
             case WB_PARTICLE_NONE:
             continue;
@@ -230,7 +233,7 @@ void wbGameRender(WBGame* game) {
 
     // Draw Enemies
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
-        enemy = &game->enemies[i];
+        enemy = &game->enemy_buffer.entries[i];
         switch (enemy->type) {
             case WB_ENEMY_NONE:
             continue;
@@ -241,10 +244,10 @@ void wbGameRender(WBGame* game) {
             offset_v = WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
         }
-        offset_x = 2.0f * roundf((enemy->head.pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
+        offset_x = 2.0f * roundf((enemy->pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
-                 - 2.0f * roundf(enemy->head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
+                 - 2.0f * roundf(enemy->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
         float sprite_vertices[] = {
             //  x, y, u, v
             -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
@@ -259,10 +262,10 @@ void wbGameRender(WBGame* game) {
     }
 
     // Draw Player Wiz
-    offset_x = 2.0f * roundf((wiz->head.pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
+    offset_x = 2.0f * roundf((wiz->pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
-             - 2.0f * roundf(wiz->head.pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
+             - 2.0f * roundf(wiz->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
     width_u = sprite_size / sprite_atlas_width;
     offset_u = roundf(wiz->animation_angle) * width_u + WB_PLAYER_WIZ_SPRITE_ATLAS_X / sprite_atlas_width;
     height_v = sprite_size / sprite_atlas_height;
@@ -292,7 +295,7 @@ void wbGameTerminate(WBGame* game) {
     glDeleteBuffers(1, &game->shader.ebo);
     glDeleteProgram(game->shader.program);
     glDeleteTextures(1, &game->sprite_atlas.texture_id); // Delete the sprite atlas texture
-    free(game->player_wiz.collider_angles); // Free the player collider angles memory
+    free(game->player.wiz.collider_angles); // Free the player collider angles memory
     free(game->map.atlas.collider); // Free the map atlas collider memory
     glfwDestroyWindow(game->window.handle); // Destroy the window
     glfwTerminate(); // Terminate GLFW to clean up resources
@@ -318,8 +321,8 @@ int wbGameRun() {
         if (frame_time == game.last_frame_time) continue;
 
         // TODO: for debug
-        if (game.enemy_cnt < 8) {
-            wbEnemyAppend(game.enemies, &game.enemy_cnt, WB_ENEMY_SPINNERBLUE, randfin(game.frame_cnt, 100, 3000), randfin(game.frame_cnt++, 50, 200));
+        if (game.enemy_buffer.head.cnt < 8) {
+            wbBufferAppend(&game.enemy_buffer.head, WB_ENEMY_SPINNERBLUE, randfin(game.frame_cnt, 200, 3000), randfin(game.frame_cnt++, 50, 200));
         }
 
         wbWindowLockAspectRatio(&game.window);
@@ -327,21 +330,21 @@ int wbGameRun() {
         wbGameProcessInput(&game);
 
         WBPowerupType movement_powerup = game.gamestate.powerup_unlocked & WB_POWERUP_MAXED;
-        wbPlayerWizHandleCollision(&game.player_wiz, &game.map, movement_powerup);
+        wbPlayerWizHandleCollision(&game.player.wiz, &game.map, movement_powerup);
 
-        wbPlayerWizUpdate(&game.player_wiz, movement_powerup);
-        game.map.view_center_x = roundf(game.player_wiz.head.pos_x / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT;
+        wbPlayerWizUpdate(&game.player.wiz, movement_powerup);
+        game.map.view_center_x = roundf(game.player.wiz.pos_x / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT;
         game.map.view_center_x = fmaxf(game.map.view_center_x, WB_MAP_VIEW_WIDTH / 2);
         game.map.view_center_x = fminf(game.map.view_center_x, game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
-        wbParticleUpdate(game.particles, &game.particle_cnt, &game.player_wiz, &game.gamestate.powerup_slot);
-        wbEnemyUpdate(game.enemies, &game.enemy_cnt, &game.player_wiz, game.particles, &game.particle_cnt);
-        wbProjectileUpdate(game.projectiles, &game.projectile_cnt, &game.map, &game.player_wiz, game.enemies, &game.enemy_cnt, game.particles, &game.particle_cnt);
+        wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate.powerup_slot);
+        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.particle_buffer);
+        wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer);
 
         // TODO: for debug
-        if (game.player_wiz.head.health <= 0) {
+        if (game.player.wiz.health <= 0) {
             int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
             int pos_x_max = game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
-            wbPlayerWizInit(&game.player_wiz, pos_x_min, pos_x_max);
+            wbPlayerWizInit(&game.player.wiz, pos_x_min, pos_x_max);
         }
 
         wbGameRender(&game);
