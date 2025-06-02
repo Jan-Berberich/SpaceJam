@@ -8,7 +8,7 @@ void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* parti
         wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, enemies[idx].pos_x, enemies[idx].pos_y);
     }
     //wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, enemies[j].head.pos_x, enemies[j].head.pos_y);
-    wbBufferRemove(&enemy_buffer->head, idx);
+    wbBufferRemove(enemy_buffer, idx);
 }
 
 void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer) {

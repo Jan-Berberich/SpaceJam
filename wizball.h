@@ -389,8 +389,8 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max);
 void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
 void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup);
 
-void wbBufferAppend(WBBufferHead* buffer_head, uint8_t type, float pos_x, float pos_y);
-void wbBufferRemove(WBBufferHead* head, int idx);
+void wbBufferAppend(void* buffer_head, uint8_t type, float pos_x, float pos_y);
+void wbBufferRemove(void* buffer_head, int idx);
 
 void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer);
 void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer);

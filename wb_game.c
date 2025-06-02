@@ -322,7 +322,7 @@ int wbGameRun() {
 
         // TODO: for debug
         if (game.enemy_buffer.head.cnt < 8) {
-            wbBufferAppend(&game.enemy_buffer.head, WB_ENEMY_SPINNERBLUE, randfin(game.frame_cnt, 200, 3000), randfin(game.frame_cnt++, 50, 200));
+            wbBufferAppend(&game.enemy_buffer, WB_ENEMY_SPINNERBLUE, randfin(game.frame_cnt, 200, 3000), randfin(game.frame_cnt++, 50, 200));
         }
 
         wbWindowLockAspectRatio(&game.window);

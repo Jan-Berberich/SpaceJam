@@ -34,7 +34,7 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
             projectile->pos_y < 0 || projectile->pos_y >= WB_MAP_HORIZON_HEIGHT ||
             wbMapGetCollision(map, projectile->pos_x, projectile->pos_y)
         ) {
-            wbBufferRemove(&projectile_buffer->head, i);
+            wbBufferRemove(projectile_buffer, i);
             continue;
         }
 
@@ -44,7 +44,7 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
                 projectile->pos_y > enemies[j].pos_y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_y <= enemies[j].pos_y + WB_ENEMY_HITBOX_SIZE / 2
             ) {
                 wbEnemyRemove(enemy_buffer, j, particle_buffer);
-                wbBufferRemove(&projectile_buffer->head, i);
+                wbBufferRemove(projectile_buffer, i);
                 break;
             }
         }
@@ -55,7 +55,7 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
                 projectile->pos_x > particles[j].pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_x <= particles[j].pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
                 projectile->pos_y > particles[j].pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_y <= particles[j].pos_y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
-                wbBufferRemove(&projectile_buffer->head, i);
+                wbBufferRemove(projectile_buffer, i);
                 break;
             }
         }

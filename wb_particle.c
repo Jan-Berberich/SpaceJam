@@ -12,7 +12,7 @@ void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* poweru
                 particle->pos_x > wiz->pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && particle->pos_x <= wiz->pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
                 particle->pos_y > wiz->pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->pos_y <= wiz->pos_y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
-                wbBufferRemove(&particle_buffer->head, i);
+                wbBufferRemove(particle_buffer, i);
                 *powerup_slot = (*powerup_slot + 1) % WB_POWERUP_SLOT_CNT;
             }
             break;
