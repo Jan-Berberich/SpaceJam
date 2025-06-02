@@ -33,7 +33,7 @@ bool wbGameInit(WBGame* game) {
     WBGamestate* gamestate = &game->gamestate;
     gamestate->type = WB_GAMESTATE_TITLESCREEN;
     gamestate->score = 0;
-    gamestate->powerup_pos = 0;
+    gamestate->powerup_slot = 0;
     gamestate->level = 0;
     gamestate->powerup_unlocked = WB_POWERUP_NONE;
     gamestate->powerup_permanent = WB_POWERUP_NONE;
@@ -59,6 +59,8 @@ bool wbGameInit(WBGame* game) {
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
         particles[i].type = WB_PARTICLE_NONE;
     }
+    // TODO: for debug
+    wbParticleAppend(game->particles, &game->particle_cnt, WB_PARTICLE_POWERUP, 1000, 200);
 
     // Initialize projectiles
     game->projectile_cnt = 0;
@@ -134,6 +136,7 @@ void wbGameRender(WBGame* game) {
     WBMap* map = &game->map;
     WBPlayerWiz* wiz = &game->player_wiz;
     WBProjectile* projectile;
+    WBParticle* particle;
 
     // Draw background
     float map_view_width = WB_MAP_VIEW_WIDTH;
@@ -177,6 +180,31 @@ void wbGameRender(WBGame* game) {
         offset_u = WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
         height_v = sprite_size / sprite_atlas_height;
         offset_v = WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
+        float sprite_vertices[] = {
+            //  x, y, u, v
+            -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
+             width_x + offset_x, -1.0f + 2.0f * height_y + offset_y, width_u + offset_u, offset_v,
+             width_x + offset_x, -1.0f                   + offset_y, width_u + offset_u, offset_v + height_v,
+            -width_x + offset_x, -1.0f                   + offset_y,           offset_u, offset_v + height_v
+        };
+        glBindTexture(GL_TEXTURE_2D, game->sprite_atlas.texture_id);
+        glBindBuffer(GL_ARRAY_BUFFER, game->shader.vbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(sprite_vertices), sprite_vertices);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw quad
+    }
+
+    // Draw Particles
+    for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
+        particle = &game->particles[i];
+        if (particle->type == WB_PARTICLE_NONE) continue;
+        offset_x = 2.0f * roundf((particle->pos_x - map->view_center_x) / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT / window_width;
+        offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+                 +(2.0f * map_height - WB_SPRITE_SIZE + 2.0f) / window_height
+                 - 2.0f * roundf(particle->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT / window_height;
+        width_u = sprite_size / sprite_atlas_width;
+        offset_u = WB_PARTICLE_POWERUP_SPRITE_ATLAS_X / sprite_atlas_width;
+        height_v = sprite_size / sprite_atlas_height;
+        offset_v = WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
         float sprite_vertices[] = {
             //  x, y, u, v
             -width_x + offset_x, -1.0f + 2.0f * height_y + offset_y,           offset_u, offset_v,
@@ -260,7 +288,9 @@ int wbGameRun() {
         game.map.view_center_x = roundf(game.player_wiz.head.pos_x / WB_SUBPIXEL_X_CNT) * WB_SUBPIXEL_X_CNT;
         game.map.view_center_x = fmaxf(game.map.view_center_x, WB_MAP_VIEW_WIDTH / 2);
         game.map.view_center_x = fminf(game.map.view_center_x, game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
-        wbProjectileUpdate(game.projectiles, &game.projectile_cnt, &game.map, &game.player_wiz);
+        //wbEnemyUpdate();
+        wbParticleUpdate(game.particles, &game.particle_cnt, &game.player_wiz, &game.gamestate.powerup_slot, game.frame_cnt);
+        wbProjectileUpdate(game.projectiles, &game.projectile_cnt, &game.map, &game.player_wiz, game.particles);
 
         wbGameRender(&game);
 

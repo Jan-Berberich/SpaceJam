@@ -23,14 +23,14 @@
 
 #define WB_FPS 1000 /*50*/
 
-#define WB_WINDOW_WIDTH  600 /*640*/
-#define WB_WINDOW_HEIGHT 486 /*339*/
+#define WB_WINDOW_WIDTH  640 /*600*/
+#define WB_WINDOW_HEIGHT 339 /*486*/
 
-#define WB_SUBPIXEL_X_CNT 2 /*0.5*/
+#define WB_SUBPIXEL_X_CNT 0.5 /*2*/
 #define WB_SUBPIXEL_Y_CNT 2
 
-#define WB_MAP_VIEW_WIDTH 570 /*640*/
-#define WB_MAP_VIEW_OFFSET_Y 70 /*0*/
+#define WB_MAP_VIEW_WIDTH 640 /*570*/
+#define WB_MAP_VIEW_OFFSET_Y 0 /*70*/
 #define WB_MAP_CEIL_HEIGHT 4
 #define WB_MAP_FLOOR_HEIGHT 288
 #define WB_MAP_HORIZON_HEIGHT 240
@@ -38,14 +38,14 @@
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
 
-#define WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX 2
-#define WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX 1
+#define WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX (int)round(2.0f * WB_MAP_VIEW_WIDTH / 570)
+#define WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX (int)round(1.0f * WB_MAP_VIEW_WIDTH / 570)
 
-#define WB_HITBOX_SIZE 8 // ?
+#define WB_HITBOX_SIZE 32 // ?
 
 #define WB_PLAYER_WIZ_WIDTH 37
 #define WB_PLAYER_WIZ_HEIGHT 38
-#define WB_PLAYER_WIZ_COLLISION_RADIUS 16 /*(WB_PLAYER_WIZ_WIDTH / 2)*/
+#define WB_PLAYER_WIZ_COLLISION_RADIUS 16
 #define WB_PLAYER_WIZ_COLLISION_ANGLE_CNT 32
 #define WB_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN sinf(M_2PI / 16.0f)
 
@@ -88,6 +88,8 @@
 #define WB_PLAYER_WIZ_VEL_Y_CNT 5
 // ~movement
 
+#define WB_POWERUP_SLOT_CNT 8
+
 #define WB_SPRITE_SIZE 64
 
 #define WB_PLAYER_WIZ_SHOOT_AUTOFIRE_SPEED (1.0f / 10.0f * 50 / WB_FPS) // collision of bullet reset cooldown?
@@ -105,6 +107,11 @@
 #define WB_ENEMY_CNT_MAX 64
 #define WB_PARTICLE_CNT_MAX 64
 #define WB_PROJECTILE_CNT_MAX 64
+
+#define WB_ENIMY_SPINNERBLUE_ANIMATION_FRAME_CNT 4
+
+#define WB_PARTICLE_POWERUP_ANIMATION_FRAME_CNT 1
+
 #define WB_PROJECTILE_VEL (4.0f * 50 / WB_FPS * 2) 
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
@@ -118,6 +125,9 @@
 #define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_X (5 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+
+#define WB_PARTICLE_POWERUP_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
+#define WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y (4 * WB_SPRITE_SIZE)
 
 // Paths
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
@@ -278,7 +288,7 @@ typedef struct {
 typedef struct {
     WBParticleType type;
     float pos_x, pos_y;
-    double creation_time;
+    double creation_frame;
 } WBParticle;
 
 typedef struct {
@@ -315,7 +325,7 @@ typedef struct {
 typedef struct {
     WBGamestateType type;
     int score;
-    int powerup_pos;
+    int powerup_slot;
     int level;
     WBPowerupType powerup_unlocked;
     WBPowerupType powerup_permanent;
@@ -344,8 +354,10 @@ void wbWindowLockAspectRatio(WBWindow* window);
 bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max);
 void wbPlayerWizHandleCollision(WBPlayerWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
 void wbPlayerWizUpdate(WBPlayerWiz* wiz, WBPowerupType movement_powerup);
+void wbParticleAppend(WBParticle* particles, int* particle_cnt, WBParticleType type, float pos_x, float pos_y);
+void wbParticleUpdate(WBParticle* particles, int* particle_cnt, WBPlayerWiz* wiz, int* powerup_slot, unsigned long long frame_cnt);
 void wbProjectileAppend(WBProjectile* projectiles, int* projectile_cnt, WBProjectileType type, float pos_x, float pos_y, float vel_x, float vel_y);
-void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz);
+void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz, WBParticle* particles);
 void wbShaderInit(WBShader* shader);
 bool wbMapInit(WBMap* map);
 bool wbMapGetCollision(WBMap* map, int x, int y);

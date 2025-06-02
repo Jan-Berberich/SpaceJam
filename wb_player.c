@@ -14,7 +14,6 @@ bool wbPlayerWizInit(WBPlayerWiz* wiz, int pos_x_min, int pos_x_max) {
 
     entity->health = WB_PLAYER_WIZ_HEALTH_MAX;
     
-    //entity->pos_x = WB_MAP_VIEW_WIDTH / 2 - 1;
     entity->pos_x = randfin(time(NULL), pos_x_min, pos_x_max);
     entity->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;

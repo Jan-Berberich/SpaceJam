@@ -20,7 +20,7 @@ void wbProjectileRemove(WBProjectile* projectiles, int* projectile_cnt, int idx)
     (*projectile_cnt)--;
 }
 
-void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz) {
+void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* map, WBPlayerWiz* wiz, WBParticle* particles) {
     WBProjectile* projectile;
     wiz->onscreen_bullet_cnt = 0;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
@@ -30,13 +30,25 @@ void wbProjectileUpdate(WBProjectile* projectiles, int* projectile_cnt, WBMap* m
         projectile->pos_x += projectile->vel_x;
         projectile->pos_y += projectile->vel_y;
 
-        if (projectile->pos_x < map->view_center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->pos_x >= map->view_center_x + WB_MAP_VIEW_WIDTH / 2 ||
+        if (
+            projectile->pos_x < map->view_center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->pos_x >= map->view_center_x + WB_MAP_VIEW_WIDTH / 2 ||
             projectile->pos_y < 0 || projectile->pos_y >= WB_MAP_HORIZON_HEIGHT ||
-            wbMapGetCollision(map, projectile->pos_x, projectile->pos_y)) {
-            
+            wbMapGetCollision(map, projectile->pos_x, projectile->pos_y)
+        ) {
             wbProjectileRemove(projectiles, projectile_cnt, i);
             continue;
         }
+
+        for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
+            if (particles[j].type == WB_PARTICLE_POWERUP &&
+                projectile->pos_x > particles[j].pos_x - WB_HITBOX_SIZE / 2 && projectile->pos_x <= particles[j].pos_x + WB_HITBOX_SIZE / 2 &&
+                projectile->pos_y > particles[j].pos_y - WB_HITBOX_SIZE / 2 && projectile->pos_y <= particles[j].pos_y + WB_HITBOX_SIZE / 2
+            ) {
+                wbProjectileRemove(projectiles, projectile_cnt, i);
+                break;
+            }
+        }
+
         projectile->pos_x += projectile->vel_x;
         projectile->pos_y += projectile->vel_y;
 
