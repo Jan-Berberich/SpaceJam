@@ -26,6 +26,7 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
     wiz->vel_x_values[4] = WB_PLAYER_WIZ_VEL_X_4;
     wiz->vel_x_values[5] = WB_PLAYER_WIZ_VEL_X_5;
     wiz->vel_x_values[6] = WB_PLAYER_WIZ_VEL_X_6;
+    wiz->vel_x_values[7] = WB_PLAYER_WIZ_VEL_X_7;
     wiz->animation_speed_values[0] = WB_PLAYER_WIZ_ANIMATION_SPEED_0;
     wiz->animation_speed_values[1] = WB_PLAYER_WIZ_ANIMATION_SPEED_1;
     wiz->animation_speed_values[2] = WB_PLAYER_WIZ_ANIMATION_SPEED_2;
@@ -33,6 +34,7 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
     wiz->animation_speed_values[4] = WB_PLAYER_WIZ_ANIMATION_SPEED_4;
     wiz->animation_speed_values[5] = WB_PLAYER_WIZ_ANIMATION_SPEED_5;
     wiz->animation_speed_values[6] = WB_PLAYER_WIZ_ANIMATION_SPEED_6;
+    wiz->animation_speed_values[7] = WB_PLAYER_WIZ_ANIMATION_SPEED_7;
 
     wiz->vel_y_values[0] = WB_PLAYER_WIZ_VEL_Y_0;
     wiz->vel_y_values[1] = WB_PLAYER_WIZ_VEL_Y_1;
@@ -46,8 +48,8 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
 }
 
 void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
-    int xc = wiz->pos_x;
-    int yc = wiz->pos_y;
+    int xc = roundf(wiz->pos_x);
+    int yc = roundf(wiz->pos_y);
     bool collision;
     int collision_cnt = 0;
     float collision_x = 0.0f;
@@ -57,8 +59,8 @@ void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     float* angles = wiz->collider_angles;
     int x; int y;
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
-        x = xc + (int)roundf(WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
-        y = yc + (int)roundf(WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
+        x = xc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
+        y = yc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
         collision = wbMapGetCollision(map, x, y);
         collision_cnt += collision;
         collision_x += collision * (x - xc);
@@ -68,8 +70,8 @@ void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     wiz->collision_angle = atan2f(collision_y / collision_cnt, collision_x / collision_cnt);
 }
 
-void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup) {
-    int pos_y = roundf(wiz->pos_y / WB_SUBPIXEL_Y_CNT) * WB_SUBPIXEL_Y_CNT;
+void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_unlocked) {
+    int pos_y = roundf(wiz->pos_y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT;
     bool map_ceil_collision = pos_y - WB_PLAYER_WIZ_COLLISION_RADIUS < WB_MAP_CEIL_HEIGHT;
     bool map_floor_collision = pos_y + WB_PLAYER_WIZ_COLLISION_RADIUS > WB_MAP_FLOOR_HEIGHT;
     if (map_ceil_collision || map_floor_collision) {
@@ -86,7 +88,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_p
             wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(collision_x);
         }
         if (fabsf(collision_y) > 0.01f) {
-            if (movement_powerup == WB_POWERUP_NONE || movement_powerup == WB_POWERUP_THRUST) {
+            if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
                 wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;
                 wiz->vel_y = -fabsf(wiz->vel_y) * fsgnf(collision_y);
             }
@@ -104,14 +106,14 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_p
     }
 }
 
-void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup) {
-    if (movement_powerup == WB_POWERUP_NONE && !isnan(wiz->collision_angle) || movement_powerup != WB_POWERUP_NONE) {
+void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType powerup_unlocked) {
+    if (!isnan(wiz->collision_angle) || (powerup_unlocked & WB_POWERUP_THRUST) || (powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
-    if (movement_powerup == WB_POWERUP_ANTIGRAV) {
+    if (powerup_unlocked & WB_POWERUP_ANTIGRAV) {
         wiz->vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
-    if (movement_powerup == WB_POWERUP_NONE || movement_powerup == WB_POWERUP_THRUST) {
+    if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;
     }
     wiz->pos_x += wiz->vel_x;
