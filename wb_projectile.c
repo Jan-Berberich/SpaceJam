@@ -38,8 +38,9 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
             continue;
         }
 
-        for (int j = 0; j < WB_ENEMY_CNT_MAX; j++) {
-            if (
+        int j;
+        for (j = 0; j < WB_ENEMY_CNT_MAX; j++) {
+            if (enemies[j].type != WB_ENEMY_NONE &&
                 projectile->pos_x > enemies[j].pos_x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_x <= enemies[j].pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
                 projectile->pos_y > enemies[j].pos_y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_y <= enemies[j].pos_y + WB_ENEMY_HITBOX_SIZE / 2
             ) {
@@ -48,6 +49,7 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
                 break;
             }
         }
+        if (j != WB_ENEMY_CNT_MAX) continue;
 
         for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
             if (
@@ -59,6 +61,7 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
                 break;
             }
         }
+        if (j != WB_ENEMY_CNT_MAX) continue;
 
         projectile->pos_x += projectile->vel_x;
         projectile->pos_y += projectile->vel_y;

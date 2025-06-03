@@ -12,7 +12,7 @@ void wbBufferAppend(void* head, uint8_t type, float pos_x, float pos_y) {
         entity->pos_x = pos_x;
         entity->pos_y = pos_y;
         entity->type = type;
-        entity->animation_frame = -0.5f;
+        entity->frame_age = 0;
         break;
 
         case WB_BUFFER_PARTICLE:
@@ -24,7 +24,7 @@ void wbBufferAppend(void* head, uint8_t type, float pos_x, float pos_y) {
         particle->pos_x = pos_x;
         particle->pos_y = pos_y;
         particle->type = type;
-        particle->animation_frame = -0.5f;
+        particle->frame_age = 0;
         break;
     }
     buffer_head->cnt++;

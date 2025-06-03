@@ -41,7 +41,7 @@
 #define WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX (int)round(2.0f * WB_MAP_VIEW_WIDTH / 570)
 #define WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX (int)round(1.0f * WB_MAP_VIEW_WIDTH / 570)
 
-#define WB_ENEMY_HITBOX_SIZE 32 // ?
+#define WB_ENEMY_HITBOX_SIZE 40 // ?
 #define WB_PARTICLE_HITBOX_SIZE 48 // ?
 #define WB_PARTICLE_POWERUP_DROP_CHANCE 0.1f // ?
 
@@ -95,6 +95,7 @@
 #define WB_SPRITE_SIZE 64
 
 #define WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
+#define WB_ENEMY_CIRCLE_ANIMATION_SPEED (1.0f / 5.0f * 50 / WB_FPS)
 
 #define WB_PLAYER_WIZ_SHOOT_AUTOFIRE_SPEED (1.0f / 10.0f * 50 / WB_FPS) // collision of bullet reset cooldown?
 
@@ -113,8 +114,12 @@
 #define WB_PROJECTILE_CNT_MAX 64
 
 #define WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT 4
+#define WB_ENEMY_CIRCLE_ANIMATION_FRAME_CNT 4
 
 #define WB_PARTICLE_POWERUP_ANIMATION_FRAME_CNT 1
+
+#define WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT 4
+#define WB_PARTICLE_DECAY_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
 
 #define WB_PROJECTILE_VEL (4.0f * 50 / WB_FPS * 2) 
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
@@ -132,9 +137,13 @@
 
 #define WB_PARTICLE_POWERUP_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y (4 * WB_SPRITE_SIZE)
+#define WB_PARTICLE_DECAY_SPRITE_ATLAS_X (12 * WB_SPRITE_SIZE)
+#define WB_PARTICLE_DECAY_SPRITE_ATLAS_Y ( 4 * WB_SPRITE_SIZE)
 
 #define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
+#define WB_ENEMY_CIRCLE_SPRITE_ATLAS_X (4 * WB_SPRITE_SIZE)
+#define WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
 
 // Paths
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
@@ -264,6 +273,11 @@ typedef struct {
 } WBTexture;
 
 typedef struct {
+    void* type;
+    float pos_x, pos_y;
+} WBEntityHead;
+
+typedef struct {
     float pos_x, pos_y;
     int health;
     float vel_x_values[WB_PLAYER_WIZ_VEL_X_CNT];
@@ -298,13 +312,13 @@ typedef struct {
     WBEnemyType type;
     float pos_x, pos_y;
     int attack_period;
-    float animation_frame;
+    uint64_t frame_age;
 } WBEnemy;
 
 typedef struct {
     WBParticleType type;
     float pos_x, pos_y;
-    float animation_frame;
+    float frame_age;
 } WBParticle;
 
 typedef struct {
@@ -382,28 +396,28 @@ typedef struct {
     WBBufferProjectile projectile_buffer;
 } WBGame;
 
-bool wbWindowInit(WBWindow* window);
-void wbWindowLockAspectRatio(WBWindow* window);
+extern bool wbWindowInit(WBWindow* window);
+extern void wbWindowLockAspectRatio(WBWindow* window);
 
-bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max);
-void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
-void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup);
+extern bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max);
+extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
+extern void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup);
 
-void wbBufferAppend(void* buffer_head, uint8_t type, float pos_x, float pos_y);
-void wbBufferRemove(void* buffer_head, int idx);
+extern void wbBufferAppend(void* buffer_head, uint8_t type, float pos_x, float pos_y);
+extern void wbBufferRemove(void* buffer_head, int idx);
 
-void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer);
-void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer);
+extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer);
+extern void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer);
 
-void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* powerup_slot);
+extern void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* powerup_slot);
 
-void wbProjectileAppend(WBBufferProjectile* projectile_buffer, WBProjectileType type, float pos_x, float pos_y, float vel_x, float vel_y);
-void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer);
+extern void wbProjectileAppend(WBBufferProjectile* projectile_buffer, WBProjectileType type, float pos_x, float pos_y, float vel_x, float vel_y);
+extern void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer);
 
-void wbShaderInit(WBShader* shader);
-bool wbMapInit(WBMap* map);
-bool wbMapGetCollision(WBMap* map, int x, int y);
-void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
-int wbGameRun();
+extern void wbShaderInit(WBShader* shader);
+extern bool wbMapInit(WBMap* map);
+extern bool wbMapGetCollision(WBMap* map, int x, int y);
+extern void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
+extern int wbGameRun();
 
 #endif // WB_H

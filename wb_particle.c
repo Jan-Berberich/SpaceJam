@@ -17,13 +17,11 @@ void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* poweru
             }
             break;
 
-            /*
-            case X:
-            particle->animation_frame += WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED
-            if (particle->animation_frame >= X_ANIMATION_FRAME_CNT - 0.5f) {
-                wbParticleRemove(particles, particle_cnt, i);
+            case WB_PARTICLE_DECAY:
+            particle->frame_age++;
+            if ((uint64_t)((double)particle->frame_age * WB_PARTICLE_DECAY_ANIMATION_SPEED) >= WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT) {
+                wbBufferRemove(particle_buffer, i);
             }
-            */
             
         }
 
