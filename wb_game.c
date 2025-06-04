@@ -89,6 +89,9 @@ bool wbGameInit(WBGame* game) {
 
 void wbGameProcessInput(WBGame* game) {
     static int prev_key_state[GLFW_KEY_LAST + 1] = {0};
+    static int wiggle_cnt = 0;
+    static WBDirectionType wiggle_dir = WB_DIRECTION_RIGHT;
+    static double wiggle_time = 0;
     bool wiz_up = glfwGetKey(game->window.handle, WB_KEY_WIZ_UP);
     bool wiz_down = glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN);
     bool wiz_left = glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT);
@@ -103,12 +106,52 @@ void wbGameProcessInput(WBGame* game) {
     if (debug_strg && !prev_key_state[GLFW_KEY_LEFT_CONTROL])
         game->gamestate.powerup.unlocked ^= WB_POWERUP_MAXED;
     prev_key_state[GLFW_KEY_LEFT_CONTROL] = debug_strg;
+
+    double time = glfwGetTime();
+    static double left_down_time;
+    if (wiz_left && !prev_key_state[WB_KEY_WIZ_LEFT]) {
+        left_down_time = time;
+    }
+    left_down_time *= wiz_left;
+    static double right_down_time;
+    if (wiz_right && !prev_key_state[WB_KEY_WIZ_RIGHT]) {
+        right_down_time = time;
+    }
+    right_down_time *= wiz_right;
+    if (!wiggle_cnt) {
+        wiggle_time = time;
+    }
+    WBDirectionType dir = left_down_time > right_down_time ? WB_DIRECTION_LEFT : WB_DIRECTION_RIGHT;
+    if (dir != wiggle_dir) {
+        if (time - wiggle_time < WB_POWERUP_WIGGLE_TIME) {
+            wiggle_dir *= -1;
+            wiggle_time = time;
+            wiggle_cnt++;
+        }
+        else {
+            wiggle_cnt = 0;
+        }
+    }
     bool debug_f = glfwGetKey(game->window.handle, GLFW_KEY_F);
+    debug_f |= wiggle_cnt >= WB_POWERUP_WIGGLE_CNT;
     if (
         debug_f && !prev_key_state[GLFW_KEY_F] &&
-        ((game->gamestate.powerup.unlocked >> 2 * game->gamestate.powerup.slot) & WB_POWERUP_MAXED) < 2
+        (((game->gamestate.powerup.unlocked >> 2 * game->gamestate.powerup.slot) & WB_POWERUP_MAXED) < 2 || game->gamestate.powerup.slot == 4)
+
     ) {
-        game->gamestate.powerup.unlocked += 1 << 2 * game->gamestate.powerup.slot;
+        int incr = game->gamestate.powerup.slot == 2 || game->gamestate.powerup.slot == 3 || game->gamestate.powerup.slot == 6 ? 2 : 1;
+        if (game->gamestate.powerup.slot == 4) {
+            game->gamestate.powerup.unlocked = (game->gamestate.powerup.unlocked >> 2 * game->gamestate.powerup.slot) & WB_POWERUP_MAXED == 0 ?
+                game->gamestate.powerup.unlocked + (incr << 2 * game->gamestate.powerup.slot) : 
+                game->gamestate.powerup.unlocked ^ (WB_POWERUP_MAXED << 2 * game->gamestate.powerup.slot);
+
+        }
+        else if (game->gamestate.powerup.slot == 5) {
+            //activate bomb
+        }
+        else {
+            game->gamestate.powerup.unlocked += incr << 2 * game->gamestate.powerup.slot;
+        }
         game->gamestate.powerup.slot = -1;
     }
     prev_key_state[GLFW_KEY_F] = debug_f;
@@ -147,6 +190,8 @@ void wbGameProcessInput(WBGame* game) {
         wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BULLET, wiz->pos_x, wiz->pos_y, projectile_vel_x, projectile_vel_y);
     }
     prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
+    prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
+    prev_key_state[WB_KEY_WIZ_RIGHT] = wiz_right;
 }
 
 void wbGameDraw(GLuint texture_id, GLuint vbo,
@@ -321,16 +366,19 @@ void wbGameRender(WBGame* game) {
             float g = (float)((rgba >> 16) & 0xFF) / 0xFF;
             float b = (float)((rgba >>  8) & 0xFF) / 0xFF;
             float a = (float)((rgba >>  0) & 0xFF) / 0xFF;
-            glUniform4f(replaceColorLoc, r, g, b, a);
+            glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
         }
         else {
             glUniform4f(replaceColorLoc, (float)0x6A / 0xFF, (float)0x65 / 0xFF, (float)0xEE / 0xFF, 1.0f); // #6A65EEFF
         }
         offset_x = -map_view_width / window_width + WB_SPRITE_SIZE / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
-                 +(2.0f * map_height - sprite_size - 12.0f) / window_height
+                 +(2.0f * map_height - sprite_size - 14.0f) / window_height
                  - 1.5f * i * WB_SPRITE_SIZE / window_height;
         int powerup_slot_state = ((game->gamestate.powerup.unlocked >> 2 * i) & WB_POWERUP_MAXED);
+        if (i == 4) {
+            powerup_slot_state &= 1;
+        }
         if (powerup_slot_state < 2) {
             offset_u = ((2.0f * i + powerup_slot_state) * WB_SPRITE_SIZE + WB_POWERUP_SPRITE_ATLAS_X) / sprite_atlas_width;
         }
