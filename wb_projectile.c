@@ -1,20 +1,9 @@
 #include "wizball.h"
 
 void wbProjectileAppend(WBBufferProjectile* projectile_buffer, WBProjectileType type, float pos_x, float pos_y, float vel_x, float vel_y) {
-    assert(projectile_buffer->head.cnt - 1 < WB_PROJECTILE_CNT_MAX);
-
-    WBProjectile* projectiles = projectile_buffer->entries;
-    while (projectiles->type != WB_PROJECTILE_NONE) {
-        projectiles++;
-    }
-
-    WBProjectile* projectile = projectiles;
-    projectile->pos_x = pos_x;
-    projectile->pos_y = pos_y;
+    WBProjectile* projectile = wbBufferAppend(projectile_buffer, type, pos_x, pos_y);
     projectile->vel_x = vel_x;
     projectile->vel_y = vel_y;
-    projectile->type = type;
-    projectile_buffer->head.cnt++;
 }
 
 void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer) {
@@ -24,15 +13,15 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
     wiz->onscreen_bullet_cnt = 0;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
         projectile = &projectile_buffer->entries[i];
-        if (projectile->type == WB_PROJECTILE_NONE) continue;
+        if (projectile->head.type == WB_PROJECTILE_NONE) continue;
 
-        projectile->pos_x += projectile->vel_x;
-        projectile->pos_y += projectile->vel_y;
+        projectile->head.pos_x += projectile->vel_x;
+        projectile->head.pos_y += projectile->vel_y;
 
         if (
-            projectile->pos_x < map->view_center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->pos_x >= map->view_center_x + WB_MAP_VIEW_WIDTH / 2 ||
-            projectile->pos_y < 0 || projectile->pos_y >= WB_MAP_HORIZON_HEIGHT ||
-            wbMapGetCollision(map, projectile->pos_x, projectile->pos_y)
+            projectile->head.pos_x < map->view_center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos_x >= map->view_center_x + WB_MAP_VIEW_WIDTH / 2 ||
+            projectile->head.pos_y < 0 || projectile->head.pos_y >= WB_MAP_HORIZON_HEIGHT ||
+            wbMapGetCollision(map, projectile->head.pos_x, projectile->head.pos_y)
         ) {
             wbBufferRemove(projectile_buffer, i);
             continue;
@@ -40,9 +29,10 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
 
         int j;
         for (j = 0; j < WB_ENEMY_CNT_MAX; j++) {
-            if (enemies[j].type != WB_ENEMY_NONE &&
-                projectile->pos_x > enemies[j].pos_x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_x <= enemies[j].pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
-                projectile->pos_y > enemies[j].pos_y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->pos_y <= enemies[j].pos_y + WB_ENEMY_HITBOX_SIZE / 2
+            if (
+                enemies[j].head.type != WB_ENEMY_NONE &&
+                projectile->head.pos_x > enemies[j].head.pos_x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos_x <= enemies[j].head.pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
+                projectile->head.pos_y > enemies[j].head.pos_y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos_y <= enemies[j].head.pos_y + WB_ENEMY_HITBOX_SIZE / 2
             ) {
                 wbEnemyRemove(enemy_buffer, j, particle_buffer);
                 wbBufferRemove(projectile_buffer, i);
@@ -53,9 +43,9 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
 
         for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
             if (
-                particles[j].type == WB_PARTICLE_POWERUP &&
-                projectile->pos_x > particles[j].pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_x <= particles[j].pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
-                projectile->pos_y > particles[j].pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->pos_y <= particles[j].pos_y + WB_PARTICLE_HITBOX_SIZE / 2
+                (WBParticleType)particles[j].head.type == WB_PARTICLE_POWERUP &&
+                projectile->head.pos_x > particles[j].head.pos_x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos_x <= particles[j].head.pos_x + WB_PARTICLE_HITBOX_SIZE / 2 &&
+                projectile->head.pos_y > particles[j].head.pos_y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos_y <= particles[j].head.pos_y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
                 wbBufferRemove(projectile_buffer, i);
                 break;
@@ -63,9 +53,9 @@ void wbProjectileUpdate(WBBufferProjectile* projectile_buffer, WBMap* map, WBWiz
         }
         if (j != WB_ENEMY_CNT_MAX) continue;
 
-        projectile->pos_x += projectile->vel_x;
-        projectile->pos_y += projectile->vel_y;
+        projectile->head.pos_x += projectile->vel_x;
+        projectile->head.pos_y += projectile->vel_y;
 
-        wiz->onscreen_bullet_cnt += projectile->type == WB_PROJECTILE_BULLET;
+        wiz->onscreen_bullet_cnt += (WBProjectileType)projectile->head.type == WB_PROJECTILE_BULLET;
     }
 }

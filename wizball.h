@@ -92,7 +92,24 @@
 #define WB_PLAYER_WIZ_VEL_Y_CNT 5
 // ~movement
 
-#define WB_POWERUP_SLOT_CNT 8
+#define WB_ENEMY_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_ENEMY_ANIMATION_COLOR_CNT 4
+#define WB_ENEMY_ANIMATION_COLOR_0 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_ENEMY_ANIMATION_COLOR_1 0xCCD454FF /* #CCD454FF */
+#define WB_ENEMY_ANIMATION_COLOR_2 0x9CE57DFF /* #9CE57DFF */
+#define WB_ENEMY_ANIMATION_COLOR_3 0x616DDDFF /* #616DDDFF */
+
+#define WB_POWERUP_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_POWERUP_ANIMATION_COLOR_CNT 6
+#define WB_POWERUP_ANIMATION_COLOR_0 0x6A65EEFF /* #6A65EEFF */
+#define WB_POWERUP_ANIMATION_COLOR_1 0x312BB5FF /* #312BB5FF */
+#define WB_POWERUP_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
+#define WB_POWERUP_ANIMATION_COLOR_3 0x312BB5FF /* #312BB5FF */
+#define WB_POWERUP_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
+#define WB_POWERUP_ANIMATION_COLOR_5 0xA4A4A4FF /* #A4A4A4FF */
+
+
+#define WB_POWERUP_SLOT_CNT 7
 
 #define WB_SPRITE_SIZE 64
 
@@ -116,7 +133,7 @@
 #define WB_PROJECTILE_CNT_MAX 64
 
 #define WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT 4
-#define WB_ENEMY_CIRCLE_ANIMATION_FRAME_CNT 4
+#define WB_ENEMY_CIRCLE_ANIMATION_FRAME_CNT 1
 
 #define WB_PARTICLE_POWERUP_ANIMATION_FRAME_CNT 1
 
@@ -146,6 +163,10 @@
 #define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
 #define WB_ENEMY_CIRCLE_SPRITE_ATLAS_X (4 * WB_SPRITE_SIZE)
 #define WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
+
+#define WB_POWERUP_SPRITE_ATLAS_X ( 0 * WB_SPRITE_SIZE)
+#define WB_POWERUP_MAXED_SPRITE_ATLAS_X (15 * WB_SPRITE_SIZE)
+#define WB_POWERUP_SPRITE_ATLAS_Y (15 * WB_SPRITE_SIZE)
 
 // Paths
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
@@ -269,14 +290,22 @@ typedef enum {
 // Structs
 
 typedef struct {
+    WBPowerupType unlocked;
+    WBPowerupType permanent;
+    int slot;
+    uint32_t animation_colors[WB_POWERUP_ANIMATION_COLOR_CNT];
+} WBPowerup;
+
+typedef struct {
     int width;
     int height;
     GLuint texture_id;
 } WBTexture;
 
 typedef struct {
-    void* type;
+    uint8_t type;
     float pos_x, pos_y;
+    float color_key;
 } WBEntityHead;
 
 typedef struct {
@@ -311,21 +340,18 @@ typedef struct {
 } WBMovepattern;
 
 typedef struct {
-    WBEnemyType type;
-    float pos_x, pos_y;
+    WBEntityHead head;
     int attack_period;
     uint64_t frame_age;
 } WBEnemy;
 
 typedef struct {
-    WBParticleType type;
-    float pos_x, pos_y;
+    WBEntityHead head;
     float frame_age;
 } WBParticle;
 
 typedef struct {
-    WBProjectileType type;
-    float pos_x, pos_y;
+    WBEntityHead head;
     float vel_x, vel_y;
 } WBProjectile;
 
@@ -337,6 +363,7 @@ typedef struct {
 typedef struct {
     WBBufferHead head;
     WBEnemy entries[WB_ENEMY_CNT_MAX];
+    uint32_t animation_colors[WB_ENEMY_ANIMATION_COLOR_CNT];
 } WBBufferEnemy;
 
 typedef struct {
@@ -376,12 +403,10 @@ typedef struct {
 
 typedef struct {
     WBGamestateType state;
+    WBPowerup powerup;
     int lifes;
     int score;
-    int powerup_slot;
     int level;
-    WBPowerupType powerup_unlocked;
-    WBPowerupType powerup_permanent;
 } WBGamestate;
 
 typedef struct {
@@ -405,7 +430,7 @@ extern bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max);
 extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
 extern void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType movement_powerup);
 
-extern void wbBufferAppend(void* buffer_head, uint8_t type, float pos_x, float pos_y);
+extern void* wbBufferAppend(void* buffer_head, uint8_t type, float pos_x, float pos_y);
 extern void wbBufferRemove(void* buffer_head, int idx);
 
 extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer);

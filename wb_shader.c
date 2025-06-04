@@ -63,8 +63,15 @@ void wbShaderInit(WBShader* shader) {
         "in vec2 TexCoord;\n"
         "out vec4 FragColor;\n"
         "uniform sampler2D texSampler;\n"
+        "uniform vec4 keyColor;\n"
+        "uniform vec4 replaceColor;\n"
         "void main() {\n"
-        "    FragColor = texture(texSampler, TexCoord);\n"
+        "    vec4 texColor = texture(texSampler, TexCoord);\n"
+        "    if (all(equal(texColor, keyColor))) {\n"
+        "        FragColor = replaceColor;\n"
+        "    } else {\n"
+        "        FragColor = texColor;\n"
+        "    }\n"
         "}\n";
     shader->program = wbShaderCreate(vertex_shader_src, fragment_shader_src);
     glUseProgram(shader->program); // Use the shader program

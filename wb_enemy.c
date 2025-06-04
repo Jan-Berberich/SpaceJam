@@ -2,11 +2,12 @@
 
 void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer) {
     WBEnemy* enemies = enemy_buffer->entries;
-    if (enemies[idx].type == WB_ENEMY_SPINNERBLUE || randfin(time(NULL), 0.0f, 1.0f) < WB_PARTICLE_POWERUP_DROP_CHANCE) {
-        wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, enemies[idx].pos_x, enemies[idx].pos_y);
+    if ((WBEnemyType)enemies[idx].head.type == WB_ENEMY_SPINNERBLUE || randfin(time(NULL), 0.0f, 1.0f) < WB_PARTICLE_POWERUP_DROP_CHANCE) {
+        wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, enemies[idx].head.pos_x, enemies[idx].head.pos_y);
     }
     else {
-        wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, enemies[idx].pos_x, enemies[idx].pos_y);
+        WBParticle* particle = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, enemies[idx].head.pos_x, enemies[idx].head.pos_y);
+        particle->head.color_key = enemies[idx].head.color_key;
     }
     wbBufferRemove(enemy_buffer, idx);
 }
@@ -16,7 +17,7 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* pa
     double time = glfwGetTime();
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
         enemy = &enemy_buffer->entries[i];
-        switch (enemy->type) {
+        switch ((WBEnemyType)enemy->head.type) {
             case WB_ENEMY_NONE:
             continue;
 
@@ -25,15 +26,17 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* pa
 
             case WB_ENEMY_CIRCLE:
             // TODO: for debug
-            enemy->pos_x += 50.0f * cosf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
-            enemy->pos_y += 50.0f * sinf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
+            enemy->head.pos_x += 50.0f * cosf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
+            enemy->head.pos_y += 50.0f * sinf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
             break;
         }
+        enemy->head.color_key += WB_ENEMY_ANIMATION_COLOR_SPEED;
+        enemy->head.color_key -= enemy->head.color_key >= WB_ENEMY_ANIMATION_COLOR_CNT ? WB_ENEMY_ANIMATION_COLOR_CNT : 0;
         enemy->frame_age++;
 
         if (
-            enemy->pos_x > wiz->pos_x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->pos_x <= wiz->pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->pos_y > wiz->pos_y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->pos_y <= wiz->pos_y + WB_ENEMY_HITBOX_SIZE / 2
+            enemy->head.pos_x > wiz->pos_x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos_x <= wiz->pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos_y > wiz->pos_y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos_y <= wiz->pos_y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
             wbEnemyRemove(enemy_buffer, i, particle_buffer);
             wiz->health--;
