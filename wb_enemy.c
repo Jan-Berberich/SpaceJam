@@ -3,10 +3,10 @@
 void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer) {
     WBEnemy* enemies = enemy_buffer->entries;
     if ((WBEnemyType)enemies[idx].head.type == WB_ENEMY_SPINNERBLUE || randfin(time(NULL), 0.0f, 1.0f) < WB_PARTICLE_POWERUP_DROP_CHANCE) {
-        wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, enemies[idx].head.pos_x, enemies[idx].head.pos_y);
+        wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
     }
     else {
-        WBParticle* particle = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, enemies[idx].head.pos_x, enemies[idx].head.pos_y);
+        WBParticle* particle = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
         particle->head.color_key = enemies[idx].head.color_key;
     }
     wbBufferRemove(enemy_buffer, idx);
@@ -26,8 +26,8 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* pa
 
             case WB_ENEMY_CIRCLE:
             // TODO: for debug
-            enemy->head.pos_x += 50.0f * cosf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
-            enemy->head.pos_y += 50.0f * sinf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
+            enemy->head.pos.x += 50.0f * cosf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
+            enemy->head.pos.y += 50.0f * sinf(M_2PI / 4 * enemy->frame_age / WB_FPS) / WB_FPS;
             break;
         }
         enemy->head.color_key += WB_ENEMY_ANIMATION_COLOR_SPEED;
@@ -35,8 +35,8 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* pa
         enemy->frame_age++;
 
         if (
-            enemy->head.pos_x > wiz->pos_x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos_x <= wiz->pos_x + WB_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->head.pos_y > wiz->pos_y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos_y <= wiz->pos_y + WB_ENEMY_HITBOX_SIZE / 2
+            enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
             wbEnemyRemove(enemy_buffer, i, particle_buffer);
             wiz->health--;

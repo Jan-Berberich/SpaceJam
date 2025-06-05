@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
+bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     wiz->collider_angles = malloc(WB_PLAYER_WIZ_COLLISION_ANGLE_CNT * (sizeof *wiz->collider_angles));
     if (!wiz->collider_angles) {
         fprintf(stderr, "Failed to allocate memory for collider_angles");
@@ -11,13 +11,14 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
     }
 
     wiz->health = WB_PLAYER_WIZ_HEALTH_MAX;
-    wiz->pos_x = randfin(time(NULL), pos_x_min, pos_x_max);
-    wiz->pos_y = WB_PLAYER_WIZ_INIT_POS_Y;
+    wiz->pos.x = randfin(time(NULL), pos_x_min, pos_x_max);
+    wiz->pos.y = WB_PLAYER_WIZ_INIT_POS_Y;
     wiz->vel_x_key = 0.0f;
-    wiz->vel_x = 0.0f;
+    wiz->vel.x = 0.0f;
     wiz->vel_y_key = 0.0f;
-    wiz->vel_y = 0.0f;
-    wiz->next_bullet_direction = WB_DIRECTION_RIGHT;
+    wiz->vel.y = 0.0f;
+    wiz->next_bullet_direction = WB_DIRECTION_POSITIVE;
+    wiz->facing = WB_DIRECTION_POSITIVE;
 
     wiz->vel_x_values[0] = WB_PLAYER_WIZ_VEL_X_0;
     wiz->vel_x_values[1] = WB_PLAYER_WIZ_VEL_X_1;
@@ -48,12 +49,11 @@ bool wbPlayerWizInit(WBWiz* wiz, int pos_x_min, int pos_x_max) {
 }
 
 void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
-    int xc = roundf(wiz->pos_x);
-    int yc = roundf(wiz->pos_y);
-    bool collision;
+    int xc = roundf(wiz->pos.x);
+    int yc = roundf(wiz->pos.y);
+    bool is_collision;
     int collision_cnt = 0;
-    float collision_x = 0.0f;
-    float collision_y = 0.0f;
+    WBVec2f collision_vec = {0.0f};
 
     // Check directions around the player for collision (circle approximation)
     float* angles = wiz->collider_angles;
@@ -61,17 +61,17 @@ void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
         x = xc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
         y = yc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
-        collision = wbMapGetCollision(map, x, y);
-        collision_cnt += collision;
-        collision_x += collision * (x - xc);
-        collision_y += collision * (y - yc);
+        is_collision = wbMapGetCollision(map, x, y);
+        collision_cnt += is_collision;
+        collision_vec.x += is_collision * (x - xc);
+        collision_vec.y += is_collision * (y - yc);
     }
 
-    wiz->collision_angle = atan2f(collision_y / collision_cnt, collision_x / collision_cnt);
+    wiz->collision_angle = atan2f(collision_vec.y / collision_cnt, collision_vec.x / collision_cnt);
 }
 
 void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_unlocked) {
-    int pos_y = roundf(wiz->pos_y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT;
+    int pos_y = roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT;
     bool map_ceil_collision = pos_y - WB_PLAYER_WIZ_COLLISION_RADIUS < WB_MAP_CEIL_HEIGHT;
     bool map_floor_collision = pos_y + WB_PLAYER_WIZ_COLLISION_RADIUS > WB_MAP_FLOOR_HEIGHT;
     if (map_ceil_collision || map_floor_collision) {
@@ -82,24 +82,23 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
     }
 
     if (!isnan(wiz->collision_angle)) {
-        float collision_x = cosf(wiz->collision_angle);
-        float collision_y = sinf(wiz->collision_angle);
-        if (fabsf(collision_x) > WB_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN) {
-            wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(collision_x);
+        WBVec2f collision = {cosf(wiz->collision_angle), sinf(wiz->collision_angle)};
+        if (fabsf(collision.x) > WB_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN) {
+            wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(collision.x);
         }
-        if (fabsf(collision_y) > 0.01f) {
+        if (fabsf(collision.y) > 0.01f) {
             if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
-                wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;
-                wiz->vel_y = -fabsf(wiz->vel_y) * fsgnf(collision_y);
+                wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
+                wiz->vel.y = -fabsf(wiz->vel.y) * fsgnf(collision.y);
             }
             else {
                 if (map_ceil_collision || map_floor_collision) {
-                    wiz->vel_y_key = -fsgnf(collision_y);
-                    wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y * fsgnf(collision_y);
+                    wiz->vel_y_key = -fsgnf(collision.y);
+                    wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y * fsgnf(collision.y);
                 }
                 else {
-                    wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y * fsgnf(collision_y);
-                    wiz->vel_y_key = -fabsf(wiz->vel_y_key) * fsgnf(collision_y);
+                    wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y * fsgnf(collision.y);
+                    wiz->vel_y_key = -fabsf(wiz->vel_y_key) * fsgnf(collision.y);
                 }
             }
         }
@@ -108,16 +107,16 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
 
 void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType powerup_unlocked) {
     if (!isnan(wiz->collision_angle) || (powerup_unlocked & WB_POWERUP_THRUST) || (powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
-        wiz->vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
+        wiz->vel.x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
     if (powerup_unlocked & WB_POWERUP_ANTIGRAV) {
-        wiz->vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
+        wiz->vel.y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
     if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
-        wiz->vel_y += WB_PLAYER_WIZ_GRAVITY;
+        wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
     }
-    wiz->pos_x += wiz->vel_x;
-    wiz->pos_y += wiz->vel_y;
+    wiz->pos.x += wiz->vel.x;
+    wiz->pos.y += wiz->vel.y;
 
     wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))];
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;

@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-void* wbBufferAppend(void* head, uint8_t type, float pos_x, float pos_y) {
+void* wbBufferAppend(void* head, uint8_t type, WBVec2f* pos) {
     WBBufferHead* buffer_head = head;
     WBEntityHead* entity_head;
     switch (buffer_head->type) {
@@ -26,15 +26,15 @@ void* wbBufferAppend(void* head, uint8_t type, float pos_x, float pos_y) {
 
         case WB_BUFFER_PROJECTILE:
         assert(buffer_head->cnt - 1 < WB_PROJECTILE_CNT_MAX);
-        WBProjectile* projectile = ((WBBufferProjectile*)buffer_head)->entries;
+        WBProjectile* projectile = ((WBProjectileBuffer*)buffer_head)->entries;
         while (projectile->head.type != WB_PROJECTILE_NONE) {
             projectile++;
         }
         entity_head = &projectile->head;
         break;
     }
-    entity_head->pos_x = pos_x;
-    entity_head->pos_y = pos_y;
+    entity_head->pos.x = pos->x;
+    entity_head->pos.y = pos->y;
     entity_head->type = type;
     entity_head->color_key = 0.0;
 
@@ -55,7 +55,7 @@ void wbBufferRemove(void* head, int idx) {
         break;
 
         case WB_BUFFER_PROJECTILE:
-        ((WBBufferProjectile*)buffer_head)->entries[idx].head.type = WB_PROJECTILE_NONE;
+        ((WBProjectileBuffer*)buffer_head)->entries[idx].head.type = WB_PROJECTILE_NONE;
         break;
     }
     buffer_head->cnt--;
