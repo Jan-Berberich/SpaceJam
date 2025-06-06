@@ -23,7 +23,7 @@ bool wbMapInit(WBMap* map) {
         stbi_image_free(data);
         return false;
     }
-    for (int i = 0; i < width * height; ++i) {
+    for (int i = 0; i < width * height; i++) {
         map_atlas->collider[i] = !!data[i * 4 + 3]; // Alpha channel
     }
     stbi_image_free(data);

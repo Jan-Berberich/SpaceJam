@@ -18,6 +18,7 @@ bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     wiz->vel_y_key = 0.0f;
     wiz->vel.y = 0.0f;
     wiz->next_bullet_direction = WB_DIRECTION_POSITIVE;
+    wiz->next_spray_direction = WB_DIRECTION_NEGATIVE;
     wiz->facing = WB_DIRECTION_POSITIVE;
 
     wiz->vel_x_values[0] = WB_PLAYER_WIZ_VEL_X_0;

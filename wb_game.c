@@ -73,7 +73,18 @@ bool wbGameInit(WBGame* game) {
         particles[i].head.type = WB_PARTICLE_NONE;
     }
 
-    wbProjectileBufferInit(&game->projectile_buffer);
+    // Initialize projectiles
+    game->projectile_buffer.head.cnt = 0;
+    game->projectile_buffer.head.type = WB_BUFFER_PROJECTILE;
+    WBProjectile* projectiles = game->projectile_buffer.entries;
+    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
+        projectiles[i].head.type = WB_PROJECTILE_NONE;
+    }
+    game->projectile_buffer.animation_colors[0] = WB_PROJECTILE_ANIMATION_COLOR_0;
+    game->projectile_buffer.animation_colors[1] = WB_PROJECTILE_ANIMATION_COLOR_1;
+    game->projectile_buffer.animation_colors[2] = WB_PROJECTILE_ANIMATION_COLOR_2;
+    game->projectile_buffer.animation_colors[3] = WB_PROJECTILE_ANIMATION_COLOR_3;
+    game->projectile_buffer.animation_colors[4] = WB_PROJECTILE_ANIMATION_COLOR_4;
 
     game->last_frame_time = 0;
     game->frame_cnt = 0;
@@ -174,16 +185,19 @@ void wbGameProcessInput(WBGame* game) {
 
     wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
 
-    if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT] && wiz->onscreen_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
-        wiz->next_bullet_direction *= -1;
+    if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT]) {
         WBVec2f vel;
-        vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
-            WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
-        vel.y = 0.0f;
-        wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BULLET, &wiz->pos, &vel);
-        if (game->gamestate.powerup.unlocked & (WB_POWERUP_WIZSPRAY | WB_POWERUP_CATSPRAY)) {
+        if (wiz->onscreen_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
+            vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
+                WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
+            vel.y = 0.0f;
+            wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BULLET, &wiz->pos, &vel);
+            wiz->next_bullet_direction *= -1;
+        }
+
+        if (!wiz->onscreen_spray && game->gamestate.powerup.unlocked & (WB_POWERUP_WIZSPRAY | WB_POWERUP_CATSPRAY)) {
             WBVec2f* ppos = game->gamestate.powerup.unlocked & WB_POWERUP_WIZSPRAY ? &wiz->pos : &game->player.cat.pos;
-            if (wiz->next_bullet_direction == WB_DIRECTION_NEGATIVE) {
+            if (wiz->next_spray_direction == WB_DIRECTION_NEGATIVE) {
                 vel.y = -WB_PROJECTILE_VEL;
                 vel.x = -WB_PROJECTILE_VEL;
                 wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, ppos, &vel);
@@ -201,6 +215,11 @@ void wbGameProcessInput(WBGame* game) {
                 vel.x = WB_PROJECTILE_VEL;
                 wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, ppos, &vel);
             }
+            wiz->next_spray_direction *= -1;
+        }
+
+        if (!wiz->onscreen_beam && game->gamestate.powerup.unlocked & WB_POWERUP_BEAM) {
+            wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
         }
     }
     prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
@@ -259,7 +278,6 @@ void wbGameRender(WBGame* game) {
         width_x, 0.0f, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
 
-    // Draw Projectiles
     float offset_x;
     float sprite_atlas_width = (float)game->sprite_atlas.width;
     float sprite_atlas_height = (float)game->sprite_atlas.height;
@@ -268,20 +286,6 @@ void wbGameRender(WBGame* game) {
     height_y = sprite_size / window_height;
     width_u = sprite_size / sprite_atlas_width;
     height_v = sprite_size / sprite_atlas_height;
-    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
-        projectile = &game->projectile_buffer.entries[i];
-        WBProjectileType type = projectile->head.type;
-        if (type == WB_PROJECTILE_NONE) continue;
-        offset_u = game->projectile_buffer.sprite_atlas_x[type] / sprite_atlas_width;
-        offset_v = game->projectile_buffer.sprite_atlas_y[type] / sprite_atlas_height;
-        offset_x = 2.0f * roundf((projectile->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
-        offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
-                 +(2.0f * map_height - sprite_size + 2.0f) / window_height
-                 - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-        wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
-            width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
-        );
-    }
 
     // Draw Particles
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
@@ -351,6 +355,66 @@ void wbGameRender(WBGame* game) {
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - sprite_size + 2.0f) / window_height
                  - 2.0f * roundf(enemy->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
+        wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
+            width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
+        );
+    }
+
+    // Draw projectiles
+    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
+        projectile = &game->projectile_buffer.entries[i];
+        switch (projectile->head.type) {
+            case WB_PROJECTILE_NONE: continue;
+            case WB_PROJECTILE_BULLET:
+                offset_u = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_BLAZER:
+                offset_u = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_SPRAY_NW:
+                offset_u = (float)WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_SPRAY_N:
+                offset_u = (float)WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_SPRAY_NE:
+                offset_u = (float)WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_BEAM:
+                uint64_t color_key = (uint64_t)((double)game->frame_cnt * WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT;
+                color_key = color_key % 2 ? color_key / 4 + 1 : 0;
+                uint32_t rgba = game->projectile_buffer.animation_colors[color_key];
+                float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
+                float g = (float)((rgba >> 16) & 0xFF) / 0xFF;
+                float b = (float)((rgba >>  8) & 0xFF) / 0xFF;
+                float a = (float)((rgba >>  0) & 0xFF) / 0xFF;
+                glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
+                projectile->head.pos.y -= 0.5f * WB_PROJECTILE_BEAM_HITBOX_SIZE;
+                offset_x = 2.0f * roundf((projectile->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+                offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+                         +(2.0f * map_height - sprite_size + 2.0f) / window_height
+                         - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
+                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + sprite_size / sprite_atlas_width
+                         * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
+                offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
+                wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
+                    width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
+                );
+                projectile->head.pos.y += WB_PROJECTILE_BEAM_HITBOX_SIZE;
+                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + sprite_size / sprite_atlas_width * WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT + sprite_size / sprite_atlas_width
+                         * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
+                offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+        }
+        offset_x = 2.0f * roundf((projectile->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+        offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+                 +(2.0f * map_height - sprite_size + 2.0f) / window_height
+                 - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
         wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
             width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
         );
@@ -436,6 +500,7 @@ int wbGameRun() {
         glfwPollEvents();
 
         // Run with fps
+        if (glfwGetKey(game.window.handle, GLFW_KEY_P)) _sleep(1.0f / WB_FPS); /*TODO: for debug*/
         if (frame_time == game.last_frame_time) continue;
 
         // TODO: for debug

@@ -42,6 +42,7 @@
 #define WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX (int)round(1.0f * WB_MAP_VIEW_WIDTH / 570)
 
 #define WB_ENEMY_HITBOX_SIZE 40 // ?
+#define WB_PROJECTILE_BEAM_HITBOX_SIZE (48 * 2)
 #define WB_PARTICLE_HITBOX_SIZE 48 // ?
 #define WB_PARTICLE_POWERUP_DROP_CHANCE 0.1f // ?
 
@@ -99,6 +100,13 @@
 #define WB_ENEMY_ANIMATION_COLOR_2 0x9CE57DFF /* #9CE57DFF */
 #define WB_ENEMY_ANIMATION_COLOR_3 0x616DDDFF /* #616DDDFF */
 
+#define WB_PROJECTILE_ANIMATION_COLOR_CNT 5
+#define WB_PROJECTILE_ANIMATION_COLOR_0 0x000000FF /* #000000FF */
+#define WB_PROJECTILE_ANIMATION_COLOR_1 0x803648FF /* #803648FF */
+#define WB_PROJECTILE_ANIMATION_COLOR_2 0x9CE57DFF /* #9CE57DFF */
+#define WB_PROJECTILE_ANIMATION_COLOR_3 0x616DDDFF /* #616DDDFF */
+#define WB_PROJECTILE_ANIMATION_COLOR_4 0xFFFFFFFF /* #FFFFFFFF */
+
 #define WB_POWERUP_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
 #define WB_POWERUP_ANIMATION_COLOR_CNT 6
 #define WB_POWERUP_ANIMATION_COLOR_0 0x6A65EEFF /* #6A65EEFF */
@@ -143,7 +151,14 @@
 #define WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT 4
 #define WB_PARTICLE_DECAY_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
 
-#define WB_PROJECTILE_VEL (4.0f * 50 / WB_FPS * 2)
+#define WB_PROJECTILE_BEAM_SPRITE_ATLAS_X (10 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y ( 1 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT 16 // rkrkgkgkbkbkwkwk
+#define WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED (1.0f / 1.0f * 50 / WB_FPS)
+#define WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT 3
+#define WB_PROJECTILE_BEAM_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+
+#define WB_PROJECTILE_VEL (8.0f * 50 / WB_FPS * 2)
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X (1 * WB_SPRITE_SIZE)
@@ -215,12 +230,12 @@ typedef enum {
     WB_ENEMY_GLIDER,
     WB_ENEMY_JUMPER,
     WB_ENEMY_STOMPER,
+    WB_ENEMY_BLINKER,
     WB_ENEMY_CNT
 } WBEnemyType;
 
 typedef enum {
     WB_PARTICLE_NONE,
-    WB_PARTICLE_BEAM,
     WB_PARTICLE_POWERUP,
     WB_PARTICLE_DECAY,
     WB_PARTICLE_DROP,
@@ -234,7 +249,7 @@ typedef enum {
     WB_PROJECTILE_SPRAY_NW,
     WB_PROJECTILE_SPRAY_N,
     WB_PROJECTILE_SPRAY_NE,
-    WB_PROJECTILE_BLINKER,
+    WB_PROJECTILE_BEAM,
     WB_PROJECTILE_CNT
 } WBProjectileType;
 
@@ -328,10 +343,13 @@ typedef struct {
     float animation_angle;
     float vel_x_key, vel_y_key;
     int onscreen_bullet_cnt;
+    bool onscreen_beam;
+    bool onscreen_spray;
     float* collider_angles;
     float collision_angle;
     WBDirectionType facing;
     WBDirectionType next_bullet_direction;
+    WBDirectionType next_spray_direction;
     WBVec2f pos_buffer[WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT];
 } WBWiz;
 
@@ -385,8 +403,7 @@ typedef struct {
 typedef struct {
     WBBufferHead head;
     WBProjectile entries[WB_PROJECTILE_CNT_MAX];
-    float sprite_atlas_x[WB_PROJECTILE_CNT];
-    float sprite_atlas_y[WB_PROJECTILE_CNT];
+    uint32_t animation_colors[WB_PROJECTILE_ANIMATION_COLOR_CNT];
 } WBProjectileBuffer;
 
 typedef struct {
