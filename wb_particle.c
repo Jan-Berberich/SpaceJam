@@ -6,7 +6,7 @@ void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* poweru
         particle = &particle_buffer->entries[i];
         if (particle->head.type == WB_PARTICLE_NONE) continue;
 
-        switch ((WBParticleType)particle->head.type) {
+        switch (particle->head.type) {
             case WB_PARTICLE_POWERUP:
             if (
                 particle->head.pos.x > wiz->pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.x <= wiz->pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&

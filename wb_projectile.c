@@ -10,9 +10,10 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
     WBEnemy* enemies = enemy_buffer->entries;
     WBParticle* particles = particle_buffer->entries;
     WBProjectile* projectile;
-    wiz->onscreen_bullet_cnt = 0;
-    wiz->onscreen_beam = false;
-    wiz->onscreen_spray = false;
+    map->view.wiz_bullet_cnt = 0;
+    map->view.cat_bullet_cnt = 0;
+    map->view.beam = false;
+    map->view.spray = false;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
         projectile = &projectile_buffer->entries[i];
         switch (projectile->head.type) {
@@ -21,7 +22,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             case WB_PROJECTILE_BEAM:
             // render both parts from one projectile
             // use color_key for offset_u and (color_key + frame_cnt) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT
-            wiz->onscreen_beam = true;
+            map->view.beam = true;
             projectile->head.pos = wiz->pos;
             if ((int)(projectile->head.color_key / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED) >= WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(projectile_buffer, i);
@@ -40,7 +41,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             default:
             projectile->head.pos.x += projectile->vel.x;
             projectile->head.pos.y += projectile->vel.y;
-            if (projectile->head.pos.x < map->view_center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view_center_x + WB_MAP_VIEW_WIDTH / 2 ||
+            if (projectile->head.pos.x < map->view.center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view.center_x + WB_MAP_VIEW_WIDTH / 2 ||
                 projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_MAP_HORIZON_HEIGHT ||
                 wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y))
             ) {
@@ -59,7 +60,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                 }
             } if (j != WB_ENEMY_CNT_MAX) continue;
             for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
-                if ((WBParticleType)particles[j].head.type == WB_PARTICLE_POWERUP &&
+                if (particles[j].head.type == WB_PARTICLE_POWERUP &&
                     projectile->head.pos.x > particles[j].head.pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.x <= particles[j].head.pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&
                     projectile->head.pos.y > particles[j].head.pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.y <= particles[j].head.pos.y + WB_PARTICLE_HITBOX_SIZE / 2
                 ) {
@@ -67,10 +68,13 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                     break;
                 }
             } if (j != WB_PARTICLE_CNT_MAX) continue;
-            wiz->onscreen_bullet_cnt += (WBProjectileType)projectile->head.type == WB_PROJECTILE_BULLET;
-            wiz->onscreen_spray       = (WBProjectileType)projectile->head.type == WB_PROJECTILE_SPRAY_NW
-                                     || (WBProjectileType)projectile->head.type == WB_PROJECTILE_SPRAY_N
-                                     || (WBProjectileType)projectile->head.type == WB_PROJECTILE_SPRAY_NE;
+            map->view.wiz_bullet_cnt += projectile->head.type == WB_PROJECTILE_BULLET_WIZ
+                                     || projectile->head.type == WB_PROJECTILE_BLAZER_WIZ;
+            map->view.cat_bullet_cnt += projectile->head.type == WB_PROJECTILE_BULLET_CAT
+                                     || projectile->head.type == WB_PROJECTILE_BLAZER_CAT;
+            map->view.spray           = projectile->head.type == WB_PROJECTILE_SPRAY_NW
+                                     || projectile->head.type == WB_PROJECTILE_SPRAY_N
+                                     || projectile->head.type == WB_PROJECTILE_SPRAY_NE;
         }
     }
 }

@@ -12,7 +12,7 @@ void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* parti
     wbBufferRemove(enemy_buffer, idx);
 }
 
-void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* particle_buffer) {
+void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer) {
     WBEnemy* enemy;
     double time = glfwGetTime();
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
@@ -34,14 +34,19 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBBufferParticle* pa
         enemy->head.color_key -= enemy->head.color_key >= WB_ENEMY_ANIMATION_COLOR_CNT ? WB_ENEMY_ANIMATION_COLOR_CNT : 0;
         enemy->frame_age++;
 
-        if (
-            enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
+        if (enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
             wbEnemyRemove(enemy_buffer, i, particle_buffer);
             wiz->health--;
         }
 
+        if (enemy->head.pos.x > cat->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > cat->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_ENEMY_HITBOX_SIZE / 2
+        ) {
+            wbEnemyRemove(enemy_buffer, i, particle_buffer);
+            cat->health--;
+        }
     }
 
 }

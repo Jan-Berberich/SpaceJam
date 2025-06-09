@@ -49,6 +49,13 @@ bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     return true;
 }
 
+void wbPlayerCatInit(WBCat* cat) {
+    cat->health = WB_PLAYER_CAT_HEALTH_MAX;
+    cat->rest_offset_x = WB_PLAYER_CAT_REST_OFFSET_X;
+    cat->next_bullet_direction = WB_DIRECTION_POSITIVE;
+    cat->next_spray_direction = WB_DIRECTION_NEGATIVE;
+}
+
 void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     int xc = roundf(wiz->pos.x);
     int yc = roundf(wiz->pos.y);
@@ -106,7 +113,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
     }
 }
 
-void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType powerup_unlocked) {
+void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBPowerupType powerup_unlocked) {
     if (!isnan(wiz->collision_angle) || (powerup_unlocked & WB_POWERUP_THRUST) || (powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel.x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
@@ -122,4 +129,8 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBPowerupType powerup_unlocked) {
     wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))];
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
     wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
+
+    map->view.center_x = roundf(wiz->pos.x / WB_MAP_SUBPIXEL_CNT) * WB_MAP_SUBPIXEL_CNT;
+    map->view.center_x = fmaxf(map->view.center_x, WB_MAP_VIEW_WIDTH / 2);
+    map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
 }

@@ -52,6 +52,7 @@ bool wbGameInit(WBGame* game) {
         fprintf(stderr, "Failed to initialize players\n");
         return false;
     }
+    wbPlayerCatInit(&game->player.cat);
 
     // Initialize enemies
     game->enemy_buffer.head.cnt = 0;
@@ -93,6 +94,8 @@ bool wbGameInit(WBGame* game) {
 }
 
 void wbGameProcessInput(WBGame* game) {
+    WBMap* map = &game->map;
+
     static int wiggle_cnt = 0;
     static double wiggle_frame = 0;
     static WBDirectionType wiggle_dir = WB_DIRECTION_POSITIVE;
@@ -125,8 +128,9 @@ void wbGameProcessInput(WBGame* game) {
     if (!wiggle_cnt) {
         wiggle_frame = game->frame_cnt;
     }
-    WBDirectionType dir = left_down_frame > right_down_frame ? WB_DIRECTION_NEGATIVE : WB_DIRECTION_POSITIVE;
-    if (dir != wiggle_dir) {
+    WBDirectionType dir = left_down_frame > 0 || right_down_frame > 0 ?
+                          left_down_frame > right_down_frame ? WB_DIRECTION_NEGATIVE : WB_DIRECTION_POSITIVE : 0;
+    if (dir != 0 && dir != wiggle_dir) {
         if (game->frame_cnt - wiggle_frame < 1.0f / WB_POWERUP_WIGGLE_SPEED) {
             wiggle_dir *= -1;
             wiggle_frame = game->frame_cnt;
@@ -187,44 +191,123 @@ void wbGameProcessInput(WBGame* game) {
 
     if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT]) {
         WBVec2f vel;
-        if (wiz->onscreen_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
+        if (map->view.wiz_bullet_cnt < WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX) {
             vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
                 WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
             vel.y = 0.0f;
-            wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BULLET, &wiz->pos, &vel);
+            WBProjectileType type = game->gamestate.powerup.unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_WIZ : WB_PROJECTILE_BULLET_WIZ;
+            wbProjectileAppend(&game->projectile_buffer, type, &wiz->pos, &vel);
             wiz->next_bullet_direction *= -1;
         }
 
-        if (!wiz->onscreen_spray && game->gamestate.powerup.unlocked & (WB_POWERUP_WIZSPRAY | WB_POWERUP_CATSPRAY)) {
-            WBVec2f* ppos = game->gamestate.powerup.unlocked & WB_POWERUP_WIZSPRAY ? &wiz->pos : &game->player.cat.pos;
+        if (!map->view.spray && game->gamestate.powerup.unlocked & WB_POWERUP_WIZSPRAY) {
             if (wiz->next_spray_direction == WB_DIRECTION_NEGATIVE) {
                 vel.y = -WB_PROJECTILE_VEL;
                 vel.x = -WB_PROJECTILE_VEL;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, &wiz->pos, &vel);
                 vel.x = 0;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, &wiz->pos, &vel);
                 vel.x = WB_PROJECTILE_VEL;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, &wiz->pos, &vel);
             }
             else {
                 vel.y =  WB_PROJECTILE_VEL;
                 vel.x = -WB_PROJECTILE_VEL;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, &wiz->pos, &vel);
                 vel.x = 0;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, &wiz->pos, &vel);
                 vel.x = WB_PROJECTILE_VEL;
-                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, ppos, &vel);
+                wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, &wiz->pos, &vel);
             }
             wiz->next_spray_direction *= -1;
         }
 
-        if (!wiz->onscreen_beam && game->gamestate.powerup.unlocked & WB_POWERUP_BEAM) {
+        if (!map->view.beam && game->gamestate.powerup.unlocked & WB_POWERUP_BEAM) {
             wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
         }
     }
+
+    wbPlayerWizUpdate(&game->player.wiz, map, game->gamestate.powerup.unlocked);
+
+    // wbPayerCatProcessInut
+    WBCat* cat = &game->player.cat;
+    int pos_y_buffer_idx = game->frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
+
+    bool cat_up = glfwGetKey(game->window.handle, WB_KEY_CAT_UP);
+    bool cat_down = glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN);
+    bool cat_left = glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT);
+    bool cat_right = glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT);
+    bool cat_shoot = glfwGetKey(game->window.handle, WB_KEY_CAT_SHOOT);
+
+    if (game->gamestate.powerup.unlocked & WB_POWERUP_CAT) {
+        float prev_cat_pos_x = cat->pos.x;
+
+        cat->pos.x += WB_PLAYER_CAT_VEL * cat_right;
+        cat->pos.x -= WB_PLAYER_CAT_VEL * cat_left;
+        cat->pos.y += WB_PLAYER_CAT_VEL * cat_down;
+        cat->pos.y -= WB_PLAYER_CAT_VEL * cat_up;
+
+        if (!cat_right && !cat_left && !cat_down && !cat_up) {
+            cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
+            cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
+                              * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);
+            cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_PLAYER_CAT_VEL)
+                              * fsgnf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y);
+            cat->facing = fsgnf(wiz->pos.x - cat->pos.x);
+        }
+        cat->facing = cat_left ? WB_DIRECTION_NEGATIVE : cat_right ? WB_DIRECTION_POSITIVE : cat->facing;
+
+        cat->pos.x += wiz->vel.x;
+
+        cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2);
+        cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_MAP_VIEW_WIDTH / 2 - WB_PLAYER_CAT_WIDTH / 2);
+        cat->pos.y = fmaxf(cat->pos.y, WB_MAP_CEIL_HEIGHT  + WB_PLAYER_CAT_CEIL_OFFSET);
+        cat->pos.y = fminf(cat->pos.y, WB_MAP_FLOOR_HEIGHT - WB_PLAYER_CAT_FLOOR_OFFSET);
+
+        if (cat_shoot && !prev_key_state[WB_KEY_CAT_SHOOT]) {
+            WBVec2f vel;
+            if (map->view.cat_bullet_cnt < WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX) {
+                vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
+                    WB_PROJECTILE_VEL * cat->next_bullet_direction : WB_PROJECTILE_VEL * cat->facing;
+                vel.y = 0.0f;
+                WBProjectileType type = game->gamestate.powerup.unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_CAT : WB_PROJECTILE_BULLET_CAT;
+                wbProjectileAppend(&game->projectile_buffer, type, &cat->pos, &vel);
+                cat->next_bullet_direction *= -1;
+            }
+            if (!map->view.spray && game->gamestate.powerup.unlocked & WB_POWERUP_CATSPRAY) {
+                if (cat->next_spray_direction == WB_DIRECTION_NEGATIVE) {
+                    vel.y = -WB_PROJECTILE_VEL;
+                    vel.x = -WB_PROJECTILE_VEL;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, &cat->pos, &vel);
+                    vel.x = 0;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, &cat->pos, &vel);
+                    vel.x = WB_PROJECTILE_VEL;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, &cat->pos, &vel);
+                }
+                else {
+                    vel.y =  WB_PROJECTILE_VEL;
+                    vel.x = -WB_PROJECTILE_VEL;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NE, &cat->pos, &vel);
+                    vel.x = 0;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_N, &cat->pos, &vel);
+                    vel.x = WB_PROJECTILE_VEL;
+                    wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_SPRAY_NW, &cat->pos, &vel);
+                }
+                cat->next_spray_direction *= -1;
+            }
+        }
+    }
+    else {
+        cat->pos.x = map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2;
+        cat->pos.y = wiz->pos.y < map->atlas.background.height / WB_MAP_CNT / 2 ? - WB_SPRITE_SIZE : map->atlas.background.height / WB_MAP_CNT + WB_SPRITE_SIZE;
+    }
+
     prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
     prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
     prev_key_state[WB_KEY_WIZ_RIGHT] = wiz_right;
+
+    prev_key_state[WB_KEY_CAT_SHOOT] = cat_shoot;
+    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
 }
 
 void wbGameDraw(GLuint texture_id, GLuint vbo,
@@ -258,6 +341,7 @@ void wbGameRender(WBGame* game) {
 
     WBMap* map = &game->map;
     WBWiz* wiz = &game->player.wiz;
+    WBCat* cat = &game->player.cat;
     WBProjectile* projectile;
     WBParticle* particle;
     WBEnemy* enemy;
@@ -271,7 +355,7 @@ void wbGameRender(WBGame* game) {
     float height_y = map_height / window_height;
     float offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height;
     float width_u = map_view_width / map->atlas.background.width;
-    float offset_u = map->view_center_x / map->atlas.background.width - 0.5f * width_u;
+    float offset_u = map->view.center_x / map->atlas.background.width - 0.5f * width_u;
     float height_v = 1.0f / WB_MAP_CNT;
     float offset_v = (float)game->gamestate.level / WB_MAP_CNT;
     wbGameDraw(map->atlas.background.texture_id, game->shader.vbo,
@@ -303,7 +387,7 @@ void wbGameRender(WBGame* game) {
             offset_u = (float)WB_PARTICLE_DECAY_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
                 (uint64_t)((double)particle->frame_age * WB_PARTICLE_DECAY_ANIMATION_SPEED)
                 % WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT
-            ) * sprite_size / sprite_atlas_width;
+            ) * width_u;
             offset_v = (float)WB_PARTICLE_DECAY_SPRITE_ATLAS_Y / sprite_atlas_width;
             uint32_t rgba = game->enemy_buffer.animation_colors[(int)particle->head.color_key];
             float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
@@ -313,7 +397,7 @@ void wbGameRender(WBGame* game) {
             glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
             break;
         }
-        offset_x = 2.0f * roundf((particle->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+        offset_x = 2.0f * roundf((particle->head.pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - sprite_size + 2.0f) / window_height
                  - 2.0f * roundf(particle->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
@@ -333,7 +417,7 @@ void wbGameRender(WBGame* game) {
             offset_u = (float)WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
                 (uint64_t)((double)enemy->frame_age * WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED)
                 % WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT
-            ) * sprite_size / sprite_atlas_width;
+            ) * width_u;
             offset_v = (float)WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
 
@@ -341,7 +425,7 @@ void wbGameRender(WBGame* game) {
             offset_u = (float)WB_ENEMY_CIRCLE_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
                 (uint64_t)((double)enemy->frame_age * WB_ENEMY_CIRCLE_ANIMATION_SPEED)
                 % WB_ENEMY_CIRCLE_ANIMATION_FRAME_CNT
-            ) * sprite_size / sprite_atlas_width;
+            ) * width_u;
             offset_v = (float)WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y / sprite_atlas_height;
             uint32_t rgba = game->enemy_buffer.animation_colors[(int)enemy->head.color_key];
             float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
@@ -351,7 +435,7 @@ void wbGameRender(WBGame* game) {
             glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
             break;
         }
-        offset_x = 2.0f * roundf((enemy->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+        offset_x = 2.0f * roundf((enemy->head.pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - sprite_size + 2.0f) / window_height
                  - 2.0f * roundf(enemy->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
@@ -365,11 +449,19 @@ void wbGameRender(WBGame* game) {
         projectile = &game->projectile_buffer.entries[i];
         switch (projectile->head.type) {
             case WB_PROJECTILE_NONE: continue;
-            case WB_PROJECTILE_BULLET:
+            case WB_PROJECTILE_BULLET_WIZ:
                 offset_u = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
                 offset_v = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
-            case WB_PROJECTILE_BLAZER:
+            case WB_PROJECTILE_BULLET_CAT:
+                offset_u = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_BLAZER_WIZ:
+                offset_u = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
+            break;
+            case WB_PROJECTILE_BLAZER_CAT:
                 offset_u = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
                 offset_v = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
@@ -395,23 +487,23 @@ void wbGameRender(WBGame* game) {
                 float a = (float)((rgba >>  0) & 0xFF) / 0xFF;
                 glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
                 projectile->head.pos.y -= 0.5f * WB_PROJECTILE_BEAM_HITBOX_SIZE;
-                offset_x = 2.0f * roundf((projectile->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+                offset_x = 2.0f * roundf((projectile->head.pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
                 offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                          +(2.0f * map_height - sprite_size + 2.0f) / window_height
                          - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + sprite_size / sprite_atlas_width
+                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + width_u
                          * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
                 offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
                 wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
                     width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
                 );
                 projectile->head.pos.y += WB_PROJECTILE_BEAM_HITBOX_SIZE;
-                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + sprite_size / sprite_atlas_width * WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT + sprite_size / sprite_atlas_width
+                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + width_u * WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT + sprite_size / sprite_atlas_width
                          * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
                 offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
         }
-        offset_x = 2.0f * roundf((projectile->head.pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+        offset_x = 2.0f * roundf((projectile->head.pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - sprite_size + 2.0f) / window_height
                  - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
@@ -420,8 +512,23 @@ void wbGameRender(WBGame* game) {
         );
     }
 
+    // Draw Player Cat
+    offset_x = 2.0f * roundf((wiz->pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width
+             + 2.0f * roundf((cat->pos.x - wiz->pos.x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+    offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
+             +(2.0f * map_height - sprite_size + 2.0f) / window_height
+             - 2.0f * roundf(cat->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
+    offset_u = (float)WB_PLAYER_CAT_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
+        (uint64_t)((double)game->frame_cnt * WB_PLAYER_CAT_ANIMATION_SPEED)
+        % WB_PLAYER_CAT_ANIMATION_FRAME_CNT
+    ) * width_u;
+    offset_v = (float)WB_PLAYER_CAT_SPRITE_ATLAS_Y / sprite_atlas_height;
+    wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
+        width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
+    );
+
     // Draw Player Wiz
-    offset_x = 2.0f * roundf((wiz->pos.x - map->view_center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
+    offset_x = 2.0f * roundf((wiz->pos.x - map->view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
@@ -518,12 +625,8 @@ int wbGameRun() {
 
         wbPlayerWizHandleCollision(&game.player.wiz, &game.map, game.gamestate.powerup.unlocked);
 
-        wbPlayerWizUpdate(&game.player.wiz, game.gamestate.powerup.unlocked);
-        game.map.view_center_x = roundf(game.player.wiz.pos.x / WB_MAP_SUBPIXEL_CNT) * WB_MAP_SUBPIXEL_CNT;
-        game.map.view_center_x = fmaxf(game.map.view_center_x, WB_MAP_VIEW_WIDTH / 2);
-        game.map.view_center_x = fminf(game.map.view_center_x, game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
         wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate.powerup.slot);
-        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.particle_buffer);
+        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer);
         wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer);
 
         // TODO: for debug
@@ -531,6 +634,11 @@ int wbGameRun() {
             int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
             int pos_x_max = game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
             wbPlayerWizInit(&game.player.wiz, pos_x_min, pos_x_max);
+        }
+
+        if (game.player.cat.health <= 0) {
+            game.gamestate.powerup.unlocked &= ~WB_POWERUP_CAT;
+            wbPlayerCatInit(&game.player.cat);
         }
 
         wbGameRender(&game);
