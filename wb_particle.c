@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* powerup_slot) {
+void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, WBGamestate* gamestate) {
     WBParticle* particle;
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
         particle = &particle_buffer->entries[i];
@@ -13,7 +13,8 @@ void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* poweru
                 particle->head.pos.y > wiz->pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
                 wbBufferRemove(particle_buffer, i);
-                *powerup_slot = (*powerup_slot + 1) % WB_POWERUP_SLOT_CNT;
+                gamestate->powerup.slot = (gamestate->powerup.slot + 1) % WB_POWERUP_SLOT_CNT;
+                gamestate->score += WB_SCORE_POWERUP;
             }
             break;
 

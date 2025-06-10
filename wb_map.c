@@ -28,12 +28,9 @@ bool wbMapInit(WBMap* map) {
     }
     stbi_image_free(data);
     
-    map->type = WB_MAP_0;
-    map->collider = map_atlas->collider;
-
     return true;
 }
 
-bool wbMapGetCollision(WBMap* map, int x, int y) {
-    return map->collider[y * map->atlas.collider_texture.width + x];
+bool wbMapGetCollision(WBMap* map, int x, int y, int level) {
+    return map->atlas.collider[(level * map->atlas.collider_texture.height / WB_MAP_CNT + y) * map->atlas.collider_texture.width + x];
 }

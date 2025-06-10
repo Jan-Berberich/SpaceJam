@@ -56,7 +56,7 @@ void wbPlayerCatInit(WBCat* cat) {
     cat->next_spray_direction = WB_DIRECTION_NEGATIVE;
 }
 
-void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
+void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map, int level) {
     int xc = roundf(wiz->pos.x);
     int yc = roundf(wiz->pos.y);
     bool is_collision;
@@ -69,7 +69,7 @@ void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
         x = xc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
         y = yc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
-        is_collision = wbMapGetCollision(map, x, y);
+        is_collision = wbMapGetCollision(map, x, y, level);
         collision_cnt += is_collision;
         collision_vec.x += is_collision * (x - xc);
         collision_vec.y += is_collision * (y - yc);
@@ -78,7 +78,7 @@ void wbPlayerWizSetCollisionAngle(WBWiz* wiz, WBMap* map) {
     wiz->collision_angle = atan2f(collision_vec.y / collision_cnt, collision_vec.x / collision_cnt);
 }
 
-void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_unlocked) {
+void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     int pos_y = roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT;
     bool map_ceil_collision = pos_y - WB_PLAYER_WIZ_COLLISION_RADIUS < WB_MAP_CEIL_HEIGHT;
     bool map_floor_collision = pos_y + WB_PLAYER_WIZ_COLLISION_RADIUS > WB_MAP_FLOOR_HEIGHT;
@@ -86,7 +86,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
         wiz->collision_angle = M_2PI / 4.0f * (map_floor_collision ? 1.0f : -1.0f);
     }
     else {
-        wbPlayerWizSetCollisionAngle(wiz, map);
+        wbPlayerWizSetCollisionAngle(wiz, map, gamestate->level);
     }
 
     if (!isnan(wiz->collision_angle)) {
@@ -95,7 +95,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
             wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(collision.x);
         }
         if (fabsf(collision.y) > 0.01f) {
-            if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
+            if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
                 wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
                 wiz->vel.y = -fabsf(wiz->vel.y) * fsgnf(collision.y);
             }
@@ -113,14 +113,14 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType powerup_un
     }
 }
 
-void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBPowerupType powerup_unlocked) {
-    if (!isnan(wiz->collision_angle) || (powerup_unlocked & WB_POWERUP_THRUST) || (powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
+void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
+    if (!isnan(wiz->collision_angle) || (gamestate->powerup.unlocked & WB_POWERUP_THRUST) || (gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel.x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
-    if (powerup_unlocked & WB_POWERUP_ANTIGRAV) {
+    if (gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV) {
         wiz->vel.y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
-    if (!(powerup_unlocked & WB_POWERUP_ANTIGRAV)) {
+    if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
     }
     wiz->pos.x += wiz->vel.x;

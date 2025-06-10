@@ -23,25 +23,34 @@
 
 #define WB_FPS 1000 /*50*/
 
-#define WB_WINDOW_WIDTH  600 /*640*/
-#define WB_WINDOW_HEIGHT 486 /*339*/
+#define WB_WINDOW_WIDTH  600 /*600*/
+#define WB_WINDOW_HEIGHT 486 /*486*/
 
 #define WB_SUBPIXEL_CNT 2.0f
 #define WB_MAP_SUBPIXEL_CNT 1.0f /*2.0f*/
 
 #define WB_MAP_VIEW_WIDTH 600 /*570*/
-#define WB_MAP_VIEW_OFFSET_Y 70 /*0*/
+#define WB_MAP_VIEW_OFFSET_Y 70 /*70*/
 #define WB_MAP_CEIL_HEIGHT 4
 #define WB_MAP_FLOOR_HEIGHT 288
 #define WB_MAP_HORIZON_HEIGHT 240
 
-#define WB_WINDOW_POWERUP_STRIDE 106
+#define WB_MAP_CNT 6
+
+#define WB_WINDOW_POWERUP_STRIDE 53
+#define WB_WINDOW_SCORE_OFFSET_Y 63
+#define WB_WINDOW_LEVEL_OFFSET_X 108
+#define WB_WINDOW_LEVEL_OFFSET_Y 4
+
+#define WB_SCORE_ENEMY 50
+#define WB_SCORE_DROP 50
+#define WB_SCORE_POWERUP 100
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
 
-#define WB_PLAYER_WIZ_ONSCREEN_BULLET_CNT_MAX (int)round(2.0f * WB_MAP_VIEW_WIDTH / 570)
-#define WB_PLAYER_CAT_ONSCREEN_BULLET_CNT_MAX (int)round(1.0f * WB_MAP_VIEW_WIDTH / 570)
+#define WB_MAP_VIEW_BULLET_WIZ_CNT_MAX (int)round(2.0f * WB_MAP_VIEW_WIDTH / 570)
+#define WB_MAP_VIEW_BULLET_CAT_CNT_MAX (int)round(1.0f * WB_MAP_VIEW_WIDTH / 570)
 
 #define WB_ENEMY_HITBOX_SIZE 40 // ?
 #define WB_PROJECTILE_BEAM_HITBOX_SIZE (48 * 2)
@@ -124,6 +133,35 @@
 #define WB_POWERUP_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
 #define WB_POWERUP_ANIMATION_COLOR_5 0xA4A4A4FF /* #A4A4A4FF */
 
+#define WB_GAMESTATE_LEVEL_ANIMATION_COLOR_SPEED (1.0f / 2.0f * 50 / WB_FPS)
+#define WB_GAMESTATE_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GAMESTATE_ANIMATION_COLOR_CNT 8
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_0 0x000000FF /* #000000FF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_1 0x7E3650FF /* #7E3650FF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_2 0x8439ACFF /* #8439ACFF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_3 0xAF6882FF /* #AF6882FF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_4 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_5 0xAF6882FF /* #AF6882FF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_6 0x8439ACFF /* #8439ACFF */
+#define WB_GAMESTATE_RED_ANIMATION_COLOR_7 0x7E3650FF /* #7E3650FF */
+
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_0 0xCED54CFF /* #CED54CFF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_1 0x55A33EFF /* #55A33EFF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_3 0x55A33EFF /* #55A33EFF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_4 0xCED54CFF /* #CED54CFF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_5 0x99E681FF /* #99E681FF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_6 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_7 0x99E681FF /* #99E681FF */
+
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_0 0x312BB5FF /* #312BB5FF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_1 0x000000FF /* #000000FF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_2 0x312BB5FF /* #312BB5FF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_3 0x8439ACFF /* #8439ACFF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_5 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_6 0x6A65EEFF /* #6A65EEFF */
+#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_7 0x8439ACFF /* #8439ACFF */
 
 #define WB_POWERUP_WIGGLE_CNT 4
 #define WB_POWERUP_WIGGLE_SPEED (1.0f / 10.0f * 50 / WB_FPS)
@@ -204,7 +242,7 @@
 #define WB_LETTER_SPRITE_ATLAS_X (0 * WB_LETTER_SPRITE_SIZE)
 #define WB_LETTER_SPRITE_ATLAS_Y (31 * WB_LETTER_SPRITE_SIZE)
 #define WB_DIGIT_SPRITE_ATLAS_X (54 * WB_DIGIT_SPRITE_SIZE)
-#define WB_DIGIT_SPRITE_ATLAS_Y (62 * WB_DIGIT_SPRITE_SIZE)
+#define WB_DIGIT_SPRITE_ATLAS_Y (63 * WB_DIGIT_SPRITE_SIZE)
 
 // Paths
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
@@ -274,16 +312,6 @@ typedef enum {
     WB_PROJECTILE_BEAM,
     WB_PROJECTILE_CNT
 } WBProjectileType;
-
-typedef enum {
-    WB_MAP_0,
-    WB_MAP_1,
-    WB_MAP_2,
-    WB_MAP_3,
-    WB_MAP_4,
-    WB_MAP_5,
-    WB_MAP_CNT
-} WBMapType;
 
 typedef enum {
     WB_MOVEPATTERN_CRICLE,
@@ -429,8 +457,8 @@ typedef struct {
 } WBProjectileBuffer;
 
 typedef struct {
-    int wiz_bullet_cnt;
-    int cat_bullet_cnt;
+    int bullet_wiz_cnt;
+    int bullet_cat_cnt;
     bool beam;
     bool spray;
     float center_x;
@@ -444,8 +472,6 @@ typedef struct {
 
 typedef struct {
     WBMapAtlas atlas;
-    bool* collider;
-    WBMapType type;
     WBView view;
 } WBMap;
 
@@ -464,9 +490,13 @@ typedef struct {
 typedef struct {
     WBGamestateType state;
     WBPowerup powerup;
-    int lifes;
-    int score;
+    int score, lifes, enemy_cnt;
+    int highscore;
+    int score2;
     int level;
+    uint32_t red_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
+    uint32_t green_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
+    uint32_t blue_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
 } WBGamestate;
 
 typedef struct {
@@ -487,27 +517,30 @@ extern bool wbWindowInit(WBWindow* window);
 extern void wbWindowLockAspectRatio(WBWindow* window);
 
 extern bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max);
-extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
-extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBPowerupType movement_powerup);
+extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
+extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
 extern void wbPlayerCatInit(WBCat* cat);
 
 extern void* wbBufferAppend(void* buffer_head, uint8_t type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer_head, int idx);
 
-extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer);
-extern void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer);
+extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
+extern void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
 
-extern void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, int* powerup_slot);
+extern void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, WBGamestate* gamestate);
 
 extern void wbProjectileBufferInit(WBProjectileBuffer* projectile_buffer);
 extern void wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
-extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer);
+extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
 
 extern void wbShaderInit(WBShader* shader);
+
 extern bool wbMapInit(WBMap* map);
-extern bool wbMapGetCollision(WBMap* map, int x, int y);
+extern bool wbMapGetCollision(WBMap* map, int x, int y, int level);
+
 extern void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
+
 extern int wbGameRun();
 
 #endif // WB_H
