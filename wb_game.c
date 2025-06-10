@@ -222,12 +222,10 @@ void wbGameProcessInput(WBGame* game) {
             wiz->next_spray_direction *= -1;
         }
 
-        if (!map->view.beam && game->gamestate.powerup.unlocked & WB_POWERUP_BEAM) {
+        if (!map->view.beam && game->gamestate.powerup.unlocked & (WB_POWERUP_BEAM | WB_POWERUP_DOUBLE)) {
             wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
         }
     }
-
-    wbPlayerWizUpdate(&game->player.wiz, map, game->gamestate.powerup.unlocked);
 
     // wbPayerCatProcessInut
     WBCat* cat = &game->player.cat;
@@ -551,10 +549,15 @@ void wbGameRender(WBGame* game) {
         else {
             glUniform4f(replaceColorLoc, (float)0x6A / 0xFF, (float)0x65 / 0xFF, (float)0xEE / 0xFF, 1.0f); // #6A65EEFF
         }
+        // vertical powerup slots left
+        /*
         offset_x = -map_view_width / window_width + (sprite_size - 12.0f) / window_width;
         offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                  +(2.0f * map_height - sprite_size - 14.0f) / window_height
                  - 1.5f * i * sprite_size / window_height;
+        */
+        offset_x = -1.0f + (window_width - (WB_POWERUP_SLOT_CNT - 1) * WB_WINDOW_POWERUP_STRIDE / 2) / window_width + (float)i * WB_WINDOW_POWERUP_STRIDE / window_width;
+        offset_y = 2.0f - (float)WB_WINDOW_POWERUP_STRIDE / window_height;
         int powerup_slotstate = ((game->gamestate.powerup.unlocked >> 2 * i) & WB_POWERUP_SLOTMASK);
         if (i == 4) {
             powerup_slotstate &= 1;
@@ -568,6 +571,23 @@ void wbGameRender(WBGame* game) {
         offset_v = (float)WB_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
         wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
             width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
+        );
+    }
+
+    char str[] = "jam rocks!";
+    char* p = str;
+    offset_x = -1;
+    while (*p) {
+        int i = *p == '!' ? 26 : *p - 'a';
+        float f = (*(p - 1) == 'i' || *(p - 1) == 'l') && p > str ? 0.5f : 1.0f;
+        p++;
+        offset_x += 2 * f * WB_LETTER_SPRITE_SIZE / window_width;
+        offset_u = (WB_LETTER_SPRITE_ATLAS_X + i * WB_LETTER_SPRITE_SIZE) / sprite_atlas_width;
+        wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
+            WB_LETTER_SPRITE_SIZE / window_width, offset_x,
+            WB_LETTER_SPRITE_SIZE / window_width, 0.1,
+            WB_LETTER_SPRITE_SIZE / sprite_atlas_width, offset_u,
+            WB_LETTER_SPRITE_SIZE / sprite_atlas_height, WB_LETTER_SPRITE_ATLAS_Y / sprite_atlas_height
         );
     }
 
@@ -624,6 +644,8 @@ int wbGameRun() {
         wbGameProcessInput(&game);
 
         wbPlayerWizHandleCollision(&game.player.wiz, &game.map, game.gamestate.powerup.unlocked);
+
+        wbPlayerWizUpdate(&game.player.wiz, &game.map, game.gamestate.powerup.unlocked);
 
         wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate.powerup.slot);
         wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer);
