@@ -1,6 +1,10 @@
 #include <math.h>
 #include <stdint.h>
 
-float fsgnf(float f);
-uint32_t randi(uint32_t seed);
-float randfin(uint32_t seed, float a, float b);
+extern float fsgnf(float f);
+
+extern uint32_t randi(uint32_t seed);
+extern float randfin(uint32_t seed, float a, float b);
+
+/* Quake III fast inverse square root algorithm */
+extern float rsqrtf(float f);

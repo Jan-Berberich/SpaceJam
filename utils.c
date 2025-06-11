@@ -12,3 +12,19 @@ uint32_t  randi(uint32_t seed) {
 float randfin(uint32_t seed, float a, float b) {
     return (float)randi(seed) / 0x7fffffff * (b - a) + a;
 }
+
+float rsqrtf(float f) {
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5f;
+
+    x2 = f * 0.5f;
+    y  = f;
+    i = *(long*)&y;                      // evil floating point bit hack
+    i = 0x5f3759df - (i >> 1);           // what the fuck?
+    y = *(float*)&i;
+    y = y * (threehalfs - (x2 * y * y)); // 1st iteration
+//  y = y * (threehalfs - (x2 * y * y)); // 2nd iteration, can be removed
+
+    return y;
+}

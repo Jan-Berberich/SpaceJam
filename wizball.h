@@ -400,7 +400,7 @@ typedef struct {
     float animation_angle;
     float vel_x_key, vel_y_key;
     float* collider_angles;
-    float collision_angle;
+    WBVec2f collision_vec;
     WBDirectionType facing;
     WBDirectionType next_bullet_direction;
     WBDirectionType next_spray_direction;
