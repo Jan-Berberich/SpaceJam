@@ -371,21 +371,48 @@ void wbGameRender(WBGame* game) {
 
     // Draw background
     float map_view_width = WB_MAP_VIEW_WIDTH;
+    float map_height = (float)map->atlas.background.height / WB_MAP_CNT;
     float window_width = WB_WINDOW_WIDTH;
     float window_height = WB_WINDOW_HEIGHT;
-    float map_height = (float)map->atlas.background.height / WB_MAP_CNT;
-    float width_x = map_view_width / window_width;
-    float height_y = map_height / window_height;
-    float offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height;
-    float width_u = map_view_width / map->atlas.background.width;
-    float offset_u = map->view.center_x / map->atlas.background.width - 0.5f * width_u;
-    float height_v = 1.0f / WB_MAP_CNT;
-    float offset_v = (float)game->gamestate.level / WB_MAP_CNT;
+    float dust_sprite_size = (float)WB_MAP_DUST_SPRITE_SIZE;
+    float dust_sprite_width = dust_sprite_size * WB_MAP_DUST_SPRITE_SCALE_X;
+    float dust_sprite_height = dust_sprite_size * WB_MAP_DUST_SPRITE_SCALE_Y;
+    float width_x = dust_sprite_width / window_width;
+    float offset_x;
+    float height_y = dust_sprite_height / window_height;
+    float offset_y;
+    float width_u = dust_sprite_size / map->atlas.dust.width;
+    float offset_u;
+    float height_v = dust_sprite_size / map->atlas.dust.height;
+    float offset_v = 0.0f;
+    int dust_row_cnt = ceil((float)WB_MAP_HORIZON_HEIGHT / dust_sprite_height);
+    int dust_col_cnt = ceil((float)WB_MAP_VIEW_WIDTH / dust_sprite_width) + 1;
+    for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
+        for (int j = 0; j < dust_row_cnt; j++) {
+            for (int k = 0; k < dust_col_cnt; k++) {
+                offset_x = -2.0f * (1 + WB_MAP_DUST_VELOCITY_FACTOR * i) * map->view.center_x / window_width + width_x + 2.0f * k * width_x;
+                offset_x = fmodf(offset_x, 2.0f * dust_col_cnt * width_x);
+                offset_x += (offset_x < -dust_col_cnt * width_x) ? 2.0f * dust_col_cnt * width_x : 0.0f;
+                offset_y = 2.0f * (WB_MAP_VIEW_OFFSET_Y + map_height) / window_height - 2.0f * height_y - 2.0f * j * height_y;
+                offset_u = i * dust_sprite_size / map->atlas.dust.width;
+                wbGameDraw(map->atlas.dust.texture_id, game->shader.vbo,
+                    width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
+                );
+            }
+        }
+    }
+    width_x = map_view_width / window_width;
+    offset_x = 0.0f;
+    height_y = map_height / window_height;
+    offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height;
+    width_u = map_view_width / map->atlas.background.width;
+    offset_u = map->view.center_x / map->atlas.background.width - 0.5f * width_u;
+    height_v = 1.0f / WB_MAP_CNT;
+    offset_v = (float)game->gamestate.level / WB_MAP_CNT;
     wbGameDraw(map->atlas.background.texture_id, game->shader.vbo,
-        width_x, 0.0f, height_y, offset_y, width_u, offset_u, height_v, offset_v
+        width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
 
-    float offset_x;
     float sprite_atlas_width = (float)game->sprite_atlas.width;
     float sprite_atlas_height = (float)game->sprite_atlas.height;
     float sprite_size = (float)WB_SPRITE_SIZE;

@@ -37,6 +37,13 @@
 
 #define WB_MAP_CNT 6
 
+#define WB_MAP_DUST_SPRITE_SIZE 64
+#define WB_MAP_DUST_LAYER_CNT 4
+#define WB_MAP_DUST_DENSITY 0.002f
+#define WB_MAP_DUST_SPRITE_SCALE_X 4
+#define WB_MAP_DUST_SPRITE_SCALE_Y 2
+#define WB_MAP_DUST_VELOCITY_FACTOR 0.5f
+
 #define WB_WINDOW_POWERUP_STRIDE 53
 #define WB_WINDOW_SCORE_OFFSET_Y 63
 #define WB_WINDOW_LEVEL_OFFSET_X 108
@@ -465,6 +472,7 @@ typedef struct {
 } WBView;
 
 typedef struct {
+    WBTexture dust;
     WBTexture background;
     WBTexture collider_texture;
     bool* collider;

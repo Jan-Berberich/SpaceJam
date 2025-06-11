@@ -27,6 +27,30 @@ bool wbMapInit(WBMap* map) {
         map_atlas->collider[i] = !!data[i * 4 + 3]; // Alpha channel
     }
     stbi_image_free(data);
+
+    data = malloc(WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_LAYER_CNT * 4 * (sizeof *data));
+    if (!data) {
+        fprintf(stderr, "Failed to allocate memory for dust texture\n");
+        return false;
+    }
+    uint8_t* p = data;
+    uint32_t seed = 42;
+    for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
+        for (int y = 0; y < WB_MAP_DUST_SPRITE_SIZE; y++) {
+            for (int x = 0; x < WB_MAP_DUST_SPRITE_SIZE; x++) {
+                // Randomly place dust specks, denser for closer layers
+                uint8_t alpha = (randfin(seed++, 0, 1) < WB_MAP_DUST_DENSITY) ? (128 + randfin(seed++, 0, 128)) : 0;
+                *p++ = 255; // white dust
+                *p++ = 255;
+                *p++ = 255;
+                *p++ = alpha;
+            }
+        }
+    }
+    map_atlas->dust.width = WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_LAYER_CNT;
+    map_atlas->dust.height = WB_MAP_DUST_SPRITE_SIZE;
+    wbTextureInit(&map_atlas->dust, data, map_atlas->dust.width, map_atlas->dust.height);
+    free(data);
     
     return true;
 }
