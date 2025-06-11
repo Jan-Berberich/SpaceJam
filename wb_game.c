@@ -359,6 +359,13 @@ void wbGameRender(WBGame* game) {
     glUniform4f(keyColorLoc, 1.0f, 0.0f, 1.0f, 1.0f); // #FF00FFFF
     // Set the replacement color later
     GLint replaceColorLoc = glGetUniformLocation(game->shader.program, "replaceColor");
+    // Set the time later
+    GLint timeLoc = glGetUniformLocation(game->shader.program, "time");
+    // Set the key alpha later
+    GLint keyAlphaLoc = glGetUniformLocation(game->shader.program, "keyAlpha");
+    // Set dust texture size
+    GLint texSizeLoc = glGetUniformLocation(game->shader.program, "texSize");
+    glUniform2f(texSizeLoc, (float)WB_MAP_DUST_SPRITE_SIZE, (float)WB_MAP_DUST_SPRITE_SIZE);
 
     // Sprite height is centered in atlas. They get shifted up by half a pixel with + 2.0 in offset_y
 
@@ -402,7 +409,10 @@ void wbGameRender(WBGame* game) {
                 );
             }
         }
+        glUniform1f(timeLoc, (float)glfwGetTime());
+        glUniform1f(keyAlphaLoc, 128.0/255.0);
     }
+    glUniform1f(keyAlphaLoc, -1.0);
     width_x = map_view_width / window_width;
     offset_x = 0.0f;
     height_y = map_height / window_height;

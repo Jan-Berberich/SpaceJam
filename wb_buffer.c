@@ -1,7 +1,7 @@
 #include "wizball.h"
 
-void* wbBufferAppend(void* head, uint8_t type, WBVec2f* pos) {
-    WBBufferHead* buffer_head = head;
+void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos) {
+    WBBufferHead* buffer_head = buffer;
     WBEntityHead* entity_head;
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
@@ -43,8 +43,8 @@ void* wbBufferAppend(void* head, uint8_t type, WBVec2f* pos) {
     return entity_head;
 }
 
-void wbBufferRemove(void* head, int idx) {
-    WBBufferHead* buffer_head = head;
+void wbBufferRemove(void* buffer, int idx) {
+    WBBufferHead* buffer_head = buffer;
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
         ((WBBufferEnemy*)buffer_head)->entries[idx].head.type = WB_ENEMY_NONE;

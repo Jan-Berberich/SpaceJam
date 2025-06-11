@@ -34,12 +34,12 @@ bool wbMapInit(WBMap* map) {
         return false;
     }
     uint8_t* p = data;
-    uint32_t seed = 42;
+    srand(15);
     for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
         for (int y = 0; y < WB_MAP_DUST_SPRITE_SIZE; y++) {
             for (int x = 0; x < WB_MAP_DUST_SPRITE_SIZE; x++) {
-                // Randomly place dust specks, denser for closer layers
-                uint8_t alpha = (randfin(seed++, 0, 1) < WB_MAP_DUST_DENSITY) ? (128 + randfin(seed++, 0, 128)) : 0;
+                // Randomly place dust specks
+                uint8_t alpha = (float)rand() / RAND_MAX < WB_MAP_DUST_DENSITY ? 128 : 0;
                 *p++ = 255; // white dust
                 *p++ = 255;
                 *p++ = 255;

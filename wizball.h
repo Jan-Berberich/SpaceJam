@@ -40,7 +40,7 @@
 
 #define WB_MAP_DUST_SPRITE_SIZE 64
 #define WB_MAP_DUST_LAYER_CNT 4
-#define WB_MAP_DUST_DENSITY 0.002f
+#define WB_MAP_DUST_DENSITY 0.001f
 #define WB_MAP_DUST_SPRITE_SCALE_X 4
 #define WB_MAP_DUST_SPRITE_SCALE_Y 2
 #define WB_MAP_DUST_VELOCITY_FACTOR 0.5f
@@ -531,8 +531,8 @@ extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
 extern void wbPlayerCatInit(WBCat* cat);
 
-extern void* wbBufferAppend(void* buffer_head, uint8_t type, WBVec2f* pos);
-extern void wbBufferRemove(void* buffer_head, int idx);
+extern void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos);
+extern void wbBufferRemove(void* buffer, int idx);
 
 extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
 extern void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
