@@ -134,7 +134,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
     wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
 
-    map->view.center_x = roundf(wiz->pos.x / WB_MAP_SUBPIXEL_CNT) * WB_MAP_SUBPIXEL_CNT;
+    map->view.center_x = wiz->pos.x;
     map->view.center_x = fmaxf(map->view.center_x, WB_MAP_VIEW_WIDTH / 2);
     map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
 }

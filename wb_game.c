@@ -390,7 +390,9 @@ void wbGameRender(WBGame* game) {
     for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
         for (int j = 0; j < dust_row_cnt; j++) {
             for (int k = 0; k < dust_col_cnt; k++) {
-                offset_x = -2.0f * (1 + WB_MAP_DUST_VELOCITY_FACTOR * i) * map->view.center_x / window_width + width_x + 2.0f * k * width_x;
+                offset_x = (-2.0f * roundf(map->view.center_x / WB_MAP_SUBPIXEL_CNT) * WB_MAP_SUBPIXEL_CNT
+                            -2.0f * roundf(WB_MAP_DUST_VELOCITY_FACTOR * i * map->view.center_x / WB_MAP_DUST_SUBPIXEL_CNT) * WB_MAP_DUST_SUBPIXEL_CNT)
+                           / window_width + width_x + 2.0f * k * width_x;
                 offset_x = fmodf(offset_x, 2.0f * dust_col_cnt * width_x);
                 offset_x += (offset_x < -dust_col_cnt * width_x) ? 2.0f * dust_col_cnt * width_x : 0.0f;
                 offset_y = 2.0f * (WB_MAP_VIEW_OFFSET_Y + map_height) / window_height - 2.0f * height_y - 2.0f * j * height_y;
@@ -406,7 +408,7 @@ void wbGameRender(WBGame* game) {
     height_y = map_height / window_height;
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height;
     width_u = map_view_width / map->atlas.background.width;
-    offset_u = map->view.center_x / map->atlas.background.width - 0.5f * width_u;
+    offset_u = roundf(map->view.center_x / WB_MAP_SUBPIXEL_CNT) * WB_MAP_SUBPIXEL_CNT / map->atlas.background.width - 0.5f * width_u;
     height_v = 1.0f / WB_MAP_CNT;
     offset_v = (float)game->gamestate.level / WB_MAP_CNT;
     wbGameDraw(map->atlas.background.texture_id, game->shader.vbo,
