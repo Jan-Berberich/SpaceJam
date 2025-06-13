@@ -1,19 +1,23 @@
 #include "wizball.h"
 
-void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer, WBGamestate* gamestate) {
+void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemies = enemy_buffer->entries;
     if ((WBEnemyType)enemies[idx].head.type == WB_ENEMY_SPINNERBLUE || randfin(time(NULL), 0.0f, 1.0f) < WB_PARTICLE_POWERUP_DROP_CHANCE) {
         wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
+        ma_sound_seek_to_pcm_frame(&sound->powerup_drop, 0);
+        ma_sound_start(&sound->powerup_drop);
     }
     else {
         WBParticle* particle = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
         particle->head.color_key = enemies[idx].head.color_key;
+        ma_sound_seek_to_pcm_frame(&sound->decay, 0);
+        ma_sound_start(&sound->decay);
     }
     wbBufferRemove(enemy_buffer, idx);
     gamestate->score += WB_SCORE_ENEMY;
 }
 
-void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer, WBGamestate* gamestate) {
+void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemy;
     gamestate->enemy_cnt = WB_ENEMY_CNT_MAX;
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
@@ -39,14 +43,14 @@ void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBuffer
         if (enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
-            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate);
+            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
             wiz->health--;
         }
 
         if (enemy->head.pos.x > cat->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > cat->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
-            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate);
+            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
             cat->health--;
         }
     }

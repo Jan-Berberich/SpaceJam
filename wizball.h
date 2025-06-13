@@ -6,6 +6,7 @@
 #include <glad/glad.h>
 
 #include "stb_image.h"
+#include "miniaudio.h"
 
 #define M_2PI (2.0 * 3.141592653589793)
 #include <math.h>
@@ -51,7 +52,7 @@
 #define WB_WINDOW_LEVEL_OFFSET_Y 4
 
 #define WB_SCORE_ENEMY 50
-#define WB_SCORE_DROP 50
+#define WB_SCORE_DROPLET 50
 #define WB_SCORE_POWERUP 100
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
@@ -256,6 +257,11 @@
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
 #define WB_MAP_COLLIDER_ATLAS_PATH "sprite/map_collider_atlas.png"
 #define WB_SPRITE_ATLAS_PATH "sprite/sprite_atlas.png"
+#define WB_SOUND_FIRE_PATH "sound/fire.wav"
+#define WB_SOUND_POWERUP_DROP_PATH "sound/powerup_drop.wav"
+#define WB_SOUND_POWERUP_COLLECT_PATH "sound/powerup_collect.wav"
+#define WB_SOUND_POWERUP_ACTIVATE_PATH "sound/powerup_activate.wav"
+#define WB_SOUND_DECAY_PATH "sound/decay.wav"
 
 // Key Bindings
 #define WB_KEY_WIZ_LEFT GLFW_KEY_A
@@ -304,7 +310,7 @@ typedef enum {
     WB_PARTICLE_NONE,
     WB_PARTICLE_POWERUP,
     WB_PARTICLE_DECAY,
-    WB_PARTICLE_DROP,
+    WB_PARTICLE_DROPLET,
     WB_PARTICLE_CNT
 } WBParticleType;
 
@@ -400,7 +406,7 @@ typedef struct {
     float vel_y_values[WB_PLAYER_WIZ_VEL_Y_CNT];
     float animation_angle;
     float vel_x_key, vel_y_key;
-    float* collider_angles;
+    float collider_angles[WB_PLAYER_WIZ_COLLISION_ANGLE_CNT];
     WBVec2f collision_vec;
     WBDirectionType facing;
     WBDirectionType next_bullet_direction;
@@ -410,7 +416,6 @@ typedef struct {
 typedef struct {
     WBVec2f pos;
     int health;
-    WBDirectionType next_bullet_direction;
     WBDirectionType next_spray_direction;
     WBDirectionType facing;
     float rest_offset_x;
@@ -451,12 +456,12 @@ typedef struct {
     WBBufferHead head;
     WBEnemy entries[WB_ENEMY_CNT_MAX];
     uint32_t animation_colors[WB_ENEMY_ANIMATION_COLOR_CNT];
-} WBBufferEnemy;
+} WBEnemyBuffer;
 
 typedef struct {
     WBBufferHead head;
     WBParticle entries[WB_PARTICLE_CNT_MAX];
-} WBBufferParticle;
+} WBParticleBuffer;
 
 typedef struct {
     WBBufferHead head;
@@ -497,6 +502,15 @@ typedef struct {
 } WBWindow;
 
 typedef struct {
+    ma_engine engine;
+    ma_sound fire;
+    ma_sound powerup_drop;
+    ma_sound powerup_collect;
+    ma_sound powerup_activate;
+    ma_sound decay;
+} WBSound;
+
+typedef struct {
     WBGamestateType state;
     WBPowerup powerup;
     int score, lifes, enemy_cnt;
@@ -514,18 +528,19 @@ typedef struct {
     WBShader shader;
     WBTexture sprite_atlas;
     WBMap map;
+    WBSound sound;
     double last_frame_time;
     uint64_t frame_cnt;
     WBPlayer player;
-    WBBufferEnemy enemy_buffer;
-    WBBufferParticle particle_buffer;
+    WBEnemyBuffer enemy_buffer;
+    WBParticleBuffer particle_buffer;
     WBProjectileBuffer projectile_buffer;
 } WBGame;
 
 extern bool wbWindowInit(WBWindow* window);
 extern void wbWindowLockAspectRatio(WBWindow* window);
 
-extern bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max);
+extern void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max);
 extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
@@ -534,14 +549,14 @@ extern void wbPlayerCatInit(WBCat* cat);
 extern void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
 
-extern void wbEnemyUpdate(WBBufferEnemy* enemy_buffer, WBWiz* wiz, WBCat* cat, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
-extern void wbEnemyRemove(WBBufferEnemy* enemy_buffer, int idx, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
+extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
+extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
-extern void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, WBGamestate* gamestate);
+extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbProjectileBufferInit(WBProjectileBuffer* projectile_buffer);
 extern void wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
-extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer, WBGamestate* gamestate);
+extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbShaderInit(WBShader* shader);
 

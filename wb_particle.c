@@ -1,6 +1,6 @@
 #include "wizball.h"
 
-void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, WBGamestate* gamestate) {
+void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate* gamestate, WBSound* sound) {
     WBParticle* particle;
     for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
         particle = &particle_buffer->entries[i];
@@ -13,6 +13,8 @@ void wbParticleUpdate(WBBufferParticle* particle_buffer, WBWiz* wiz, WBGamestate
                 particle->head.pos.y > wiz->pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_PARTICLE_HITBOX_SIZE / 2
             ) {
                 wbBufferRemove(particle_buffer, i);
+                ma_sound_seek_to_pcm_frame(&sound->powerup_collect, 0);
+                ma_sound_start(&sound->powerup_collect);
                 gamestate->powerup.slot = (gamestate->powerup.slot + 1) % WB_POWERUP_SLOT_CNT;
                 gamestate->score += WB_SCORE_POWERUP;
             }

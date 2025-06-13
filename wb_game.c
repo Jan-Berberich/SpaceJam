@@ -1,4 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "wizball.h"
 
 bool wbGameInit(WBGame* game) {
@@ -26,6 +25,32 @@ bool wbGameInit(WBGame* game) {
     // Initialize map
     if (!wbMapInit(&game->map)) {
         fprintf(stderr, "Failed to initialize map\n");
+        return false;
+    }
+
+    // Initialize sound
+    if (ma_engine_init(NULL, &game->sound.engine) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to initialize sound engine\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_FIRE_PATH, 0, NULL, NULL, &game->sound.fire) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load fire sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_POWERUP_DROP_PATH, 0, NULL, NULL, &game->sound.powerup_drop) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load powerup drop sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_POWERUP_COLLECT_PATH, 0, NULL, NULL, &game->sound.powerup_collect) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load powerup collect sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_POWERUP_ACTIVATE_PATH, 0, NULL, NULL, &game->sound.powerup_activate) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load powerup activate sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_DECAY_PATH, 0, NULL, NULL, &game->sound.decay) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load decay sound\n");
         return false;
     }
 
@@ -74,10 +99,7 @@ bool wbGameInit(WBGame* game) {
     // Initialize players
     int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
     int pos_x_max = game->map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
-    if (!wbPlayerWizInit(&game->player.wiz, pos_x_min, pos_x_max)) {
-        fprintf(stderr, "Failed to initialize players\n");
-        return false;
-    }
+    wbPlayerWizInit(&game->player.wiz, pos_x_min, pos_x_max);
     wbPlayerCatInit(&game->player.cat);
 
     // Initialize enemies
@@ -170,6 +192,8 @@ void wbGameProcessInput(WBGame* game) {
     activate_powerup |= wiggle_cnt >= WB_POWERUP_WIGGLE_CNT;
     int powerup_slotstate = (game->gamestate.powerup.unlocked >> 2 * game->gamestate.powerup.slot) & WB_POWERUP_SLOTMASK;
     if (activate_powerup && !prev_key_state[WB_KEY_POWERUP] && (powerup_slotstate < 2 || game->gamestate.powerup.slot == 4)) {
+        ma_sound_seek_to_pcm_frame(&game->sound.powerup_activate, 0);
+        ma_sound_start(&game->sound.powerup_activate);
         int incr = game->gamestate.powerup.slot == 2 || game->gamestate.powerup.slot == 3 || game->gamestate.powerup.slot == 6 ? 2 : 1;
         if (game->gamestate.powerup.slot == 4) {
             game->gamestate.powerup.unlocked = powerup_slotstate == 0 ?
@@ -218,6 +242,8 @@ void wbGameProcessInput(WBGame* game) {
     if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT]) {
         WBVec2f vel;
         if (map->view.bullet_wiz_cnt < WB_MAP_VIEW_BULLET_WIZ_CNT_MAX) {
+            ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
+            ma_sound_start(&game->sound.fire);
             vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
                 WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
             vel.y = 0.0f;
@@ -301,12 +327,12 @@ void wbGameProcessInput(WBGame* game) {
     if (cat_shoot && !prev_key_state[WB_KEY_CAT_SHOOT]) {
         WBVec2f vel;
         if (map->view.bullet_cat_cnt < WB_MAP_VIEW_BULLET_CAT_CNT_MAX) {
-            vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
-                WB_PROJECTILE_VEL * cat->next_bullet_direction : WB_PROJECTILE_VEL * cat->facing;
+            ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
+            ma_sound_start(&game->sound.fire);
+            vel.x = WB_PROJECTILE_VEL * cat->facing;
             vel.y = 0.0f;
             WBProjectileType type = game->gamestate.powerup.unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_CAT : WB_PROJECTILE_BULLET_CAT;
             wbProjectileAppend(&game->projectile_buffer, type, &cat->pos, &vel);
-            cat->next_bullet_direction *= -1;
         }
         if (!map->view.spray && game->gamestate.powerup.unlocked & WB_POWERUP_CATSPRAY) {
             if (cat->next_spray_direction == WB_DIRECTION_NEGATIVE) {
@@ -359,8 +385,11 @@ void wbGameRender(WBGame* game) {
     glUniform4f(keyColorLoc, 1.0f, 0.0f, 1.0f, 1.0f); // #FF00FFFF
     // Set the replacement color later
     GLint replaceColorLoc = glGetUniformLocation(game->shader.program, "replaceColor");
-    // Set the time later
-    GLint timeLoc = glGetUniformLocation(game->shader.program, "time");
+    // Set the frameCnt later
+    GLint frameCntLoc = glGetUniformLocation(game->shader.program, "frameCnt");
+    // Set the fps
+    GLint fpsLoc = glGetUniformLocation(game->shader.program, "fps");
+    glUniform1f(fpsLoc, WB_FPS);
     // Set the key alpha later
     GLint keyAlphaLoc = glGetUniformLocation(game->shader.program, "keyAlpha");
     // Set dust texture size
@@ -409,7 +438,7 @@ void wbGameRender(WBGame* game) {
                 );
             }
         }
-        glUniform1f(timeLoc, (float)glfwGetTime());
+        glUniform1f(frameCntLoc, (float)game->frame_cnt);
         glUniform1f(keyAlphaLoc, 128.0/255.0);
     }
     glUniform1f(keyAlphaLoc, -1.0);
@@ -720,7 +749,7 @@ void wbGameRender(WBGame* game) {
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
 
-    char debug_str[] = "!wizjam!";
+    char debug_str[] = "spacejam";
     float string_width = 0.0f;
     for (char* p = debug_str; *p; p++) {
         string_width += *p == 'i' || *p == 'l'? 0.5f : 1.0f;
@@ -752,8 +781,16 @@ void wbGameTerminate(WBGame* game) {
     glDeleteBuffers(1, &game->shader.ebo);
     glDeleteProgram(game->shader.program);
     glDeleteTextures(1, &game->sprite_atlas.texture_id); // Delete the sprite atlas texture
-    free(game->player.wiz.collider_angles); // Free the player collider angles memory
+    glDeleteTextures(1, &game->map.atlas.background.texture_id);
+    glDeleteTextures(1, &game->map.atlas.collider_texture.texture_id);
+    glDeleteTextures(1, &game->map.atlas.dust.texture_id);
     free(game->map.atlas.collider); // Free the map atlas collider memory
+    ma_sound_uninit(&game->sound.decay);
+    ma_sound_uninit(&game->sound.powerup_activate);
+    ma_sound_uninit(&game->sound.powerup_collect);
+    ma_sound_uninit(&game->sound.powerup_drop);
+    ma_sound_uninit(&game->sound.fire);
+    ma_engine_uninit(&game->sound.engine);
     glfwDestroyWindow(game->window.handle); // Destroy the window
     glfwTerminate(); // Terminate GLFW to clean up resources
 }
@@ -776,7 +813,7 @@ int wbGameRun() {
 
         // Run with fps
         if (glfwGetKey(game.window.handle, GLFW_KEY_P)) _sleep(1.0f / WB_FPS); /*TODO: for debug*/
-        if (frame_time == game.last_frame_time) continue;
+        if (!glfwGetKey(game.window.handle, GLFW_KEY_LEFT_BRACKET) && frame_time == game.last_frame_time) continue;
 
         // TODO: for debug
         if (game.enemy_buffer.head.cnt < 8) {
@@ -795,9 +832,9 @@ int wbGameRun() {
 
         wbPlayerWizUpdate(&game.player.wiz, &game.map, &game.gamestate);
 
-        wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate);
-        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate);
-        wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate);
+        wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate, &game.sound);
+        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
+        wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
 
         // TODO: for debug
         if (game.player.wiz.health <= 0) {

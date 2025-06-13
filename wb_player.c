@@ -1,11 +1,6 @@
 #include "wizball.h"
 
-bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
-    wiz->collider_angles = malloc(WB_PLAYER_WIZ_COLLISION_ANGLE_CNT * (sizeof *wiz->collider_angles));
-    if (!wiz->collider_angles) {
-        fprintf(stderr, "Failed to allocate memory for collider_angles");
-        return false;
-    }
+void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
         wiz->collider_angles[i] = (float)i * M_2PI / WB_PLAYER_WIZ_COLLISION_ANGLE_CNT;
     }
@@ -45,14 +40,11 @@ bool wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     wiz->vel_y_values[4] = WB_PLAYER_WIZ_VEL_Y_4;
 
     wiz->animation_angle = 0.0f;
-
-    return true;
 }
 
 void wbPlayerCatInit(WBCat* cat) {
     cat->health = WB_PLAYER_CAT_HEALTH_MAX;
     cat->rest_offset_x = WB_PLAYER_CAT_REST_OFFSET_X;
-    cat->next_bullet_direction = WB_DIRECTION_POSITIVE;
     cat->next_spray_direction = WB_DIRECTION_NEGATIVE;
 }
 

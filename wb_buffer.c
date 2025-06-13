@@ -6,7 +6,7 @@ void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos) {
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
         assert(buffer_head->cnt - 1 < WB_ENEMY_CNT_MAX);
-        WBEnemy* enemy = ((WBBufferEnemy*)buffer_head)->entries;
+        WBEnemy* enemy = ((WBEnemyBuffer*)buffer_head)->entries;
         while (enemy->head.type != WB_ENEMY_NONE) {
             enemy++;
         }
@@ -16,7 +16,7 @@ void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos) {
 
         case WB_BUFFER_PARTICLE:
         assert(buffer_head->cnt - 1 < WB_PARTICLE_CNT_MAX);
-        WBParticle* particle = ((WBBufferParticle*)buffer_head)->entries;
+        WBParticle* particle = ((WBParticleBuffer*)buffer_head)->entries;
         while (particle->head.type != WB_PARTICLE_NONE) {
             particle++;
         }
@@ -47,11 +47,11 @@ void wbBufferRemove(void* buffer, int idx) {
     WBBufferHead* buffer_head = buffer;
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
-        ((WBBufferEnemy*)buffer_head)->entries[idx].head.type = WB_ENEMY_NONE;
+        ((WBEnemyBuffer*)buffer_head)->entries[idx].head.type = WB_ENEMY_NONE;
         break;
 
         case WB_BUFFER_PARTICLE:
-        ((WBBufferParticle*)buffer_head)->entries[idx].head.type = WB_PARTICLE_NONE;
+        ((WBParticleBuffer*)buffer_head)->entries[idx].head.type = WB_PARTICLE_NONE;
         break;
 
         case WB_BUFFER_PROJECTILE:

@@ -6,7 +6,7 @@ void wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType 
     projectile->vel.y = vel->y;
 }
 
-void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBBufferEnemy* enemy_buffer, WBBufferParticle* particle_buffer, WBGamestate* gamestate) {
+void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemies = enemy_buffer->entries;
     WBParticle* particles = particle_buffer->entries;
     WBProjectile* projectile;
@@ -33,7 +33,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                     projectile->head.pos.x > enemies[j].head.pos.x - WB_ENEMY_HITBOX_SIZE / 2                                      && projectile->head.pos.x <= enemies[j].head.pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
                     projectile->head.pos.y > enemies[j].head.pos.y - WB_ENEMY_HITBOX_SIZE / 2 - WB_PROJECTILE_BEAM_HITBOX_SIZE / 2 && projectile->head.pos.y <= enemies[j].head.pos.y + WB_ENEMY_HITBOX_SIZE / 2 + WB_PROJECTILE_BEAM_HITBOX_SIZE / 2
                 ) {
-                    wbEnemyRemove(enemy_buffer, j, particle_buffer, gamestate);
+                    wbEnemyRemove(enemy_buffer, j, particle_buffer, gamestate, sound);
                 }
             }
             break;
@@ -54,7 +54,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                     projectile->head.pos.x > enemies[j].head.pos.x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.x <= enemies[j].head.pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
                     projectile->head.pos.y > enemies[j].head.pos.y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.y <= enemies[j].head.pos.y + WB_ENEMY_HITBOX_SIZE / 2
                 ) {
-                    wbEnemyRemove(enemy_buffer, j, particle_buffer, gamestate);
+                    wbEnemyRemove(enemy_buffer, j, particle_buffer, gamestate, sound);
                     wbBufferRemove(projectile_buffer, i);
                     break;
                 }
