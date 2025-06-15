@@ -5,8 +5,34 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
+#define STBI_NO_FAILURE_STRINGS
+#define STBI_NO_SIMD
+#define STBI_NO_HDR
+#define STBI_ONLY_PNG
 #include "stb_image.h"
+
+// for faster build
+//#define WB_NO_SOUND
+#ifdef WB_NO_SOUND
+#define MA_SUCCESS 0
+#define ma_engine_init(_1,_2) MA_SUCCESS
+#define ma_sound_init_from_file(_1,_2,_3,_4,_5,_6) MA_SUCCESS
+#define ma_sound_seek_to_pcm_frame(_1,_2) MA_SUCCESS
+#define ma_sound_start(_) MA_SUCCESS
+#define ma_sound_stop(_) MA_SUCCESS
+#define ma_sound_uninit(_) MA_SUCCESS
+#define ma_engine_uninit(_) MA_SUCCESS
+#define ma_engine void*
+#define ma_sound void*
+#else
+#define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
+#define MA_ENABLE_WASAPI
+#define MA_NO_ENCODING
+#define MA_NO_FLAC
+#define MA_NO_MP3
+#define MA_NO_GENERATION
 #include "miniaudio.h"
+#endif
 
 #define M_2PI (2.0 * 3.141592653589793)
 #include <math.h>
@@ -23,6 +49,7 @@
 
 
 #define WB_FPS 1000 /*50*/
+#define WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT (WB_FPS / 50) /*1*/
 
 #define WB_WINDOW_WIDTH  600 /*600*/
 #define WB_WINDOW_HEIGHT 486 /*486*/
@@ -54,6 +81,9 @@
 #define WB_SCORE_ENEMY 50
 #define WB_SCORE_DROPLET 50
 #define WB_SCORE_POWERUP 100
+
+#define WB_GAMEPLAY_HIT_FRAME_CNT (3 * WB_FPS)
+#define WB_GAMEPLAY_GAMEOVER_FRAME_CNT (5 * WB_FPS)
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
@@ -133,44 +163,42 @@
 #define WB_PROJECTILE_ANIMATION_COLOR_3 0x616DDDFF /* #616DDDFF */
 #define WB_PROJECTILE_ANIMATION_COLOR_4 0xFFFFFFFF /* #FFFFFFFF */
 
-#define WB_POWERUP_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
-#define WB_POWERUP_ANIMATION_COLOR_CNT 6
-#define WB_POWERUP_ANIMATION_COLOR_0 0x6A65EEFF /* #6A65EEFF */
-#define WB_POWERUP_ANIMATION_COLOR_1 0x312BB5FF /* #312BB5FF */
-#define WB_POWERUP_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
-#define WB_POWERUP_ANIMATION_COLOR_3 0x312BB5FF /* #312BB5FF */
-#define WB_POWERUP_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
-#define WB_POWERUP_ANIMATION_COLOR_5 0xA4A4A4FF /* #A4A4A4FF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_CNT 6
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_0 0x6A65EEFF /* #6A65EEFF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_1 0x312BB5FF /* #312BB5FF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_3 0x312BB5FF /* #312BB5FF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
+#define WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_5 0xA4A4A4FF /* #A4A4A4FF */
 
-#define WB_GAMESTATE_LEVEL_ANIMATION_COLOR_SPEED (1.0f / 2.0f * 50 / WB_FPS)
-#define WB_GAMESTATE_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
-#define WB_GAMESTATE_ANIMATION_COLOR_CNT 8
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_0 0x000000FF /* #000000FF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_1 0x7E3650FF /* #7E3650FF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_2 0x8439ACFF /* #8439ACFF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_3 0xAF6882FF /* #AF6882FF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_4 0xFFFFFFFF /* #FFFFFFFF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_5 0xAF6882FF /* #AF6882FF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_6 0x8439ACFF /* #8439ACFF */
-#define WB_GAMESTATE_RED_ANIMATION_COLOR_7 0x7E3650FF /* #7E3650FF */
-
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_0 0xCED54CFF /* #CED54CFF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_1 0x55A33EFF /* #55A33EFF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_3 0x55A33EFF /* #55A33EFF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_4 0xCED54CFF /* #CED54CFF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_5 0x99E681FF /* #99E681FF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_6 0xFFFFFFFF /* #FFFFFFFF */
-#define WB_GAMESTATE_GREEN_ANIMATION_COLOR_7 0x99E681FF /* #99E681FF */
-
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_0 0x312BB5FF /* #312BB5FF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_1 0x000000FF /* #000000FF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_2 0x312BB5FF /* #312BB5FF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_3 0x8439ACFF /* #8439ACFF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_5 0xFFFFFFFF /* #FFFFFFFF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_6 0x6A65EEFF /* #6A65EEFF */
-#define WB_GAMESTATE_BLUE_ANIMATION_COLOR_7 0x8439ACFF /* #8439ACFF */
+#define WB_GRAPHIC_GUI_LEVEL_ANIMATION_COLOR_SPEED (1.0f / 2.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT 8
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_0 0x000000FF /* #000000FF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_1 0x7E3650FF /* #7E3650FF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_2 0x8439ACFF /* #8439ACFF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_3 0xAF6882FF /* #AF6882FF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_4 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_5 0xAF6882FF /* #AF6882FF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_6 0x8439ACFF /* #8439ACFF */
+#define WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_7 0x7E3650FF /* #7E3650FF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_0 0xCED54CFF /* #CED54CFF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_1 0x55A33EFF /* #55A33EFF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_2 0x000000FF /* #000000FF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_3 0x55A33EFF /* #55A33EFF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_4 0xCED54CFF /* #CED54CFF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_5 0x99E681FF /* #99E681FF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_6 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_7 0x99E681FF /* #99E681FF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_0 0x312BB5FF /* #312BB5FF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_1 0x000000FF /* #000000FF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_2 0x312BB5FF /* #312BB5FF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_3 0x8439ACFF /* #8439ACFF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_4 0x6A65EEFF /* #6A65EEFF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_5 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_6 0x6A65EEFF /* #6A65EEFF */
+#define WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_7 0x8439ACFF /* #8439ACFF */
 
 #define WB_POWERUP_WIGGLE_CNT 4
 #define WB_POWERUP_WIGGLE_SPEED (1.0f / 10.0f * 50 / WB_FPS)
@@ -184,7 +212,7 @@
 #define WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
 #define WB_ENEMY_CIRCLE_ANIMATION_SPEED (1.0f / 5.0f * 50 / WB_FPS)
 
-#define WB_PLAYER_WIZ_SHOOT_AUTOFIRE_SPEED (1.0f / 10.0f * 50 / WB_FPS) // collision of bullet reset cooldown?
+#define WB_PLAYER_WIZ_AUTOFIRE_FRAME_CNT (12 * WB_FPS / 50)
 
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_Y (0 * WB_SPRITE_SIZE)
@@ -268,12 +296,12 @@
 #define WB_KEY_WIZ_RIGHT GLFW_KEY_D
 #define WB_KEY_WIZ_UP GLFW_KEY_W
 #define WB_KEY_WIZ_DOWN GLFW_KEY_S
-#define WB_KEY_WIZ_SHOOT GLFW_KEY_SPACE
+#define WB_KEY_WIZ_FIRE GLFW_KEY_SPACE
 #define WB_KEY_CAT_LEFT GLFW_KEY_LEFT
 #define WB_KEY_CAT_RIGHT GLFW_KEY_RIGHT
 #define WB_KEY_CAT_UP GLFW_KEY_UP
 #define WB_KEY_CAT_DOWN GLFW_KEY_DOWN
-#define WB_KEY_CAT_SHOOT GLFW_KEY_RIGHT_CONTROL
+#define WB_KEY_CAT_FIRE GLFW_KEY_RIGHT_CONTROL
 #define WB_KEY_POWERUP GLFW_KEY_F /*not in real game*/
 #define WB_KEY_TOGGLEGRAV GLFW_KEY_LEFT_CONTROL /*not in ral game*/
 #define WB_KEY_SPRINT GLFW_KEY_LEFT_SHIFT /*not in real game*/
@@ -284,10 +312,13 @@ typedef enum {
     WB_GAMESTATE_TITLESCREEN,
     WB_GAMESTATE_PLAYERSELECT,
     WB_GAMESTATE_GETREADY,
-    WB_GAMESTATE_PLAYING,
-    WB_GAMESTATE_PAUSED,
+    WB_GAMESTATE_SPAWN,
+    WB_GAMESTATE_PLAY,
+    WB_GAMESTATE_HIT,
+    WB_GAMESTATE_PAUSE,
     WB_GAMESTATE_GAMEOVER,
     WB_GAMESTATE_SCOREBOARD,
+    WB_GAMESTATE_WIZTIPS,
     WB_GAMESTATE_CNT
 } WBGamestateType;
 
@@ -328,11 +359,16 @@ typedef enum {
 } WBProjectileType;
 
 typedef enum {
-    WB_MOVEPATTERN_CRICLE,
-    WB_MOVEPATTERN_ZIGZAG,
-    WB_MOVEPATTERN_REFLECT,
+    WB_MOVEPATTERN_INERT,
+    WB_MOVEPATTERN_GLIDE,
+    WB_MOVEPATTERN_STEP_DOWN,
+    WB_MOVEPATTERN_STEP_UP,
+    WB_MOVEPATTERN_CIRCLE,
+    WB_MOVEPATTERN_BOUNCE,
     WB_MOVEPATTERN_BOUNCE_FLOOR,
-    WB_MOVEPATTERN_BOUNCE_CEIL
+    WB_MOVEPATTERN_BOUNCE_CEIL,
+    WB_MOVEPATTERN_JAY,
+    WB_MOVEPATTERN_RAID
 } WBMovepatternType;
 
 typedef enum {
@@ -383,7 +419,7 @@ typedef struct {
     WBPowerupType unlocked;
     WBPowerupType permanent;
     int slot;
-    uint32_t animation_colors[WB_POWERUP_ANIMATION_COLOR_CNT];
+    uint32_t animation_colors[WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_CNT];
 } WBPowerup;
 
 typedef struct {
@@ -415,6 +451,7 @@ typedef struct {
 
 typedef struct {
     WBVec2f pos;
+    WBVec2f vel;
     int health;
     WBDirectionType next_spray_direction;
     WBDirectionType facing;
@@ -428,11 +465,9 @@ typedef struct {
 } WBPlayer;
 
 typedef struct {
-    WBVec2f vel;
-} WBMovepattern;
-
-typedef struct {
     WBEntityHead head;
+    WBMovepatternType movepattern_type;
+    WBVec2f vel;
     int attack_period;
     uint64_t frame_age;
 } WBEnemy;
@@ -517,9 +552,9 @@ typedef struct {
     int highscore;
     int score2;
     int level;
-    uint32_t red_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
-    uint32_t green_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
-    uint32_t blue_animation_colors[WB_GAMESTATE_ANIMATION_COLOR_CNT];
+    uint32_t red_animation_colors[WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT];
+    uint32_t green_animation_colors[WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT];
+    uint32_t blue_animation_colors[WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT];
 } WBGamestate;
 
 typedef struct {
@@ -531,10 +566,12 @@ typedef struct {
     WBSound sound;
     double last_frame_time;
     uint64_t frame_cnt;
+    uint64_t frame_counter;
     WBPlayer player;
     WBEnemyBuffer enemy_buffer;
     WBParticleBuffer particle_buffer;
     WBProjectileBuffer projectile_buffer;
+    char text[WB_WINDOW_WIDTH / WB_DIGIT_SPRITE_SIZE];
 } WBGame;
 
 extern bool wbWindowInit(WBWindow* window);
@@ -545,10 +582,13 @@ extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* game
 extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
 extern void wbPlayerCatInit(WBCat* cat);
+extern void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt);
 
-extern void* wbBufferAppend(void* buffer, uint8_t type, WBVec2f* pos);
+extern void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
+extern void wbBufferClear(void* buffer);
 
+extern void wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type);
 extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 

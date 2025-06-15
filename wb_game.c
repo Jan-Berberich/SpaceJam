@@ -1,5 +1,13 @@
 #include "wizball.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#ifndef WB_NO_SOUND
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
+#endif
+
 bool wbGameInit(WBGame* game) {
     // Initialize the GLFW library
     if (!glfwInit()) {
@@ -57,58 +65,40 @@ bool wbGameInit(WBGame* game) {
     // Initialize game state
     WBGamestate* gamestate = &game->gamestate;
     gamestate->state = WB_GAMESTATE_TITLESCREEN;
-    gamestate->lifes = 3;
-    gamestate->score = 0;
-    gamestate->highscore = 50000;
-    gamestate->score2 = 0;
-    gamestate->level = 0;
-    gamestate->red_animation_colors[0] = WB_GAMESTATE_RED_ANIMATION_COLOR_0;
-    gamestate->red_animation_colors[1] = WB_GAMESTATE_RED_ANIMATION_COLOR_1;
-    gamestate->red_animation_colors[2] = WB_GAMESTATE_RED_ANIMATION_COLOR_2;
-    gamestate->red_animation_colors[3] = WB_GAMESTATE_RED_ANIMATION_COLOR_3;
-    gamestate->red_animation_colors[4] = WB_GAMESTATE_RED_ANIMATION_COLOR_4;
-    gamestate->red_animation_colors[5] = WB_GAMESTATE_RED_ANIMATION_COLOR_5;
-    gamestate->red_animation_colors[6] = WB_GAMESTATE_RED_ANIMATION_COLOR_6;
-    gamestate->red_animation_colors[7] = WB_GAMESTATE_RED_ANIMATION_COLOR_7;
-    gamestate->green_animation_colors[0] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_0;
-    gamestate->green_animation_colors[1] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_1;
-    gamestate->green_animation_colors[2] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_2;
-    gamestate->green_animation_colors[3] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_3;
-    gamestate->green_animation_colors[4] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_4;
-    gamestate->green_animation_colors[5] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_5;
-    gamestate->green_animation_colors[6] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_6;
-    gamestate->green_animation_colors[7] = WB_GAMESTATE_GREEN_ANIMATION_COLOR_7;
-    gamestate->blue_animation_colors[0] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_0;
-    gamestate->blue_animation_colors[1] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_1;
-    gamestate->blue_animation_colors[2] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_2;
-    gamestate->blue_animation_colors[3] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_3;
-    gamestate->blue_animation_colors[4] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_4;
-    gamestate->blue_animation_colors[5] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_5;
-    gamestate->blue_animation_colors[6] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_6;
-    gamestate->blue_animation_colors[7] = WB_GAMESTATE_BLUE_ANIMATION_COLOR_7;
-    gamestate->powerup.unlocked = WB_POWERUP_NONE;
-    gamestate->powerup.permanent = WB_POWERUP_NONE;
-    gamestate->powerup.slot = -1;
-    gamestate->powerup.animation_colors[0] = WB_POWERUP_ANIMATION_COLOR_0;
-    gamestate->powerup.animation_colors[1] = WB_POWERUP_ANIMATION_COLOR_1;
-    gamestate->powerup.animation_colors[2] = WB_POWERUP_ANIMATION_COLOR_2;
-    gamestate->powerup.animation_colors[3] = WB_POWERUP_ANIMATION_COLOR_3;
-    gamestate->powerup.animation_colors[4] = WB_POWERUP_ANIMATION_COLOR_4;
-    gamestate->powerup.animation_colors[5] = WB_POWERUP_ANIMATION_COLOR_5;
-
-    // Initialize players
-    int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
-    int pos_x_max = game->map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
-    wbPlayerWizInit(&game->player.wiz, pos_x_min, pos_x_max);
-    wbPlayerCatInit(&game->player.cat);
+    gamestate->red_animation_colors[0] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_0;
+    gamestate->red_animation_colors[1] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_1;
+    gamestate->red_animation_colors[2] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_2;
+    gamestate->red_animation_colors[3] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_3;
+    gamestate->red_animation_colors[4] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_4;
+    gamestate->red_animation_colors[5] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_5;
+    gamestate->red_animation_colors[6] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_6;
+    gamestate->red_animation_colors[7] = WB_GRAPHIC_GUI_RED_ANIMATION_COLOR_7;
+    gamestate->green_animation_colors[0] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_0;
+    gamestate->green_animation_colors[1] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_1;
+    gamestate->green_animation_colors[2] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_2;
+    gamestate->green_animation_colors[3] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_3;
+    gamestate->green_animation_colors[4] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_4;
+    gamestate->green_animation_colors[5] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_5;
+    gamestate->green_animation_colors[6] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_6;
+    gamestate->green_animation_colors[7] = WB_GRAPHIC_GUI_GREEN_ANIMATION_COLOR_7;
+    gamestate->blue_animation_colors[0] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_0;
+    gamestate->blue_animation_colors[1] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_1;
+    gamestate->blue_animation_colors[2] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_2;
+    gamestate->blue_animation_colors[3] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_3;
+    gamestate->blue_animation_colors[4] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_4;
+    gamestate->blue_animation_colors[5] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_5;
+    gamestate->blue_animation_colors[6] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_6;
+    gamestate->blue_animation_colors[7] = WB_GRAPHIC_GUI_BLUE_ANIMATION_COLOR_7;
+    gamestate->powerup.animation_colors[0] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_0;
+    gamestate->powerup.animation_colors[1] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_1;
+    gamestate->powerup.animation_colors[2] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_2;
+    gamestate->powerup.animation_colors[3] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_3;
+    gamestate->powerup.animation_colors[4] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_4;
+    gamestate->powerup.animation_colors[5] = WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_5;
 
     // Initialize enemies
     game->enemy_buffer.head.cnt = 0;
     game->enemy_buffer.head.type = WB_BUFFER_ENEMY;
-    WBEnemy* enemies = game->enemy_buffer.entries;
-    for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
-        enemies[i].head.type = WB_ENEMY_NONE;
-    }
     game->enemy_buffer.animation_colors[0] = WB_ENEMY_ANIMATION_COLOR_0;
     game->enemy_buffer.animation_colors[1] = WB_ENEMY_ANIMATION_COLOR_1;
     game->enemy_buffer.animation_colors[2] = WB_ENEMY_ANIMATION_COLOR_2;
@@ -117,18 +107,10 @@ bool wbGameInit(WBGame* game) {
     // Initialize particles
     game->particle_buffer.head.cnt = 0;
     game->particle_buffer.head.type = WB_BUFFER_PARTICLE;
-    WBParticle* particles = game->particle_buffer.entries;
-    for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
-        particles[i].head.type = WB_PARTICLE_NONE;
-    }
 
     // Initialize projectiles
     game->projectile_buffer.head.cnt = 0;
     game->projectile_buffer.head.type = WB_BUFFER_PROJECTILE;
-    WBProjectile* projectiles = game->projectile_buffer.entries;
-    for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
-        projectiles[i].head.type = WB_PROJECTILE_NONE;
-    }
     game->projectile_buffer.animation_colors[0] = WB_PROJECTILE_ANIMATION_COLOR_0;
     game->projectile_buffer.animation_colors[1] = WB_PROJECTILE_ANIMATION_COLOR_1;
     game->projectile_buffer.animation_colors[2] = WB_PROJECTILE_ANIMATION_COLOR_2;
@@ -142,6 +124,9 @@ bool wbGameInit(WBGame* game) {
 }
 
 void wbGameProcessInput(WBGame* game) {
+    if (game->frame_cnt % WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT) {
+        return;
+    }
     WBMap* map = &game->map;
 
     static int wiggle_cnt = 0;
@@ -152,23 +137,29 @@ void wbGameProcessInput(WBGame* game) {
     bool wiz_down = glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN);
     bool wiz_left = glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT);
     bool wiz_right = glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT);
-    bool wiz_shoot = glfwGetKey(game->window.handle, WB_KEY_WIZ_SHOOT);
+    bool wiz_fire = glfwGetKey(game->window.handle, WB_KEY_WIZ_FIRE);
+    bool cat_up = glfwGetKey(game->window.handle, WB_KEY_CAT_UP);
+    bool cat_down = glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN);
+    bool cat_left = glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT);
+    bool cat_right = glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT);
+    bool cat_fire = glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE);
 
     WBWiz* wiz = &game->player.wiz;
 
-    // TODO: for debug
-    bool sprint = glfwGetKey(game->window.handle, WB_KEY_SPRINT);
+    // wbGamestatePowerupProcessInput
+    WBPowerup* powerup = &game->gamestate.powerup;
+    bool sprint = glfwGetKey(game->window.handle, WB_KEY_SPRINT); // TODO: not in real game
     bool debug_strg = glfwGetKey(game->window.handle, WB_KEY_TOGGLEGRAV);
     if (debug_strg && !prev_key_state[WB_KEY_TOGGLEGRAV])
-        game->gamestate.powerup.unlocked ^= WB_POWERUP_SLOTMASK;
+        powerup->unlocked ^= WB_POWERUP_SLOTMASK;
     prev_key_state[WB_KEY_TOGGLEGRAV] = debug_strg;
 
-    static double left_down_frame;
+    static uint64_t left_down_frame;
     if (wiz_left && !prev_key_state[WB_KEY_WIZ_LEFT]) {
         left_down_frame = game->frame_cnt;
     }
     left_down_frame *= wiz_left;
-    static double right_down_frame;
+    static uint64_t right_down_frame;
     if (wiz_right && !prev_key_state[WB_KEY_WIZ_RIGHT]) {
         right_down_frame = game->frame_cnt;
     }
@@ -190,69 +181,85 @@ void wbGameProcessInput(WBGame* game) {
     }
     bool activate_powerup = glfwGetKey(game->window.handle, WB_KEY_POWERUP);
     activate_powerup |= wiggle_cnt >= WB_POWERUP_WIGGLE_CNT;
-    int powerup_slotstate = (game->gamestate.powerup.unlocked >> 2 * game->gamestate.powerup.slot) & WB_POWERUP_SLOTMASK;
-    if (activate_powerup && !prev_key_state[WB_KEY_POWERUP] && (powerup_slotstate < 2 || game->gamestate.powerup.slot == 4)) {
+    int powerup_slotstate = (powerup->unlocked >> 2 * powerup->slot) & WB_POWERUP_SLOTMASK;
+    if (activate_powerup && !prev_key_state[WB_KEY_POWERUP] && powerup->slot >= 0 && (powerup_slotstate < 2 || powerup->slot == 4)) {
         ma_sound_seek_to_pcm_frame(&game->sound.powerup_activate, 0);
         ma_sound_start(&game->sound.powerup_activate);
-        int incr = game->gamestate.powerup.slot == 2 || game->gamestate.powerup.slot == 3 || game->gamestate.powerup.slot == 6 ? 2 : 1;
-        if (game->gamestate.powerup.slot == 4) {
-            game->gamestate.powerup.unlocked = powerup_slotstate == 0 ?
-                game->gamestate.powerup.unlocked + (incr << 2 * game->gamestate.powerup.slot) : 
-                game->gamestate.powerup.unlocked ^ (WB_POWERUP_SLOTMASK << 2 * game->gamestate.powerup.slot);
+        int incr = powerup->slot == 2 || powerup->slot == 3 || powerup->slot == 6 ? 2 : 1;
+        if (powerup->slot == 4) {
+            powerup->unlocked = powerup_slotstate == 0 ?
+                powerup->unlocked + (incr << 2 * powerup->slot) : 
+                powerup->unlocked ^ (WB_POWERUP_SLOTMASK << 2 * powerup->slot);
 
         }
-        else if (game->gamestate.powerup.slot == 5) {
+        else if (powerup->slot == 5) {
             //activate bomb
         }
         else {
-            game->gamestate.powerup.unlocked += incr << 2 * game->gamestate.powerup.slot;
+            powerup->unlocked += incr << 2 * powerup->slot;
         }
-        game->gamestate.powerup.slot = -1;
+        powerup->slot = -1;
     }
     prev_key_state[WB_KEY_POWERUP] = activate_powerup;
 
     // wbPlayerWizProcessInput
+    static uint64_t wiz_fire_down_frame;
+    if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE]) {
+        wiz_fire_down_frame = game->frame_cnt;
+    }
+    wiz_fire_down_frame *= wiz_fire;
+    bool autofire = wiz_fire_down_frame > 0 && game->frame_cnt - wiz_fire_down_frame >= WB_PLAYER_WIZ_AUTOFIRE_FRAME_CNT;
+    autofire &= !!(powerup->unlocked & WB_POWERUP_CAT);
+    if (autofire) {
+        cat_right |= wiz_right;
+        cat_left  |= wiz_left;
+        cat_up    |= wiz_up;
+        cat_down  |= wiz_down;
+        wiz_right  = false;
+        wiz_left   = false;
+        wiz_up     = false;
+        wiz_down   = false;
+    }
     if (wiz_right) {
-        wiz->vel_x_key += WB_PLAYER_WIZ_ACC_X;
+        wiz->vel_x_key += WB_PLAYER_WIZ_ACC_X * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
         wiz->vel_x_key = fminf(wiz->vel_x_key,   WB_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint);
     }
     if (wiz_left) {
-        wiz->vel_x_key -= WB_PLAYER_WIZ_ACC_X;
+        wiz->vel_x_key -= WB_PLAYER_WIZ_ACC_X * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
         wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint));
     }
 
     float vel_x, vel_y;
-    if (game->gamestate.powerup.unlocked & WB_POWERUP_ANTIGRAV) {
+    if (powerup->unlocked & WB_POWERUP_ANTIGRAV) {
         if (wiz_down) {
-            wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y;
+            wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
             wiz->vel_y_key = fminf(wiz->vel_y_key, WB_PLAYER_WIZ_VEL_Y_CNT - 1);
         }
         if (wiz_up) {
-            wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y;
+            wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
             wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_PLAYER_WIZ_VEL_Y_CNT + 1);
         }
         vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
-        wiz->vel_x_key -= fsgnf(vel_x) * WB_PLAYER_WIZ_DEC_X * (!wiz_left && !wiz_right);
+        wiz->vel_x_key -= fsgnf(vel_x) * WB_PLAYER_WIZ_DEC_X * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT * (!wiz_left && !wiz_right);
         vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
-        wiz->vel_y_key -= fsgnf(vel_y) * WB_PLAYER_WIZ_DEC_Y * (!wiz_up && !wiz_down);
+        wiz->vel_y_key -= fsgnf(vel_y) * WB_PLAYER_WIZ_DEC_Y * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT * (!wiz_up && !wiz_down);
     }
 
-    wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
-
-    if (wiz_shoot && !prev_key_state[WB_KEY_WIZ_SHOOT]) {
+    if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
+        
         WBVec2f vel;
         if (map->view.bullet_wiz_cnt < WB_MAP_VIEW_BULLET_WIZ_CNT_MAX) {
             ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
             ma_sound_start(&game->sound.fire);
-            vel.x = game->gamestate.powerup.unlocked & WB_POWERUP_DOUBLE ?
+            vel.x = powerup->unlocked & WB_POWERUP_DOUBLE ?
                 WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
             vel.y = 0.0f;
-            WBProjectileType type = game->gamestate.powerup.unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_WIZ : WB_PROJECTILE_BULLET_WIZ;
+            WBProjectileType type = powerup->unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_WIZ : WB_PROJECTILE_BULLET_WIZ;
             wbProjectileAppend(&game->projectile_buffer, type, &wiz->pos, &vel);
             wiz->next_bullet_direction *= -1;
         }
 
-        if (!map->view.spray && game->gamestate.powerup.unlocked & WB_POWERUP_WIZSPRAY) {
+        if (!map->view.spray && powerup->unlocked & WB_POWERUP_WIZSPRAY) {
             if (wiz->next_spray_direction == WB_DIRECTION_NEGATIVE) {
                 vel.y = -WB_PROJECTILE_VEL;
                 vel.x = -WB_PROJECTILE_VEL;
@@ -274,67 +281,39 @@ void wbGameProcessInput(WBGame* game) {
             wiz->next_spray_direction *= -1;
         }
 
-        if (!map->view.beam && game->gamestate.powerup.unlocked & (WB_POWERUP_BEAM | WB_POWERUP_DOUBLE)) {
+        if (!map->view.beam && powerup->unlocked & (WB_POWERUP_BEAM | WB_POWERUP_DOUBLE)) {
             wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
         }
     }
-    prev_key_state[WB_KEY_WIZ_SHOOT] = wiz_shoot;
+    prev_key_state[WB_KEY_WIZ_FIRE] = wiz_fire;
     prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
     prev_key_state[WB_KEY_WIZ_RIGHT] = wiz_right;
 
-    // wbPayerCatProcessInut
+    // wbPlayerCatProcessInput
     WBCat* cat = &game->player.cat;
-    int pos_y_buffer_idx = game->frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
-    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
-
-    if (!(game->gamestate.powerup.unlocked & WB_POWERUP_CAT)) {
-        cat->pos.x = map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2;
-        cat->pos.y = wiz->pos.y < (float)map->atlas.background.height / WB_MAP_CNT / 2 ?
-                   - WB_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_SPRITE_SIZE;
-        return;
-    }
-
-    bool cat_up = glfwGetKey(game->window.handle, WB_KEY_CAT_UP);
-    bool cat_down = glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN);
-    bool cat_left = glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT);
-    bool cat_right = glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT);
-    bool cat_shoot = glfwGetKey(game->window.handle, WB_KEY_CAT_SHOOT);
+    if (!(powerup->unlocked & WB_POWERUP_CAT)) return;
 
     float prev_cat_pos_x = cat->pos.x;
 
-    cat->pos.x += WB_PLAYER_CAT_VEL * cat_right;
-    cat->pos.x -= WB_PLAYER_CAT_VEL * cat_left;
-    cat->pos.y += WB_PLAYER_CAT_VEL * cat_down;
-    cat->pos.y -= WB_PLAYER_CAT_VEL * cat_up;
+    cat->vel.x = 0.0f;
+    cat->vel.y = 0.0f;
+    cat->vel.x += WB_PLAYER_CAT_VEL * cat_right;
+    cat->vel.x -= WB_PLAYER_CAT_VEL * cat_left;
+    cat->vel.y += WB_PLAYER_CAT_VEL * cat_down;
+    cat->vel.y -= WB_PLAYER_CAT_VEL * cat_up;
 
-    if (!cat_right && !cat_left && !cat_down && !cat_up) {
-        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
-        cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
-                            * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);
-        cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_PLAYER_CAT_VEL)
-                            * fsgnf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y);
-        cat->facing = fsgnf(wiz->pos.x - cat->pos.x);
-    }
-    cat->facing = cat_left && !cat_right ? WB_DIRECTION_NEGATIVE : cat_right && !cat_left ? WB_DIRECTION_POSITIVE : cat->facing;
-
-    cat->pos.x += wiz->vel.x;
-
-    cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2);
-    cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_MAP_VIEW_WIDTH / 2 - WB_PLAYER_CAT_WIDTH / 2);
-    cat->pos.y = fmaxf(cat->pos.y, WB_MAP_CEIL_HEIGHT  + WB_PLAYER_CAT_CEIL_OFFSET);
-    cat->pos.y = fminf(cat->pos.y, WB_MAP_FLOOR_HEIGHT - WB_PLAYER_CAT_FLOOR_OFFSET);
-
-    if (cat_shoot && !prev_key_state[WB_KEY_CAT_SHOOT]) {
+    if (cat_fire && !prev_key_state[WB_KEY_CAT_FIRE] || autofire) {
+        
         WBVec2f vel;
         if (map->view.bullet_cat_cnt < WB_MAP_VIEW_BULLET_CAT_CNT_MAX) {
             ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
             ma_sound_start(&game->sound.fire);
             vel.x = WB_PROJECTILE_VEL * cat->facing;
             vel.y = 0.0f;
-            WBProjectileType type = game->gamestate.powerup.unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_CAT : WB_PROJECTILE_BULLET_CAT;
+            WBProjectileType type = powerup->unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_CAT : WB_PROJECTILE_BULLET_CAT;
             wbProjectileAppend(&game->projectile_buffer, type, &cat->pos, &vel);
         }
-        if (!map->view.spray && game->gamestate.powerup.unlocked & WB_POWERUP_CATSPRAY) {
+        if (!map->view.spray && powerup->unlocked & WB_POWERUP_CATSPRAY) {
             if (cat->next_spray_direction == WB_DIRECTION_NEGATIVE) {
                 vel.y = -WB_PROJECTILE_VEL;
                 vel.x = -WB_PROJECTILE_VEL;
@@ -356,7 +335,7 @@ void wbGameProcessInput(WBGame* game) {
             cat->next_spray_direction *= -1;
         }
     }
-    prev_key_state[WB_KEY_CAT_SHOOT] = cat_shoot;
+    prev_key_state[WB_KEY_CAT_FIRE] = cat_fire;
 }
 
 void wbGameDraw(GLuint texture_id, GLuint vbo,
@@ -373,6 +352,30 @@ void wbGameDraw(GLuint texture_id, GLuint vbo,
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw quad
+}
+
+void wbGameDrawText(WBGame* game) {
+    float window_width = WB_WINDOW_WIDTH;
+    float window_height = WB_WINDOW_HEIGHT;
+    float sprite_atlas_width = game->sprite_atlas.width;
+    float sprite_atlas_height = game->sprite_atlas.height;
+    float string_width = 0.0f;
+    for (char* p = game->text; *p; p++) {
+        string_width += *p == 'i' || *p == 'l'? 0.5f : 1.0f;
+    }
+    float offset_x = (1.0f - string_width) * WB_LETTER_SPRITE_SIZE / window_width;
+    for (char* p = game->text; *p; p++) {
+        int i = *p == '!' ? 26 : *p - 'a';
+        float w = *p == 'i' || *p == 'l' ? 0.5f : 1.0f;
+        float offset_u = (WB_LETTER_SPRITE_ATLAS_X + i * WB_LETTER_SPRITE_SIZE) / sprite_atlas_width;
+        wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
+            WB_LETTER_SPRITE_SIZE / window_width, offset_x,
+            WB_LETTER_SPRITE_SIZE / window_height, 0.1,
+            WB_LETTER_SPRITE_SIZE / sprite_atlas_width, offset_u,
+            WB_LETTER_SPRITE_SIZE / sprite_atlas_height, WB_LETTER_SPRITE_ATLAS_Y / sprite_atlas_height
+        );
+        offset_x += 2 * w * WB_LETTER_SPRITE_SIZE / window_width;
+    }
 }
 
 void wbGameRender(WBGame* game) {
@@ -431,6 +434,7 @@ void wbGameRender(WBGame* game) {
                            / window_width + width_x + 2.0f * k * width_x;
                 offset_x = fmodf(offset_x, 2.0f * dust_col_cnt * width_x);
                 offset_x += (offset_x < -dust_col_cnt * width_x) ? 2.0f * dust_col_cnt * width_x : 0.0f;
+                offset_x += (j / (dust_row_cnt - 1.0f) - 0.5f) * width_x;
                 offset_y = 2.0f * (WB_MAP_VIEW_OFFSET_Y + map_height) / window_height - 2.0f * height_y - 2.0f * j * height_y;
                 offset_u = i * dust_sprite_size / map->atlas.dust.width;
                 wbGameDraw(map->atlas.dust.texture_id, game->shader.vbo,
@@ -569,7 +573,7 @@ void wbGameRender(WBGame* game) {
                 offset_v = (float)WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_BEAM:
-                uint64_t color_key = (uint64_t)((double)game->frame_cnt * WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT;
+                uint64_t color_key = fmod((double)game->frame_cnt * WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED, WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT);
                 color_key = color_key % 2 ? color_key / 4 + 1 : 0;
                 uint32_t rgba = game->projectile_buffer.animation_colors[color_key];
                 float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
@@ -629,7 +633,7 @@ void wbGameRender(WBGame* game) {
 
     // Draw Powerup Slots
     for (int i = 0; i < WB_POWERUP_SLOT_CNT; i++) {
-        int animation_color_idx = i == game->gamestate.powerup.slot ? (uint64_t)((double)game->frame_cnt * WB_POWERUP_ANIMATION_COLOR_SPEED) % WB_POWERUP_ANIMATION_COLOR_CNT : 0;
+        int animation_color_idx = i == game->gamestate.powerup.slot ? (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_CNT : 0;
         uint32_t rgba = game->gamestate.powerup.animation_colors[animation_color_idx];
         float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
         float g = (float)((rgba >> 16) & 0xFF) / 0xFF;
@@ -663,7 +667,7 @@ void wbGameRender(WBGame* game) {
 
     // Draw Gamestate
     // 1UP
-    int animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GAMESTATE_ANIMATION_COLOR_SPEED) % WB_GAMESTATE_ANIMATION_COLOR_CNT;
+    int animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
     uint32_t rgba = game->gamestate.red_animation_colors[animation_color_idx];
     float r = (float)((rgba >> 24) & 0xFF) / 0xFF;
     float g = (float)((rgba >> 16) & 0xFF) / 0xFF;
@@ -704,7 +708,7 @@ void wbGameRender(WBGame* game) {
     a = (float)((rgba >>  0) & 0xFF) / 0xFF;
     glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
     offset_x += 2.0f * WB_DIGIT_SPRITE_SIZE / window_width;
-    sprintf(str, "%01i", game->gamestate.lifes - 1);
+    sprintf(str, "%01i", game->gamestate.lifes ? game->gamestate.lifes - 1 : 0);
     offset_u = (WB_DIGIT_SPRITE_ATLAS_X + (*str - '0') * WB_DIGIT_SPRITE_SIZE) / sprite_atlas_width;
     wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
@@ -732,7 +736,7 @@ void wbGameRender(WBGame* game) {
     // score2
     // level
     uint32_t* animation_colors = (uint32_t*)((uint8_t*)game->gamestate.red_animation_colors + game->gamestate.level % 3 * (sizeof game->gamestate.red_animation_colors));
-    animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GAMESTATE_LEVEL_ANIMATION_COLOR_SPEED) % WB_GAMESTATE_ANIMATION_COLOR_CNT;
+    animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_LEVEL_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
     rgba = animation_colors[animation_color_idx];
     r = (float)((rgba >> 24) & 0xFF) / 0xFF;
     g = (float)((rgba >> 16) & 0xFF) / 0xFF;
@@ -749,24 +753,7 @@ void wbGameRender(WBGame* game) {
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
 
-    char debug_str[] = "spacejam";
-    float string_width = 0.0f;
-    for (char* p = debug_str; *p; p++) {
-        string_width += *p == 'i' || *p == 'l'? 0.5f : 1.0f;
-    }
-    offset_x = (1.0f - string_width) * WB_LETTER_SPRITE_SIZE / window_width;
-    for (char* p = debug_str; *p; p++) {
-        int i = *p == '!' ? 26 : *p - 'a';
-        float w = *p == 'i' || *p == 'l' ? 0.5f : 1.0f;
-        offset_u = (WB_LETTER_SPRITE_ATLAS_X + i * WB_LETTER_SPRITE_SIZE) / sprite_atlas_width;
-        wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
-            WB_LETTER_SPRITE_SIZE / window_width, offset_x,
-            WB_LETTER_SPRITE_SIZE / window_height, 0.1,
-            WB_LETTER_SPRITE_SIZE / sprite_atlas_width, offset_u,
-            WB_LETTER_SPRITE_SIZE / sprite_atlas_height, WB_LETTER_SPRITE_ATLAS_Y / sprite_atlas_height
-        );
-        offset_x += 2 * w * WB_LETTER_SPRITE_SIZE / window_width;
-    }
+    wbGameDrawText(game);
 
     // Swap front and back buffers
     // The front buffer is what's currently displayed, the back buffer is what's being rendered to
@@ -815,42 +802,106 @@ int wbGameRun() {
         if (glfwGetKey(game.window.handle, GLFW_KEY_P)) _sleep(1.0f / WB_FPS); /*TODO: for debug*/
         if (!glfwGetKey(game.window.handle, GLFW_KEY_LEFT_BRACKET) && frame_time == game.last_frame_time) continue;
 
-        // TODO: for debug
-        if (game.enemy_buffer.head.cnt < 8) {
-            uint32_t seed = game.frame_cnt * 4;
-            WBVec2f pos = {randfin(seed + 0, 200, 3000), randfin(seed + 1, 50, 200)};
-            wbBufferAppend(&game.enemy_buffer, WB_ENEMY_SPINNERBLUE, &pos);
-            pos.x = randfin(seed + 2, 200, 3000); pos.y = randfin(seed + 3, 50, 200);
-            wbBufferAppend(&game.enemy_buffer, WB_ENEMY_CIRCLE, &pos);
-        }
-
         wbWindowLockAspectRatio(&game.window);
 
-        wbGameProcessInput(&game);
+        switch (game.gamestate.state) {
+            case WB_GAMESTATE_TITLESCREEN:
+            game.gamestate.state = WB_GAMESTATE_GETREADY;
+            game.gamestate.lifes = 3;
+            game.gamestate.score = 0;
+            game.gamestate.highscore = 50000;
+            game.gamestate.score2 = 0;
+            game.gamestate.level = 0;
+            game.gamestate.powerup.unlocked = WB_POWERUP_NONE;
+            game.gamestate.powerup.permanent = WB_POWERUP_NONE;
+            game.gamestate.powerup.slot = -1;
+            break;
 
-        wbPlayerWizHandleCollision(&game.player.wiz, &game.map, &game.gamestate);
+            case WB_GAMESTATE_GETREADY:
+            game.gamestate.state = WB_GAMESTATE_SPAWN;
+            break;
 
-        wbPlayerWizUpdate(&game.player.wiz, &game.map, &game.gamestate);
-
-        wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate, &game.sound);
-        wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
-        wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
-
-        // TODO: for debug
-        if (game.player.wiz.health <= 0) {
-            game.gamestate.lifes--;
+            case WB_GAMESTATE_SPAWN:
             int pos_x_min = WB_MAP_VIEW_WIDTH / 2 - 1;
             int pos_x_max = game.map.atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1;
             wbPlayerWizInit(&game.player.wiz, pos_x_min, pos_x_max);
-        }
-
-        if (game.player.cat.health <= 0) {
-            game.gamestate.powerup.unlocked &= ~WB_POWERUP_CAT;
             wbPlayerCatInit(&game.player.cat);
+            wbBufferClear(&game.particle_buffer);
+            wbBufferClear(&game.enemy_buffer);
+            wbBufferClear(&game.projectile_buffer);
+            WBVec2f pos;
+            WBVec2f vel = {0.0f};
+            uint32_t seed = time(NULL);
+            for (int i = 0; i < 8; i++) {
+                pos.x = randfin(seed++, 200, 3000);
+                pos.y = randfin(seed++,  50,  200);
+                wbEnemyAppend(&game.enemy_buffer, WB_ENEMY_SPINNERBLUE, &pos, &vel, WB_MOVEPATTERN_INERT);
+            }
+            game.gamestate.state = WB_GAMESTATE_PLAY;
+            strcpy(game.text, "wizjam"); // TODO: temporary text
+            break;
+
+            case WB_GAMESTATE_PLAY:
+            if (game.enemy_buffer.head.cnt == 0) {
+                // play sound
+                WBVec2f pos;
+                WBVec2f vel = {0.0f};
+                uint32_t seed = time(NULL);
+                for (int i = 0; i < 8; i++) { // TODO: temporary
+                    pos.x = randfin(seed++, 200, 3000);
+                    pos.y = randfin(seed++,   0,  150);
+                    wbEnemyAppend(&game.enemy_buffer, WB_ENEMY_CIRCLE, &pos, &vel, WB_MOVEPATTERN_CIRCLE);
+                }
+            }
+            wbGameProcessInput(&game);
+            wbPlayerWizHandleCollision(&game.player.wiz, &game.map, &game.gamestate);
+            wbPlayerWizUpdate(&game.player.wiz, &game.map, &game.gamestate);
+            wbPlayerCatUpdate(&game.player.cat, &game.player.wiz, &game.map, &game.gamestate, game.frame_cnt);
+            wbParticleUpdate(&game.particle_buffer, &game.player.wiz, &game.gamestate, &game.sound);
+            wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbGameRender(&game);
+            if (!game.player.cat.health) {
+                game.gamestate.powerup.unlocked &= ~WB_POWERUP_CAT;
+                wbPlayerCatInit(&game.player.cat);
+            }
+            if (!game.player.wiz.health) {
+                ma_sound_stop(&game.sound.fire);
+                ma_sound_stop(&game.sound.powerup_activate);
+                ma_sound_stop(&game.sound.powerup_collect);
+                ma_sound_stop(&game.sound.powerup_drop);
+                ma_sound_stop(&game.sound.decay);
+                // play explode sound
+                game.gamestate.lifes--;
+                game.gamestate.powerup.slot = -1;
+                game.gamestate.powerup.unlocked = game.gamestate.powerup.permanent;
+                game.frame_counter = 0;
+                game.gamestate.state = WB_GAMESTATE_HIT;
+                strcpy(game.text, "trshshsh"); // TODO: temporary text
+            }
+            break;
+
+            case WB_GAMESTATE_HIT:
+            wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbGameRender(&game);
+            if (++game.frame_counter >= WB_GAMEPLAY_HIT_FRAME_CNT) {
+                if (game.gamestate.lifes) {
+                    game.gamestate.state = WB_GAMESTATE_SPAWN;
+                } else {
+                    game.frame_counter = 0;
+                    game.gamestate.state = WB_GAMESTATE_GAMEOVER;
+                    strcpy(game.text, "gameover"); // TODO: temporary text
+                    // play game over sound
+                }
+            }
+            break;
+
+            case WB_GAMESTATE_GAMEOVER:
+            wbGameRender(&game);
+            game.gamestate.state = ++game.frame_counter >= WB_GAMEPLAY_GAMEOVER_FRAME_CNT ? WB_GAMESTATE_TITLESCREEN : WB_GAMESTATE_GAMEOVER;
+            break;
         }
-
-        wbGameRender(&game);
-
 
         game.last_frame_time = frame_time;
         game.frame_cnt++;

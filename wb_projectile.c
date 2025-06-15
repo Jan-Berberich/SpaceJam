@@ -21,7 +21,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
 
             case WB_PROJECTILE_BEAM:
             // render both parts from one projectile
-            // use color_key for offset_u and (color_key + frame_cnt) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT
+            // use color_key for offset_u and (color_key + frame_cnt) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT for color
             map->view.beam = true;
             projectile->head.pos = wiz->pos;
             if ((int)(projectile->head.color_key / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED) >= WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {

@@ -4,7 +4,6 @@ void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
         wiz->collider_angles[i] = (float)i * M_2PI / WB_PLAYER_WIZ_COLLISION_ANGLE_CNT;
     }
-
     wiz->health = WB_PLAYER_WIZ_HEALTH_MAX;
     wiz->pos.x = randfin(time(NULL), pos_x_min, pos_x_max);
     wiz->pos.y = WB_PLAYER_WIZ_INIT_POS_Y;
@@ -119,6 +118,8 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
     }
+    wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
+
     wiz->pos.x += wiz->vel.x;
     wiz->pos.y += wiz->vel.y;
 
@@ -129,4 +130,33 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     map->view.center_x = wiz->pos.x;
     map->view.center_x = fmaxf(map->view.center_x, WB_MAP_VIEW_WIDTH / 2);
     map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
+}
+
+void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt) {
+    if (!(gamestate->powerup.unlocked & WB_POWERUP_CAT)) {
+        cat->pos.x = map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2;
+        cat->pos.y = wiz->pos.y < (float)map->atlas.background.height / WB_MAP_CNT / 2 ?
+                   - WB_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_SPRITE_SIZE;
+        return;
+    }
+
+    int pos_y_buffer_idx = frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
+    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
+    if (!cat->vel.x && !cat->vel.y) {
+        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
+        cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
+                            * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);
+        cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_PLAYER_CAT_VEL)
+                            * fsgnf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y);
+        cat->facing = fsgnf(wiz->pos.x - cat->pos.x);
+    }
+    cat->facing = cat->vel.x < 0 ? WB_DIRECTION_NEGATIVE : cat->vel.x > 0 ? WB_DIRECTION_POSITIVE : cat->facing;
+
+    cat->pos.x += cat->vel.x + wiz->vel.x;
+    cat->pos.y += cat->vel.y;
+
+    cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2);
+    cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_MAP_VIEW_WIDTH / 2 - WB_PLAYER_CAT_WIDTH / 2);
+    cat->pos.y = fmaxf(cat->pos.y, WB_MAP_CEIL_HEIGHT  + WB_PLAYER_CAT_CEIL_OFFSET);
+    cat->pos.y = fminf(cat->pos.y, WB_MAP_FLOOR_HEIGHT - WB_PLAYER_CAT_FLOOR_OFFSET);
 }
