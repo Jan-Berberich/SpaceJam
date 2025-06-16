@@ -287,6 +287,7 @@
 #define WB_MAP_COLLIDER_ATLAS_PATH "sprite/map_collider_atlas.png"
 #define WB_SPRITE_ATLAS_PATH "sprite/sprite_atlas.png"
 #define WB_SOUND_FIRE_PATH "sound/fire.wav"
+#define WB_SOUND_FIRE_SPAM_PATH "sound/fire_spam.wav"
 #define WB_SOUND_POWERUP_DROP_PATH "sound/powerup_drop.wav"
 #define WB_SOUND_POWERUP_COLLECT_PATH "sound/powerup_collect.wav"
 #define WB_SOUND_POWERUP_ACTIVATE_PATH "sound/powerup_activate.wav"
@@ -541,6 +542,7 @@ typedef struct {
 typedef struct {
     ma_engine engine;
     ma_sound fire;
+    ma_sound fire_spam;
     ma_sound powerup_drop;
     ma_sound powerup_collect;
     ma_sound powerup_activate;

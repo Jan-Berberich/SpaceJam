@@ -45,6 +45,10 @@ bool wbGameInit(WBGame* game) {
         fprintf(stderr, "Failed to load fire sound\n");
         return false;
     }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_FIRE_SPAM_PATH, 0, NULL, NULL, &game->sound.fire_spam) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load fire spam sound\n");
+        return false;
+    }
     if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_POWERUP_DROP_PATH, 0, NULL, NULL, &game->sound.powerup_drop) != MA_SUCCESS) {
         fprintf(stderr, "Failed to load powerup drop sound\n");
         return false;
@@ -121,6 +125,28 @@ bool wbGameInit(WBGame* game) {
     game->frame_cnt = 0;
 
     return true;
+}
+
+void wbGameUninit(WBGame* game) {
+    // Cleanup resources
+    glDeleteVertexArrays(1, &game->shader.vao);
+    glDeleteBuffers(1, &game->shader.vbo);
+    glDeleteBuffers(1, &game->shader.ebo);
+    glDeleteProgram(game->shader.program);
+    glDeleteTextures(1, &game->sprite_atlas.texture_id); // Delete the sprite atlas texture
+    glDeleteTextures(1, &game->map.atlas.background.texture_id);
+    glDeleteTextures(1, &game->map.atlas.collider_texture.texture_id);
+    glDeleteTextures(1, &game->map.atlas.dust.texture_id);
+    free(game->map.atlas.collider); // Free the map atlas collider memory
+    ma_sound_uninit(&game->sound.decay);
+    ma_sound_uninit(&game->sound.powerup_activate);
+    ma_sound_uninit(&game->sound.powerup_collect);
+    ma_sound_uninit(&game->sound.powerup_drop);
+    ma_sound_uninit(&game->sound.fire_spam);
+    ma_sound_uninit(&game->sound.fire);
+    ma_engine_uninit(&game->sound.engine);
+    glfwDestroyWindow(game->window.handle); // Destroy the window
+    glfwTerminate(); // Terminate GLFW to clean up resources
 }
 
 void wbGameProcessInput(WBGame* game) {
@@ -246,17 +272,24 @@ void wbGameProcessInput(WBGame* game) {
         wiz->vel_y_key -= fsgnf(vel_y) * WB_PLAYER_WIZ_DEC_Y * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT * (!wiz_up && !wiz_down);
     }
 
+    static uint64_t last_fire_frame = 0;
     if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
         WBVec2f vel;
         if (map->view.bullet_wiz_cnt < WB_MAP_VIEW_BULLET_WIZ_CNT_MAX) {
-            ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
-            ma_sound_start(&game->sound.fire);
+            if (game->frame_cnt - last_fire_frame == WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT) {
+                ma_sound_seek_to_pcm_frame(&game->sound.fire_spam, 0);
+                ma_sound_start(&game->sound.fire_spam);
+            } else {
+                ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
+                ma_sound_start(&game->sound.fire);
+            }
             vel.x = powerup->unlocked & WB_POWERUP_DOUBLE ?
                 WB_PROJECTILE_VEL * wiz->next_bullet_direction : WB_PROJECTILE_VEL * wiz->facing;
             vel.y = 0.0f;
             WBProjectileType type = powerup->unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_WIZ : WB_PROJECTILE_BULLET_WIZ;
             wbProjectileAppend(&game->projectile_buffer, type, &wiz->pos, &vel);
             wiz->next_bullet_direction *= -1;
+            last_fire_frame = game->frame_cnt;
         }
 
         if (!map->view.spray && powerup->unlocked & WB_POWERUP_WIZSPRAY) {
@@ -305,15 +338,20 @@ void wbGameProcessInput(WBGame* game) {
     cat->hold_position = cat_right || cat_left || cat_up || cat_down;
 
     if (cat_fire && !prev_key_state[WB_KEY_CAT_FIRE] || autofire) {
-        
         WBVec2f vel;
         if (map->view.bullet_cat_cnt < WB_MAP_VIEW_BULLET_CAT_CNT_MAX) {
-            ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
-            ma_sound_start(&game->sound.fire);
+            if (game->frame_cnt - last_fire_frame == WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT) {
+                ma_sound_seek_to_pcm_frame(&game->sound.fire_spam, 0);
+                ma_sound_start(&game->sound.fire_spam);
+            } else {
+                ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
+                ma_sound_start(&game->sound.fire);
+            }
             vel.x = WB_PROJECTILE_VEL * cat->facing;
             vel.y = 0.0f;
             WBProjectileType type = powerup->unlocked & WB_POWERUP_BLAZERS ? WB_PROJECTILE_BLAZER_CAT : WB_PROJECTILE_BULLET_CAT;
             wbProjectileAppend(&game->projectile_buffer, type, &cat->pos, &vel);
+            last_fire_frame = game->frame_cnt;
         }
         if (!map->view.spray && powerup->unlocked & WB_POWERUP_CATSPRAY) {
             if (cat->next_spray_direction == WB_DIRECTION_NEGATIVE) {
@@ -763,27 +801,6 @@ void wbGameRender(WBGame* game) {
     glfwSwapBuffers(game->window.handle);
 }
 
-void wbGameTerminate(WBGame* game) {
-    // Cleanup resources
-    glDeleteVertexArrays(1, &game->shader.vao);
-    glDeleteBuffers(1, &game->shader.vbo);
-    glDeleteBuffers(1, &game->shader.ebo);
-    glDeleteProgram(game->shader.program);
-    glDeleteTextures(1, &game->sprite_atlas.texture_id); // Delete the sprite atlas texture
-    glDeleteTextures(1, &game->map.atlas.background.texture_id);
-    glDeleteTextures(1, &game->map.atlas.collider_texture.texture_id);
-    glDeleteTextures(1, &game->map.atlas.dust.texture_id);
-    free(game->map.atlas.collider); // Free the map atlas collider memory
-    ma_sound_uninit(&game->sound.decay);
-    ma_sound_uninit(&game->sound.powerup_activate);
-    ma_sound_uninit(&game->sound.powerup_collect);
-    ma_sound_uninit(&game->sound.powerup_drop);
-    ma_sound_uninit(&game->sound.fire);
-    ma_engine_uninit(&game->sound.engine);
-    glfwDestroyWindow(game->window.handle); // Destroy the window
-    glfwTerminate(); // Terminate GLFW to clean up resources
-}
-
 int wbGameRun() {
     WBGame game;
     if(!wbGameInit(&game)) {
@@ -909,6 +926,6 @@ int wbGameRun() {
         game.frame_cnt++;
     }
 
-    wbGameTerminate(&game); // Clean up resources before exiting
+    wbGameUninit(&game); // Clean up resources before exiting
     return 0; // Return 0 to indicate successful execution
 }
