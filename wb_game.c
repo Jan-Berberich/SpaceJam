@@ -801,7 +801,7 @@ int wbGameRun() {
         glfwPollEvents();
 
         // Run with fps
-        if (glfwGetKey(game.window.handle, GLFW_KEY_P)) Sleep(1.0f / WB_FPS); /*TODO: for debug*/
+        if (glfwGetKey(game.window.handle, GLFW_KEY_P)) Sleep(1.0f / WB_FPS * 1000); /*TODO: for debug*/
         if (!glfwGetKey(game.window.handle, GLFW_KEY_LEFT_BRACKET) && frame_time == game.last_frame_time) continue;
 
         wbWindowLockAspectRatio(&game.window);
