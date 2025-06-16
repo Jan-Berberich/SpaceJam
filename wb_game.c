@@ -128,7 +128,7 @@ void wbGameProcessInput(WBGame* game) {
         return;
     }
     WBMap* map = &game->map;
-
+    
     static int wiggle_cnt = 0;
     static double wiggle_frame = 0;
     static WBDirectionType wiggle_dir = WB_DIRECTION_POSITIVE;
@@ -208,8 +208,9 @@ void wbGameProcessInput(WBGame* game) {
         wiz_fire_down_frame = game->frame_cnt;
     }
     wiz_fire_down_frame *= wiz_fire;
-    bool autofire = wiz_fire_down_frame > 0 && game->frame_cnt - wiz_fire_down_frame >= WB_PLAYER_WIZ_AUTOFIRE_FRAME_CNT;
-    autofire &= !!(powerup->unlocked & WB_POWERUP_CAT);
+    bool autofire = wiz_fire_down_frame > 0 &&
+                    game->frame_cnt - wiz_fire_down_frame >= WB_PLAYER_WIZ_AUTOFIRE_FRAME_CNT &&
+                    powerup->unlocked & WB_POWERUP_CAT;
     if (autofire) {
         cat_right |= wiz_right;
         cat_left  |= wiz_left;
@@ -246,7 +247,6 @@ void wbGameProcessInput(WBGame* game) {
     }
 
     if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
-        
         WBVec2f vel;
         if (map->view.bullet_wiz_cnt < WB_MAP_VIEW_BULLET_WIZ_CNT_MAX) {
             ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
@@ -301,6 +301,8 @@ void wbGameProcessInput(WBGame* game) {
     cat->vel.x -= WB_PLAYER_CAT_VEL * cat_left;
     cat->vel.y += WB_PLAYER_CAT_VEL * cat_down;
     cat->vel.y -= WB_PLAYER_CAT_VEL * cat_up;
+
+    cat->hold_position = cat_right || cat_left || cat_up || cat_down;
 
     if (cat_fire && !prev_key_state[WB_KEY_CAT_FIRE] || autofire) {
         
@@ -799,7 +801,7 @@ int wbGameRun() {
         glfwPollEvents();
 
         // Run with fps
-        if (glfwGetKey(game.window.handle, GLFW_KEY_P)) _sleep(1.0f / WB_FPS); /*TODO: for debug*/
+        if (glfwGetKey(game.window.handle, GLFW_KEY_P)) Sleep(1.0f / WB_FPS); /*TODO: for debug*/
         if (!glfwGetKey(game.window.handle, GLFW_KEY_LEFT_BRACKET) && frame_time == game.last_frame_time) continue;
 
         wbWindowLockAspectRatio(&game.window);

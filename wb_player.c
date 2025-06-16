@@ -142,7 +142,7 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
 
     int pos_y_buffer_idx = frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
     cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
-    if (!cat->vel.x && !cat->vel.y) {
+    if (!cat->hold_position) {
         cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
         cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
                             * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);

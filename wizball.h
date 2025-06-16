@@ -43,6 +43,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <windows.h>
 
 #include "utils.h"
 
@@ -452,6 +453,7 @@ typedef struct {
 typedef struct {
     WBVec2f pos;
     WBVec2f vel;
+    bool hold_position;
     int health;
     WBDirectionType next_spray_direction;
     WBDirectionType facing;
