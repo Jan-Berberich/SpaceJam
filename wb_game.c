@@ -41,6 +41,14 @@ bool wbGameInit(WBGame* game) {
         fprintf(stderr, "Failed to initialize sound engine\n");
         return false;
     }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_TITLESCREEN_PATH, 0, NULL, NULL, &game->sound.titlescreen) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load titlescreen sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_GETREADY_PATH, 0, NULL, NULL, &game->sound.getready) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to getready titlescreen sound\n");
+        return false;
+    }
     if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_FIRE_PATH, 0, NULL, NULL, &game->sound.fire) != MA_SUCCESS) {
         fprintf(stderr, "Failed to load fire sound\n");
         return false;
@@ -63,6 +71,30 @@ bool wbGameInit(WBGame* game) {
     }
     if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_DECAY_PATH, 0, NULL, NULL, &game->sound.decay) != MA_SUCCESS) {
         fprintf(stderr, "Failed to load decay sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_CLEAR_PATH, 0, NULL, NULL, &game->sound.clear) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load clear sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_BLINKER_PATH, 0, NULL, NULL, &game->sound.blinker) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load blinker sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_BOMB_PATH, 0, NULL, NULL, &game->sound.bomb) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load bomb sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_CATHIT_PATH, 0, NULL, NULL, &game->sound.cathit) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load cathit sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_EXPLODE_PATH, 0, NULL, NULL, &game->sound.explode) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load explode sound\n");
+        return false;
+    }
+    if (ma_sound_init_from_file(&game->sound.engine, WB_SOUND_GAMEOVER_PATH, 0, NULL, NULL, &game->sound.gameover) != MA_SUCCESS) {
+        fprintf(stderr, "Failed to load gameover sound\n");
         return false;
     }
 
@@ -138,12 +170,20 @@ void wbGameUninit(WBGame* game) {
     glDeleteTextures(1, &game->map.atlas.collider_texture.texture_id);
     glDeleteTextures(1, &game->map.atlas.dust.texture_id);
     free(game->map.atlas.collider); // Free the map atlas collider memory
+    ma_sound_uninit(&game->sound.gameover);
+    ma_sound_uninit(&game->sound.explode);
+    ma_sound_uninit(&game->sound.cathit);
+    ma_sound_uninit(&game->sound.bomb);
+    ma_sound_uninit(&game->sound.blinker);
+    ma_sound_uninit(&game->sound.clear);
     ma_sound_uninit(&game->sound.decay);
     ma_sound_uninit(&game->sound.powerup_activate);
     ma_sound_uninit(&game->sound.powerup_collect);
     ma_sound_uninit(&game->sound.powerup_drop);
     ma_sound_uninit(&game->sound.fire_spam);
     ma_sound_uninit(&game->sound.fire);
+    ma_sound_uninit(&game->sound.getready);
+    ma_sound_uninit(&game->sound.titlescreen);
     ma_engine_uninit(&game->sound.engine);
     glfwDestroyWindow(game->window.handle); // Destroy the window
     glfwTerminate(); // Terminate GLFW to clean up resources
@@ -158,7 +198,6 @@ void wbGameProcessInput(WBGame* game) {
     static int wiggle_cnt = 0;
     static double wiggle_frame = 0;
     static WBDirectionType wiggle_dir = WB_DIRECTION_POSITIVE;
-    static int prev_key_state[GLFW_KEY_LAST + 1] = {0};
     bool wiz_up = glfwGetKey(game->window.handle, WB_KEY_WIZ_UP);
     bool wiz_down = glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN);
     bool wiz_left = glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT);
@@ -176,17 +215,17 @@ void wbGameProcessInput(WBGame* game) {
     WBPowerup* powerup = &game->gamestate.powerup;
     bool sprint = glfwGetKey(game->window.handle, WB_KEY_SPRINT); // TODO: not in real game
     bool debug_strg = glfwGetKey(game->window.handle, WB_KEY_TOGGLEGRAV);
-    if (debug_strg && !prev_key_state[WB_KEY_TOGGLEGRAV])
+    if (debug_strg && !game->window.prev_key_state[WB_KEY_TOGGLEGRAV])
         powerup->unlocked ^= WB_POWERUP_SLOTMASK;
-    prev_key_state[WB_KEY_TOGGLEGRAV] = debug_strg;
+    game->window.prev_key_state[WB_KEY_TOGGLEGRAV] = debug_strg;
 
     static uint64_t left_down_frame;
-    if (wiz_left && !prev_key_state[WB_KEY_WIZ_LEFT]) {
+    if (wiz_left && !game->window.prev_key_state[WB_KEY_WIZ_LEFT]) {
         left_down_frame = game->frame_cnt;
     }
     left_down_frame *= wiz_left;
     static uint64_t right_down_frame;
-    if (wiz_right && !prev_key_state[WB_KEY_WIZ_RIGHT]) {
+    if (wiz_right && !game->window.prev_key_state[WB_KEY_WIZ_RIGHT]) {
         right_down_frame = game->frame_cnt;
     }
     right_down_frame *= wiz_right;
@@ -208,7 +247,7 @@ void wbGameProcessInput(WBGame* game) {
     bool activate_powerup = glfwGetKey(game->window.handle, WB_KEY_POWERUP);
     activate_powerup |= wiggle_cnt >= WB_POWERUP_WIGGLE_CNT;
     int powerup_slotstate = (powerup->unlocked >> 2 * powerup->slot) & WB_POWERUP_SLOTMASK;
-    if (activate_powerup && !prev_key_state[WB_KEY_POWERUP] && powerup->slot >= 0 && (powerup_slotstate < 2 || powerup->slot == 4)) {
+    if (activate_powerup && !game->window.prev_key_state[WB_KEY_POWERUP] && powerup->slot >= 0 && (powerup_slotstate < 2 || powerup->slot == 4)) {
         ma_sound_seek_to_pcm_frame(&game->sound.powerup_activate, 0);
         ma_sound_start(&game->sound.powerup_activate);
         int incr = powerup->slot == 2 || powerup->slot == 3 || powerup->slot == 6 ? 2 : 1;
@@ -219,18 +258,20 @@ void wbGameProcessInput(WBGame* game) {
 
         }
         else if (powerup->slot == 5) {
-            //activate bomb
+            //TODO: activate bomb
+            ma_sound_seek_to_pcm_frame(&game->sound.bomb, 0);
+            ma_sound_start(&game->sound.bomb);
         }
         else {
             powerup->unlocked += incr << 2 * powerup->slot;
         }
         powerup->slot = -1;
     }
-    prev_key_state[WB_KEY_POWERUP] = activate_powerup;
+    game->window.prev_key_state[WB_KEY_POWERUP] = activate_powerup;
 
     // wbPlayerWizProcessInput
     static uint64_t wiz_fire_down_frame;
-    if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE]) {
+    if (wiz_fire && !game->window.prev_key_state[WB_KEY_WIZ_FIRE]) {
         wiz_fire_down_frame = game->frame_cnt;
     }
     wiz_fire_down_frame *= wiz_fire;
@@ -273,7 +314,7 @@ void wbGameProcessInput(WBGame* game) {
     }
 
     static uint64_t last_fire_frame = 0;
-    if (wiz_fire && !prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
+    if (wiz_fire && !game->window.prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
         WBVec2f vel;
         if (map->view.bullet_wiz_cnt < WB_MAP_VIEW_BULLET_WIZ_CNT_MAX) {
             if (game->frame_cnt - last_fire_frame == WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT) {
@@ -318,9 +359,9 @@ void wbGameProcessInput(WBGame* game) {
             wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
         }
     }
-    prev_key_state[WB_KEY_WIZ_FIRE] = wiz_fire;
-    prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
-    prev_key_state[WB_KEY_WIZ_RIGHT] = wiz_right;
+    game->window.prev_key_state[WB_KEY_WIZ_FIRE] = wiz_fire;
+    game->window.prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
+    game->window.prev_key_state[WB_KEY_WIZ_RIGHT] = wiz_right;
 
     // wbPlayerCatProcessInput
     WBCat* cat = &game->player.cat;
@@ -337,7 +378,7 @@ void wbGameProcessInput(WBGame* game) {
 
     cat->hold_position = cat_right || cat_left || cat_up || cat_down;
 
-    if (cat_fire && !prev_key_state[WB_KEY_CAT_FIRE] || autofire) {
+    if (cat_fire && !game->window.prev_key_state[WB_KEY_CAT_FIRE] || autofire) {
         WBVec2f vel;
         if (map->view.bullet_cat_cnt < WB_MAP_VIEW_BULLET_CAT_CNT_MAX) {
             if (game->frame_cnt - last_fire_frame == WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT) {
@@ -375,7 +416,7 @@ void wbGameProcessInput(WBGame* game) {
             cat->next_spray_direction *= -1;
         }
     }
-    prev_key_state[WB_KEY_CAT_FIRE] = cat_fire;
+    game->window.prev_key_state[WB_KEY_CAT_FIRE] = cat_fire;
 }
 
 void wbGameDraw(GLuint texture_id, GLuint vbo,
@@ -809,6 +850,9 @@ int wbGameRun() {
         return -1; // Return -1 to indicate failure
     }
 
+    ma_sound_seek_to_pcm_frame(&game.sound.titlescreen, 0);
+    ma_sound_start(&game.sound.titlescreen);
+
     // Loop until the user closes the window
     while (!glfwWindowShouldClose(game.window.handle)) {
         uint64_t frame_time = (uint64_t)round(glfwGetTime() * WB_FPS);
@@ -823,9 +867,10 @@ int wbGameRun() {
 
         wbWindowLockAspectRatio(&game.window);
 
+        bool space_pressed = glfwGetKey(game.window.handle, GLFW_KEY_SPACE);
+
         switch (game.gamestate.state) {
             case WB_GAMESTATE_TITLESCREEN:
-            game.gamestate.state = WB_GAMESTATE_GETREADY;
             game.gamestate.lifes = 3;
             game.gamestate.score = 0;
             game.gamestate.highscore = 50000;
@@ -834,10 +879,21 @@ int wbGameRun() {
             game.gamestate.powerup.unlocked = WB_POWERUP_NONE;
             game.gamestate.powerup.permanent = WB_POWERUP_NONE;
             game.gamestate.powerup.slot = -1;
+            if (space_pressed && !game.window.prev_key_state[GLFW_KEY_SPACE]) {
+                ma_sound_stop(&game.sound.titlescreen);
+                ma_sound_seek_to_pcm_frame(&game.sound.getready, 0);
+                ma_sound_start(&game.sound.getready);
+                game.gamestate.state = WB_GAMESTATE_GETREADY;
+            }
+            game.window.prev_key_state[GLFW_KEY_SPACE] = space_pressed;
             break;
 
             case WB_GAMESTATE_GETREADY:
-            game.gamestate.state = WB_GAMESTATE_SPAWN;
+            if (space_pressed && !game.window.prev_key_state[GLFW_KEY_SPACE]) {
+                ma_sound_stop(&game.sound.getready);
+                game.gamestate.state = WB_GAMESTATE_SPAWN;
+            }
+            game.window.prev_key_state[GLFW_KEY_SPACE] = space_pressed;
             break;
 
             case WB_GAMESTATE_SPAWN:
@@ -862,7 +918,8 @@ int wbGameRun() {
 
             case WB_GAMESTATE_PLAY:
             if (game.enemy_buffer.head.cnt == 0) {
-                // play sound
+                ma_sound_seek_to_pcm_frame(&game.sound.clear, 0);
+                ma_sound_start(&game.sound.clear);
                 WBVec2f pos;
                 WBVec2f vel = {0.0f};
                 uint32_t seed = time(NULL);
@@ -890,13 +947,14 @@ int wbGameRun() {
                 ma_sound_stop(&game.sound.powerup_collect);
                 ma_sound_stop(&game.sound.powerup_drop);
                 ma_sound_stop(&game.sound.decay);
-                // play explode sound
+                ma_sound_seek_to_pcm_frame(&game.sound.explode, 0);
+                ma_sound_start(&game.sound.explode);
+                strcpy(game.text, "trshshsh"); // TODO: temporary text
                 game.gamestate.lifes--;
                 game.gamestate.powerup.slot = -1;
                 game.gamestate.powerup.unlocked = game.gamestate.powerup.permanent;
                 game.frame_counter = 0;
                 game.gamestate.state = WB_GAMESTATE_HIT;
-                strcpy(game.text, "trshshsh"); // TODO: temporary text
             }
             break;
 
@@ -906,19 +964,26 @@ int wbGameRun() {
             wbGameRender(&game);
             if (++game.frame_counter >= WB_GAMEPLAY_HIT_FRAME_CNT) {
                 if (game.gamestate.lifes) {
-                    game.gamestate.state = WB_GAMESTATE_SPAWN;
+                    ma_sound_seek_to_pcm_frame(&game.sound.getready, 0);
+                    ma_sound_start(&game.sound.getready);
+                    game.gamestate.state = WB_GAMESTATE_GETREADY;
                 } else {
+                    ma_sound_seek_to_pcm_frame(&game.sound.gameover, 0);
+                    ma_sound_start(&game.sound.gameover);
+                    strcpy(game.text, "gameover"); // TODO: temporary text
                     game.frame_counter = 0;
                     game.gamestate.state = WB_GAMESTATE_GAMEOVER;
-                    strcpy(game.text, "gameover"); // TODO: temporary text
-                    // play game over sound
                 }
             }
             break;
 
             case WB_GAMESTATE_GAMEOVER:
             wbGameRender(&game);
-            game.gamestate.state = ++game.frame_counter >= WB_GAMEPLAY_GAMEOVER_FRAME_CNT ? WB_GAMESTATE_TITLESCREEN : WB_GAMESTATE_GAMEOVER;
+            if (++game.frame_counter >= WB_GAMEPLAY_GAMEOVER_FRAME_CNT) {
+                ma_sound_seek_to_pcm_frame(&game.sound.titlescreen, 0);
+                ma_sound_start(&game.sound.titlescreen);
+                game.gamestate.state = WB_GAMESTATE_TITLESCREEN;
+            }
             break;
         }
 

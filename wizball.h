@@ -50,7 +50,7 @@
 
 
 #define WB_FPS 1000 /*50*/
-#define WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT (WB_FPS / 50) /*1*/
+#define WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT (WB_FPS / 50)
 
 #define WB_WINDOW_WIDTH  600 /*600*/
 #define WB_WINDOW_HEIGHT 486 /*486*/
@@ -83,8 +83,8 @@
 #define WB_SCORE_DROPLET 50
 #define WB_SCORE_POWERUP 100
 
-#define WB_GAMEPLAY_HIT_FRAME_CNT (3 * WB_FPS)
-#define WB_GAMEPLAY_GAMEOVER_FRAME_CNT (5 * WB_FPS)
+#define WB_GAMEPLAY_HIT_FRAME_CNT (4 * WB_FPS)
+#define WB_GAMEPLAY_GAMEOVER_FRAME_CNT (6 * WB_FPS)
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
@@ -286,12 +286,21 @@
 #define WB_MAP_BACKGROUND_ATLAS_PATH "sprite/map_background_atlas.png"
 #define WB_MAP_COLLIDER_ATLAS_PATH "sprite/map_collider_atlas.png"
 #define WB_SPRITE_ATLAS_PATH "sprite/sprite_atlas.png"
+
+#define WB_SOUND_TITLESCREEN_PATH "sound/titlescreen.wav"
+#define WB_SOUND_GETREADY_PATH "sound/getready.wav"
 #define WB_SOUND_FIRE_PATH "sound/fire.wav"
 #define WB_SOUND_FIRE_SPAM_PATH "sound/fire_spam.wav"
 #define WB_SOUND_POWERUP_DROP_PATH "sound/powerup_drop.wav"
 #define WB_SOUND_POWERUP_COLLECT_PATH "sound/powerup_collect.wav"
 #define WB_SOUND_POWERUP_ACTIVATE_PATH "sound/powerup_activate.wav"
 #define WB_SOUND_DECAY_PATH "sound/decay.wav"
+#define WB_SOUND_CLEAR_PATH "sound/clear.wav"
+#define WB_SOUND_BLINKER_PATH "sound/blinker.wav"
+#define WB_SOUND_BOMB_PATH "sound/bomb.wav"
+#define WB_SOUND_CATHIT_PATH "sound/cathit.wav"
+#define WB_SOUND_EXPLODE_PATH "sound/explode.wav"
+#define WB_SOUND_GAMEOVER_PATH "sound/gameover.wav"
 
 // Key Bindings
 #define WB_KEY_WIZ_LEFT GLFW_KEY_A
@@ -537,16 +546,25 @@ typedef struct {
     GLFWwindow* handle;
     int width;
     int height;
+    int prev_key_state[GLFW_KEY_LAST + 1];
 } WBWindow;
 
 typedef struct {
     ma_engine engine;
+    ma_sound titlescreen;
+    ma_sound getready;
     ma_sound fire;
     ma_sound fire_spam;
     ma_sound powerup_drop;
     ma_sound powerup_collect;
     ma_sound powerup_activate;
     ma_sound decay;
+    ma_sound clear;
+    ma_sound blinker;
+    ma_sound bomb;
+    ma_sound cathit;
+    ma_sound explode;
+    ma_sound gameover;
 } WBSound;
 
 typedef struct {

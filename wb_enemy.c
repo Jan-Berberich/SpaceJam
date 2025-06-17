@@ -74,14 +74,21 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
             enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
             wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
-            wiz->health--;
+            if (--wiz->health) {
+                // TODO: play shieldhit sound
+            }
         }
 
         if (enemy->head.pos.x > cat->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > cat->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_ENEMY_HITBOX_SIZE / 2
         ) {
             wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
-            cat->health--;
+            if (--cat->health) {
+                ma_sound_seek_to_pcm_frame(&sound->cathit, 0);
+                ma_sound_start(&sound->cathit);
+            } else {
+                // TODO: play catdeath sound
+            }
         }
     }
 
