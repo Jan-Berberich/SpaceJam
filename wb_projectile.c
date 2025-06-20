@@ -43,14 +43,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             default:
             projectile->head.pos.x += projectile->vel.x;
             projectile->head.pos.y += projectile->vel.y;
-            if (projectile->head.pos.x < map->view.center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view.center_x + WB_MAP_VIEW_WIDTH / 2 ||
-                projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_MAP_HORIZON_HEIGHT ||
-                wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)
-            ) {
-                wbBufferRemove(projectile_buffer, i);
-                continue;
-            }
             int j;
+            // enemy hit?
             for (j = 0; j < WB_ENEMY_CNT_MAX; j++) {
                 if (enemies[j].head.type != WB_ENEMY_NONE &&
                     projectile->head.pos.x > enemies[j].head.pos.x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.x <= enemies[j].head.pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
@@ -61,7 +55,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                     break;
                 }
             } if (j != WB_ENEMY_CNT_MAX) continue;
-            for (int j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
+            // powerup hit?
+            for (j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
                 if (particles[j].head.type == WB_PARTICLE_POWERUP &&
                     projectile->head.pos.x > particles[j].head.pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.x <= particles[j].head.pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&
                     projectile->head.pos.y > particles[j].head.pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.y <= particles[j].head.pos.y + WB_PARTICLE_HITBOX_SIZE / 2
@@ -70,6 +65,14 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                     break;
                 }
             } if (j != WB_PARTICLE_CNT_MAX) continue;
+            // map hit?
+            if (projectile->head.pos.x < map->view.center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view.center_x + WB_MAP_VIEW_WIDTH / 2 ||
+                projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_MAP_HORIZON_HEIGHT ||
+                wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)
+            ) {
+                wbBufferRemove(projectile_buffer, i);
+                continue;
+            }
             map->view.bullet_wiz_cnt += projectile->head.type == WB_PROJECTILE_BULLET_WIZ
                                      || projectile->head.type == WB_PROJECTILE_BLAZER_WIZ;
             map->view.bullet_cat_cnt += projectile->head.type == WB_PROJECTILE_BULLET_CAT
