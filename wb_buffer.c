@@ -12,7 +12,6 @@ int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
             enemy++;
             idx++;
         }
-        enemy->frame_age = 0;
         entity_head = &enemy->head;
         break;
 
@@ -23,7 +22,6 @@ int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
             particle++;
             idx++;
         }
-        particle->frame_age = 0;
         entity_head = &particle->head;
         break;
 
@@ -40,7 +38,8 @@ int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
     entity_head->pos.x = pos->x;
     entity_head->pos.y = pos->y;
     entity_head->type = object_type;
-    entity_head->color_key = 0.0;
+    entity_head->color_key = 0.0f;
+    entity_head->animation_key = 0.0f;
 
     buffer_head->cnt++;
 

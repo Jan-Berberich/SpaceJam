@@ -23,13 +23,13 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
 
             case WB_PROJECTILE_BEAM:
             // render both parts from one projectile
-            // use color_key for offset_u and (color_key + frame_cnt) % WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT for color
             map->view.beam = true;
             projectile->head.pos = wiz->pos;
-            if ((int)(projectile->head.color_key / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED) >= WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {
+            projectile->head.animation_key += WB_PROJECTILE_BEAM_ANIMATION_SPEED;
+            if (projectile->head.animation_key >= WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(projectile_buffer, i);
                 continue;
-            } projectile->head.color_key += WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED;
+            }
             for (int j = 0; j < WB_ENEMY_CNT_MAX; j++) {
                 if (enemies[j].head.type != WB_ENEMY_NONE &&
                     projectile->head.pos.x > enemies[j].head.pos.x - WB_ENEMY_HITBOX_SIZE / 2                                      && projectile->head.pos.x <= enemies[j].head.pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
@@ -48,8 +48,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             for (j = 0; j < WB_ENEMY_CNT_MAX; j++) {
                 if (enemies[j].head.type != WB_ENEMY_NONE &&
                     projectile->head.pos.x > enemies[j].head.pos.x - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.x <= enemies[j].head.pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
-                    projectile->head.pos.y > enemies[j].head.pos.y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.y <= enemies[j].head.pos.y + WB_ENEMY_HITBOX_SIZE / 2
-                ) {
+                    projectile->head.pos.y > enemies[j].head.pos.y - WB_ENEMY_HITBOX_SIZE / 2 && projectile->head.pos.y <= enemies[j].head.pos.y + WB_ENEMY_HITBOX_SIZE / 2) {
+                    
                     wbEnemyRemove(enemy_buffer, j, particle_buffer, gamestate, sound);
                     wbBufferRemove(projectile_buffer, i);
                     break;
@@ -59,8 +59,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             for (j = 0; j < WB_PARTICLE_CNT_MAX; j++) {
                 if (particles[j].head.type == WB_PARTICLE_POWERUP &&
                     projectile->head.pos.x > particles[j].head.pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.x <= particles[j].head.pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&
-                    projectile->head.pos.y > particles[j].head.pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.y <= particles[j].head.pos.y + WB_PARTICLE_HITBOX_SIZE / 2
-                ) {
+                    projectile->head.pos.y > particles[j].head.pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && projectile->head.pos.y <= particles[j].head.pos.y + WB_PARTICLE_HITBOX_SIZE / 2) {
+                    
                     wbBufferRemove(projectile_buffer, i);
                     break;
                 }
@@ -68,8 +68,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             // map hit?
             if (projectile->head.pos.x < map->view.center_x - WB_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view.center_x + WB_MAP_VIEW_WIDTH / 2 ||
                 projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_MAP_HORIZON_HEIGHT ||
-                wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)
-            ) {
+                wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)) {
+                
                 wbBufferRemove(projectile_buffer, i);
                 continue;
             }

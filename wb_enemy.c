@@ -6,6 +6,7 @@ int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* 
     enemy->vel.x = vel->x;
     enemy->vel.y = vel->y;
     enemy->movepattern_type = movepattern_type;
+    enemy->frame_age = 0;
     return idx;
 }
 
@@ -28,49 +29,65 @@ void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* parti
     gamestate->score += WB_SCORE_ENEMY;
 }
 
+void wbEnemyMovepatternUpdate(WBEnemy* enemy) {
+    switch (enemy->movepattern_type) {
+        case WB_MOVEPATTERN_INERT:
+        break;
+        case WB_MOVEPATTERN_GLIDE:
+        break;
+        case WB_MOVEPATTERN_STEP_DOWN:
+        break;
+        case WB_MOVEPATTERN_STEP_UP:
+        break;
+        case WB_MOVEPATTERN_CIRCLE:
+        enemy->vel.x = 100.0f * cosf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
+        enemy->vel.y = 100.0f * sinf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
+        break;
+        case WB_MOVEPATTERN_BOUNCE:
+        break;
+        case WB_MOVEPATTERN_BOUNCE_FLOOR:
+        break;
+        case WB_MOVEPATTERN_BOUNCE_CEIL:
+        break;
+        case WB_MOVEPATTERN_ARC:
+        break;
+        case WB_MOVEPATTERN_RAID:
+        break;
+    }
+}
+
 void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemy;
-    gamestate->enemy_cnt = 0;
+    gamestate->enemy_cnt = WB_ENEMY_CNT_MAX;
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
         enemy = &enemy_buffer->entries[i];
         switch ((WBEnemyType)enemy->head.type) {
             case WB_ENEMY_NONE:
+            gamestate->enemy_cnt--;
             continue;
 
             case WB_ENEMY_BLINKER:
             gamestate->enemy_cnt--;
-            default:
-            gamestate->enemy_cnt++;
-            switch (enemy->movepattern_type) {
-                case WB_MOVEPATTERN_INERT:
-                break;
-                case WB_MOVEPATTERN_GLIDE:
-                break;
-                case WB_MOVEPATTERN_STEP_DOWN:
-                break;
-                case WB_MOVEPATTERN_STEP_UP:
-                break;
-                case WB_MOVEPATTERN_CIRCLE:
-                enemy->vel.x = 100.0f * cosf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
-                enemy->vel.y = 100.0f * sinf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
-                break;
-                case WB_MOVEPATTERN_BOUNCE:
-                break;
-                case WB_MOVEPATTERN_BOUNCE_FLOOR:
-                break;
-                case WB_MOVEPATTERN_BOUNCE_CEIL:
-                break;
-                case WB_MOVEPATTERN_ARC:
-                break;
-                case WB_MOVEPATTERN_RAID:
-                break;
-            }
+            wbEnemyMovepatternUpdate(enemy);
+            break;
+
+            case WB_ENEMY_SPINNERBLUE:
+            enemy->head.animation_key += WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED;
+            enemy->head.animation_key -= enemy->head.animation_key >= WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT ? WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT : 0;
+            wbEnemyMovepatternUpdate(enemy);
+            break;
+
+            case WB_ENEMY_CIRCLE:
+            wbEnemyMovepatternUpdate(enemy);
             break;
         }
-        enemy->head.color_key += WB_ENEMY_ANIMATION_COLOR_SPEED;
-        enemy->head.color_key -= enemy->head.color_key >= WB_ENEMY_ANIMATION_COLOR_CNT ? WB_ENEMY_ANIMATION_COLOR_CNT : 0;
+
         enemy->head.pos.x += enemy->vel.x;
         enemy->head.pos.y += enemy->vel.y;
+        if (enemy->head.color_key >= 0) {
+            enemy->head.color_key += WB_ENEMY_ANIMATION_COLOR_SPEED;
+            enemy->head.color_key -= enemy->head.color_key >= WB_ENEMY_ANIMATION_COLOR_CNT ? WB_ENEMY_ANIMATION_COLOR_CNT : 0;
+        }
         enemy->frame_age++;
 
         if (gamestate->state == WB_GAMESTATE_PLAY &&

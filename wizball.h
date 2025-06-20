@@ -155,7 +155,7 @@
 #define WB_PLAYER_CAT_VEL (4.0f * 50 / WB_FPS * 2)
 // ~movement
 
-#define WB_ENEMY_ANIMATION_COLOR_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_ENEMY_ANIMATION_COLOR_SPEED (1.0f / 5.0f * 50 / WB_FPS)
 #define WB_ENEMY_ANIMATION_COLOR_CNT 4
 #define WB_ENEMY_ANIMATION_COLOR_0 0xFFFFFFFF /* #FFFFFFFF */
 #define WB_ENEMY_ANIMATION_COLOR_1 0xCCD454FF /* #CCD454FF */
@@ -216,7 +216,6 @@
 #define WB_DIGIT_SPRITE_SIZE 16
 
 #define WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
-#define WB_ENEMY_CIRCLE_ANIMATION_SPEED (1.0f / 5.0f * 50 / WB_FPS)
 
 #define WB_PLAYER_WIZ_AUTOFIRE_FRAME_CNT (12 * WB_FPS / 50)
 
@@ -451,6 +450,7 @@ typedef struct {
     uint8_t type;
     WBVec2f pos;
     float color_key;
+    float animation_key;
 } WBEntityHead;
 
 typedef struct {
@@ -489,12 +489,11 @@ typedef struct {
     WBMovepatternType movepattern_type;
     WBVec2f vel;
     int attack_period;
-    uint64_t frame_age;
+    float frame_age;
 } WBEnemy;
 
 typedef struct {
     WBEntityHead head;
-    float frame_age;
 } WBParticle;
 
 typedef struct {

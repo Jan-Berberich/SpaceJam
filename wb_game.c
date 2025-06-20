@@ -257,23 +257,33 @@ void wbGameProcessInput(WBGame* game) {
     bool activate_powerup = glfwGetKey(game->window.handle, WB_KEY_POWERUP);
     activate_powerup |= wiggle_cnt >= WB_POWERUP_WIGGLE_CNT;
     int powerup_slotstate = (powerup->unlocked >> 2 * powerup->slot) & WB_POWERUP_SLOTMASK;
-    if (activate_powerup && !game->window.prev_key_state[WB_KEY_POWERUP] && powerup->slot >= 0 && (powerup_slotstate < 2 || powerup->slot == 4)) {
+    if (activate_powerup && !game->window.prev_key_state[WB_KEY_POWERUP] && powerup->slot >= 0 &&
+        (powerup_slotstate < WB_POWERUP_SLOTMASK - 1 || powerup->slot == (int)(0.5f * log2f(WB_POWERUP_WIZSPRAY + 1)))) {
+        
         ma_sound_seek_to_pcm_frame(&game->sound.powerup_activate, 0);
         ma_sound_start(&game->sound.powerup_activate);
-        int incr = powerup->slot == 2 || powerup->slot == 3 || powerup->slot == 6 ? 2 : 1;
-        if (powerup->slot == 4) {
+
+        int incr = powerup->slot == (int)(0.5f * log2f(WB_POWERUP_CAT + 1)) ||
+                   powerup->slot == (int)(0.5f * log2f(WB_POWERUP_BLAZERS + 1))||
+                   powerup->slot == (int)(0.5f * log2f(WB_POWERUP_SHIELD + 1)) ?
+                   2 : 1;
+        if (powerup->slot == (int)(0.5f * log2f(WB_POWERUP_WIZSPRAY + 1))) {
             powerup->unlocked = powerup_slotstate == 0 ?
-                powerup->unlocked + (incr << 2 * powerup->slot) : 
-                powerup->unlocked ^ (WB_POWERUP_SLOTMASK << 2 * powerup->slot);
+                                powerup->unlocked + (incr << 2 * powerup->slot) : 
+                                powerup->unlocked ^ (WB_POWERUP_SLOTMASK << 2 * powerup->slot);
 
         }
-        else if (powerup->slot == 5) {
+        else if (powerup->slot == (int)(0.5f * log2f(WB_POWERUP_BOMB + 1))) {
             //TODO: activate bomb
             ma_sound_seek_to_pcm_frame(&game->sound.bomb, 0);
             ma_sound_start(&game->sound.bomb);
         }
         else {
             powerup->unlocked += incr << 2 * powerup->slot;
+        }
+        if (powerup->unlocked & WB_POWERUP_BEAM && powerup->slot == (int)(0.5f * log2f(WB_POWERUP_BEAM + 1))) {
+            int idx = wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &wiz->vel);
+            game->projectile_buffer.entries[idx].head.animation_key = WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT - 1;
         }
         powerup->slot = -1;
     }
@@ -298,11 +308,11 @@ void wbGameProcessInput(WBGame* game) {
         wiz_up     = false;
         wiz_down   = false;
     }
-    if (wiz_right) {
+    if (wiz_right && game->gamestate.state == WB_GAMESTATE_PLAY) {
         wiz->vel_x_key += WB_PLAYER_WIZ_ACC_X * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
         wiz->vel_x_key = fminf(wiz->vel_x_key,   WB_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint);
     }
-    if (wiz_left) {
+    if (wiz_left && game->gamestate.state == WB_GAMESTATE_PLAY) {
         wiz->vel_x_key -= WB_PLAYER_WIZ_ACC_X * WB_GAMEPLAY_PROCESS_INPUT_FRAME_CNT;
         wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint));
     }
@@ -451,7 +461,7 @@ void wbGameDrawDust(WBGame* game, GLint keyAlphaLoc, GLint frameCntLoc) {
     float map_height = (float)map->atlas.background.height / WB_MAP_CNT;
     float window_width = WB_WINDOW_WIDTH;
     float window_height = WB_WINDOW_HEIGHT;
-    float dust_sprite_size = (float)WB_MAP_DUST_SPRITE_SIZE;
+    float dust_sprite_size = WB_MAP_DUST_SPRITE_SIZE;
     float dust_sprite_width = dust_sprite_size * WB_MAP_DUST_SPRITE_SCALE_X;
     float dust_sprite_height = dust_sprite_size * WB_MAP_DUST_SPRITE_SCALE_Y;
     float width_x = dust_sprite_width / window_width;
@@ -462,8 +472,8 @@ void wbGameDrawDust(WBGame* game, GLint keyAlphaLoc, GLint frameCntLoc) {
     float offset_u;
     float height_v = dust_sprite_size / map->atlas.dust.height;
     float offset_v = 0.0f;
-    int dust_row_cnt = ceil((float)WB_MAP_HORIZON_HEIGHT / dust_sprite_height);
-    int dust_col_cnt = ceil((float)WB_MAP_VIEW_WIDTH / dust_sprite_width) + 1;
+    int dust_row_cnt = ceil(WB_MAP_HORIZON_HEIGHT / dust_sprite_height);
+    int dust_col_cnt = ceil(WB_MAP_VIEW_WIDTH / dust_sprite_width) + 1;
     for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
         for (int j = 0; j < dust_row_cnt; j++) {
             for (int k = 0; k < dust_col_cnt; k++) {
@@ -480,7 +490,7 @@ void wbGameDrawDust(WBGame* game, GLint keyAlphaLoc, GLint frameCntLoc) {
                 );
             }
         }
-        glUniform1f(frameCntLoc, (float)game->frame_cnt);
+        glUniform1f(frameCntLoc, game->frame_cnt);
         glUniform1f(keyAlphaLoc, 128.0/255.0);
     }
     glUniform1f(keyAlphaLoc, -1.0);
@@ -531,16 +541,13 @@ void wbGameDrawEntities(WBGame* game, GLint replaceColorLoc) {
             continue;
 
             case WB_PARTICLE_POWERUP:
-            offset_u = (float)WB_PARTICLE_POWERUP_SPRITE_ATLAS_X / sprite_atlas_width;
-            offset_v = (float)WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
+            offset_u = WB_PARTICLE_POWERUP_SPRITE_ATLAS_X / sprite_atlas_width;
+            offset_v = WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
 
             case WB_PARTICLE_DECAY:
-            offset_u = (float)WB_PARTICLE_DECAY_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
-                (uint64_t)((double)particle->frame_age * WB_PARTICLE_DECAY_ANIMATION_SPEED)
-                % WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT
-            ) * width_u;
-            offset_v = (float)WB_PARTICLE_DECAY_SPRITE_ATLAS_Y / sprite_atlas_width;
+            offset_u = WB_PARTICLE_DECAY_SPRITE_ATLAS_X / sprite_atlas_width + (int)particle->head.animation_key * width_u;
+            offset_v = WB_PARTICLE_DECAY_SPRITE_ATLAS_Y / sprite_atlas_width;
             uint32_t rgba = game->enemy_buffer.animation_colors[(int)particle->head.color_key];
             rgbaSplitf(rgba, &r, &g, &b, &a);
             glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
@@ -563,19 +570,13 @@ void wbGameDrawEntities(WBGame* game, GLint replaceColorLoc) {
             continue;
 
             case WB_ENEMY_SPINNERBLUE:
-            offset_u = (float)WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
-                (uint64_t)((double)enemy->frame_age * WB_ENEMY_SPINNERBLUE_ANIMATION_SPEED)
-                % WB_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT
-            ) * width_u;
-            offset_v = (float)WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y / sprite_atlas_height;
+            offset_u = WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X / sprite_atlas_width + (int)enemy->head.animation_key * width_u;
+            offset_v = WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
 
             case WB_ENEMY_CIRCLE:
-            offset_u = (float)WB_ENEMY_CIRCLE_SPRITE_ATLAS_X / sprite_atlas_width + (float)(
-                (uint64_t)((double)enemy->frame_age * WB_ENEMY_CIRCLE_ANIMATION_SPEED)
-                % WB_ENEMY_CIRCLE_ANIMATION_FRAME_CNT
-            ) * width_u;
-            offset_v = (float)WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y / sprite_atlas_height;
+            offset_u = WB_ENEMY_CIRCLE_SPRITE_ATLAS_X / sprite_atlas_width;
+            offset_v = WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y / sprite_atlas_height;
             uint32_t rgba = game->enemy_buffer.animation_colors[(int)enemy->head.color_key];
             rgbaSplitf(rgba, &r, &g, &b, &a);
             glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
@@ -596,32 +597,32 @@ void wbGameDrawEntities(WBGame* game, GLint replaceColorLoc) {
         switch (projectile->head.type) {
             case WB_PROJECTILE_NONE: continue;
             case WB_PROJECTILE_BULLET_WIZ:
-                offset_u = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_BULLET_CAT:
-                offset_u = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BULLET_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_BLAZER_WIZ:
-                offset_u = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_BLAZER_CAT:
-                offset_u = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_SPRAY_NW:
-                offset_u = (float)WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_SPRAY_N:
-                offset_u = (float)WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_SPRAY_NE:
-                offset_u = (float)WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_X / sprite_atlas_width;
-                offset_v = (float)WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_X / sprite_atlas_width;
+                offset_v = WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
             case WB_PROJECTILE_BEAM:
                 uint64_t color_key = fmod((double)game->frame_cnt * WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED, WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT);
@@ -634,16 +635,14 @@ void wbGameDrawEntities(WBGame* game, GLint replaceColorLoc) {
                 offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
                          +(2.0f * map_height - sprite_size + 2.0f) / window_height
                          - 2.0f * roundf(projectile->head.pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + width_u
-                         * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
-                offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + (int)projectile->head.animation_key * width_u;
+                offset_v = WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
                 wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
                     width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
                 );
                 projectile->head.pos.y += WB_PROJECTILE_BEAM_HITBOX_SIZE;
-                offset_u = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + width_u * WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT + sprite_size / sprite_atlas_width
-                         * (int)((projectile->head.color_key - WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED) / WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED * WB_PROJECTILE_BEAM_ANIMATION_SPEED);
-                offset_v = (float)WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
+                offset_u = WB_PROJECTILE_BEAM_SPRITE_ATLAS_X / sprite_atlas_width + ((int)projectile->head.animation_key + WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) * width_u;
+                offset_v = WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y / sprite_atlas_height;
             break;
         }
         offset_x = 2.0f * roundf((projectile->head.pos.x - game->map.view.center_x) / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_width;
@@ -677,9 +676,9 @@ void wbGameDrawPlayerCat(WBGame* game) {
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(cat->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-    offset_u = (float)WB_PLAYER_CAT_SPRITE_ATLAS_X / sprite_atlas_width
-             + ((uint64_t)((double)game->frame_cnt * WB_PLAYER_CAT_ANIMATION_SPEED) % WB_PLAYER_CAT_ANIMATION_FRAME_CNT) * width_u;
-    offset_v = (float)WB_PLAYER_CAT_SPRITE_ATLAS_Y / sprite_atlas_height;
+    offset_u = WB_PLAYER_CAT_SPRITE_ATLAS_X / sprite_atlas_width
+             + (int)fmodf(game->frame_cnt * WB_PLAYER_CAT_ANIMATION_SPEED, WB_PLAYER_CAT_ANIMATION_FRAME_CNT) * width_u;
+    offset_v = WB_PLAYER_CAT_SPRITE_ATLAS_Y / sprite_atlas_height;
     wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
@@ -705,7 +704,7 @@ void wbGameDrawPlayerWiz(WBGame* game) {
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
     offset_u = roundf(wiz->animation_angle) * width_u + WB_PLAYER_WIZ_SPRITE_ATLAS_X / sprite_atlas_width;
-    offset_v = (float)WB_PLAYER_WIZ_SPRITE_ATLAS_Y / sprite_atlas_height;
+    offset_v = WB_PLAYER_WIZ_SPRITE_ATLAS_Y / sprite_atlas_height;
     wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
@@ -733,9 +732,9 @@ void wbGameDrawPlayerWizSpawn(WBGame* game) {
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(cat->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-    offset_u = (float)WB_PLAYER_CAT_SPRITE_ATLAS_X / sprite_atlas_width
-             + ((uint64_t)((double)game->frame_cnt * WB_PLAYER_CAT_ANIMATION_SPEED) % WB_PLAYER_CAT_ANIMATION_FRAME_CNT) * width_u;
-    offset_v = (float)WB_PLAYER_CAT_SPRITE_ATLAS_Y / sprite_atlas_height;
+    offset_u = WB_PLAYER_CAT_SPRITE_ATLAS_X / sprite_atlas_width
+             + (int)fmodf(game->frame_cnt * WB_PLAYER_CAT_ANIMATION_SPEED, WB_PLAYER_CAT_ANIMATION_FRAME_CNT) * width_u;
+    offset_v = WB_PLAYER_CAT_SPRITE_ATLAS_Y / sprite_atlas_height;
     wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
     );
@@ -745,9 +744,9 @@ void wbGameDrawPlayerWizSpawn(WBGame* game) {
     offset_y = 2.0f * WB_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT / window_height;
-    offset_u = (float)WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_X / sprite_atlas_width
+    offset_u = WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_X / sprite_atlas_width
              + ((uint64_t)((double)game->frame_counter * WB_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) % (game->sprite_atlas.width / WB_SPRITE_SIZE)) * width_u;
-    offset_v = (float)WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_Y / sprite_atlas_height
+    offset_v = WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_Y / sprite_atlas_height
              + ((uint64_t)((double)game->frame_counter * WB_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) / (game->sprite_atlas.width / WB_SPRITE_SIZE)) * height_v;
     wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
@@ -769,7 +768,7 @@ void wbGameDrawGui(WBGame* game, GLint replaceColorLoc) {
 
     // powerup slots
     for (int i = 0; i < WB_POWERUP_SLOT_CNT; i++) {
-        int animation_color_idx = i == game->gamestate.powerup.slot ? (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_CNT : 0;
+        int animation_color_idx = i == game->gamestate.powerup.slot ? (int)fmodf(game->frame_cnt * WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_SPEED, WB_GRAPHIC_GUI_POWERUP_ANIMATION_COLOR_CNT) : 0;
         uint32_t rgba = game->gamestate.powerup.animation_colors[animation_color_idx];
         rgbaSplitf(rgba, &r, &g, &b, &a);
         glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
@@ -783,16 +782,16 @@ void wbGameDrawGui(WBGame* game, GLint replaceColorLoc) {
             offset_u = ((2.0f * i + powerup_slotstate) * sprite_size + WB_POWERUP_SPRITE_ATLAS_X) / sprite_atlas_width;
         }
         else {
-            offset_u = (float)WB_POWERUP_MAXED_SPRITE_ATLAS_X / sprite_atlas_width;
+            offset_u = WB_POWERUP_MAXED_SPRITE_ATLAS_X / sprite_atlas_width;
         }
-        offset_v = (float)WB_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
+        offset_v = WB_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
         wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
             width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v
         );
     }
 
     // 1UP
-    int animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
+    int animation_color_idx = fmodf(game->frame_cnt * WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED, WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT);
     uint32_t rgba = game->gamestate.red_animation_colors[animation_color_idx];
     rgbaSplitf(rgba, &r, &g, &b, &a);
     glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
@@ -859,7 +858,7 @@ void wbGameDrawGui(WBGame* game, GLint replaceColorLoc) {
 
     // level
     uint32_t* animation_colors = (uint32_t*)((uint8_t*)game->gamestate.red_animation_colors + game->gamestate.level % 3 * (sizeof game->gamestate.red_animation_colors));
-    animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_LEVEL_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
+    animation_color_idx = fmodf(game->frame_cnt * WB_GRAPHIC_GUI_LEVEL_ANIMATION_COLOR_SPEED, WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT);
     rgba = animation_colors[animation_color_idx];
     rgbaSplitf(rgba, &r, &g, &b, &a);
     glUniform4f(replaceColorLoc, r, g, b, a); // #FF00FFFF
@@ -893,7 +892,7 @@ void wbGameDrawText(WBGame* game) {
         float offset_u = (WB_LETTER_SPRITE_ATLAS_X + i * WB_LETTER_SPRITE_SIZE) / sprite_atlas_width;
         wbGameDraw(game->sprite_atlas.texture_id, game->shader.vbo,
             WB_LETTER_SPRITE_SIZE / window_width, offset_x,
-            WB_LETTER_SPRITE_SIZE / window_height, 0.1,
+            WB_LETTER_SPRITE_SIZE / window_height, 1.0f - WB_LETTER_SPRITE_SIZE / window_height,
             WB_LETTER_SPRITE_SIZE / sprite_atlas_width, offset_u,
             WB_LETTER_SPRITE_SIZE / sprite_atlas_height, WB_LETTER_SPRITE_ATLAS_Y / sprite_atlas_height
         );
@@ -956,7 +955,6 @@ void wbGameRender(WBGame* game) {
         wbGameDrawDust(game, keyAlphaLoc, frameCntLoc);
         wbGameDrawMap(game, &game->map.atlas.background);
         wbGameDrawEntities(game, replaceColorLoc);
-        wbGameDrawPlayerCat(game);
         wbGameDrawGui(game, replaceColorLoc);
         wbGameDrawText(game);
         break;
@@ -976,6 +974,28 @@ void wbGameRender(WBGame* game) {
     glfwSwapBuffers(game->window.handle);
 }
 
+void wbGameRandomEnemyInsert(WBGame* game) {
+    uint32_t seed = glfwGetTime() * 1e9;
+    WBVec2f pos;
+    float pos_y_offset = (WB_MAP_VIEW_OFFSET_Y + game->map.atlas.background.height / WB_MAP_CNT - 1.5f * WB_SPRITE_SIZE);
+    pos.x = randfin(seed++,                  0.0f, 0.5f * WB_WINDOW_WIDTH);
+    pos.y = randfin(seed++, 0.5f * WB_SPRITE_SIZE, 0.5f * WB_WINDOW_HEIGHT / 2) + 0.5f * pos_y_offset;
+    WBVec2f vel;
+    vel.x = randfin(seed++, 0.25f * WB_PLAYER_WIZ_VEL_X_6, 2.0f * WB_PLAYER_WIZ_VEL_X_6);
+    vel.y = randfin(seed++,                          0.0f, 2.0f * WB_PLAYER_WIZ_VEL_X_6);
+    vel.x *= (*((uint8_t*)&vel.x) & 1) * 2 - 1;
+    for (int i = 0; i < 4; i++) {
+        pos.x *= -1.0f;
+        vel.x *= -1.0f;
+        if (i == 2) {
+            pos.y = -pos.y + pos_y_offset;
+            vel.y = -vel.y;
+        }
+        int idx = wbEnemyAppend(&game->enemy_buffer, WB_ENEMY_CIRCLE, &pos, &vel, WB_MOVEPATTERN_INERT);
+        wbBufferRemove(&game->enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
+    }
+}
+
 void wbGamestateGetreadySetup(WBGame* game) {
     ma_sound_stop(&game->sound.titlescreen);
     ma_sound_seek_to_pcm_frame(&game->sound.getready, 0);
@@ -986,6 +1006,9 @@ void wbGamestateGetreadySetup(WBGame* game) {
     wbBufferClear(&game->projectile_buffer);
     game->map.view.center_x = 0.0f;
     game->frame_counter = 0;
+    for (int i = 0; i < 4; i++) {
+        wbGameRandomEnemyInsert(game);
+    }
     game->gamestate.state = WB_GAMESTATE_GETREADY;
 }
 
@@ -1026,31 +1049,12 @@ int wbGameRun() {
             break;
 
             case WB_GAMESTATE_GETREADY:
-            if (game.frame_counter++ % (uint64_t)(25.0f * WB_FPS / 50) == 0) {
-                uint32_t seed = game.frame_cnt;
-                WBVec2f pos;
-                float pos_y_offset = (WB_MAP_VIEW_OFFSET_Y + game.map.atlas.background.height / WB_MAP_CNT - WB_SPRITE_SIZE + 1);
-                pos.x = randfin(seed++, 0.0f, 0.5f * WB_WINDOW_WIDTH);
-                pos.y = randfin(seed++, 0.0f, 0.5f * WB_WINDOW_HEIGHT / 2) + 0.5f * pos_y_offset;
-                WBVec2f vel;
-                vel.x = randfin(seed++, 0.5f * WB_PLAYER_WIZ_VEL_X_6, 2.0f * WB_PLAYER_WIZ_VEL_X_6);
-                vel.x *= (*((uint8_t*)&vel.x) & 1) * 2 - 1;
-                vel.y = randfin(seed++, 0.5f * WB_PLAYER_WIZ_VEL_X_6, 2.0f * WB_PLAYER_WIZ_VEL_X_6);
-                vel.y *= (*((uint8_t*)&vel.y) & 2)     - 1;
-                for (int i = 0; i < 4; i++) {
-                    pos.x *= -1.0f;
-                    vel.x *= -1.0f;
-                    if (i == 2) {
-                        pos.y = -pos.y + pos_y_offset;
-                        vel.y = -vel.y;
-                    }
-                    int idx = wbEnemyAppend(&game.enemy_buffer, WB_ENEMY_CIRCLE, &pos, &vel, WB_MOVEPATTERN_INERT);
-                    wbBufferRemove(&game.enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
-                }
+            uint32_t seed = glfwGetTime() * 1e9;
+            if (randfin(seed, 0.0f, 1.0f) < 0.0625f / WB_FPS * 50) {
+                wbGameRandomEnemyInsert(&game);
             }
             wbGameRender(&game);
             wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
-            uint32_t seed = time(NULL);
             if (space_pressed && !game.window.prev_key_state[GLFW_KEY_SPACE]) {
                 ma_sound_stop(&game.sound.getready);
                 game.frame_counter = 0;
