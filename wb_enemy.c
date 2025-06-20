@@ -1,10 +1,12 @@
 #include "wizball.h"
 
-void wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
-    WBEnemy* enemy = wbBufferAppend(enemy_buffer, enemy_type, pos);
+int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
+    int idx = wbBufferAppend(enemy_buffer, enemy_type, pos);
+    WBEnemy* enemy = &enemy_buffer->entries[idx];
     enemy->vel.x = vel->x;
     enemy->vel.y = vel->y;
     enemy->movepattern_type = movepattern_type;
+    return idx;
 }
 
 void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
@@ -16,7 +18,8 @@ void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* parti
         ma_sound_start(&sound->powerup_drop);
     }
     else {
-        WBParticle* particle = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
+        int particle_idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
+        WBParticle* particle = &particle_buffer->entries[particle_idx];
         particle->head.color_key = enemies[idx].head.color_key;
         ma_sound_seek_to_pcm_frame(&sound->decay, 0);
         ma_sound_start(&sound->decay);
@@ -57,7 +60,7 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
                 break;
                 case WB_MOVEPATTERN_BOUNCE_CEIL:
                 break;
-                case WB_MOVEPATTERN_JAY:
+                case WB_MOVEPATTERN_ARC:
                 break;
                 case WB_MOVEPATTERN_RAID:
                 break;
@@ -70,26 +73,24 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
         enemy->head.pos.y += enemy->vel.y;
         enemy->frame_age++;
 
-        if (enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2
-        ) {
-            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
-            if (--wiz->health) {
-                // TODO: play shieldhit sound
-            }
-        }
-
-        if (enemy->head.pos.x > cat->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->head.pos.y > cat->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_ENEMY_HITBOX_SIZE / 2
-        ) {
+        if (gamestate->state == WB_GAMESTATE_PLAY &&
+            enemy->head.pos.x > cat->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > cat->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_ENEMY_HITBOX_SIZE / 2) {
+            
             wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
             if (--cat->health) {
                 ma_sound_seek_to_pcm_frame(&sound->cathit, 0);
                 ma_sound_start(&sound->cathit);
-            } else {
-                // TODO: play catdeath sound
             }
+            continue;
+        }
+
+        if (gamestate->state == WB_GAMESTATE_PLAY &&
+            enemy->head.pos.x > wiz->pos.x - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > wiz->pos.y - WB_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_ENEMY_HITBOX_SIZE / 2) {
+            
+            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
+            wiz->health--;
         }
     }
-
 }

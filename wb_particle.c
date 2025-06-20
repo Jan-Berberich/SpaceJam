@@ -8,10 +8,10 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate
 
         switch (particle->head.type) {
             case WB_PARTICLE_POWERUP:
-            if (
+            if (gamestate->state == WB_GAMESTATE_PLAY &&
                 particle->head.pos.x > wiz->pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.x <= wiz->pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&
-                particle->head.pos.y > wiz->pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_PARTICLE_HITBOX_SIZE / 2
-            ) {
+                particle->head.pos.y > wiz->pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_PARTICLE_HITBOX_SIZE / 2) {
+                
                 wbBufferRemove(particle_buffer, i);
                 ma_sound_seek_to_pcm_frame(&sound->powerup_collect, 0);
                 ma_sound_start(&sound->powerup_collect);

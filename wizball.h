@@ -85,6 +85,8 @@
 
 #define WB_GAMEPLAY_HIT_FRAME_CNT (4 * WB_FPS)
 #define WB_GAMEPLAY_GAMEOVER_FRAME_CNT (6 * WB_FPS)
+#define WB_GAMEPLAY_POWERUP_SHIELD_WEAROFF_TIME 36.0f
+#define WB_GAMEPLAY_POWERUP_SHIELD_WARN_TIME 33.0f // TODO: play sound
 
 #define WB_PLAYER_WIZ_HEALTH_MAX 1
 #define WB_PLAYER_CAT_HEALTH_MAX 9
@@ -103,7 +105,8 @@
 #define WB_PLAYER_WIZ_COLLISION_ANGLE_CNT 32
 #define WB_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN sinf(M_2PI / 16.0f)
 
-#define WB_PLAYER_WIZ_INIT_POS_Y (WB_PLAYER_WIZ_HEIGHT / 2 + WB_MAP_CEIL_HEIGHT)
+#define WB_PLAYER_WIZ_SPAWN_POS_Y 244.25
+#define WB_PLAYER_WIZ_SPAWN_VEL_Y (-7.5 * 50 / WB_FPS)
 
 #define WB_PLAYER_CAT_WIDTH 24
 #define WB_PLAYER_CAT_CEIL_OFFSET 6
@@ -137,6 +140,8 @@
 #define WB_PLAYER_WIZ_ANIMATION_SPEED_5 (1.0f /  3.00f * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_ANIMATION_SPEED_6 (1.0f /  2.67f * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_ANIMATION_SPEED_7 (1.0f /  2.00f * 50 / WB_FPS)
+#define WB_PLAYER_WIZ_SPAWN_ANIMATION_SPEED (1.0f / 3.0f * 50 / WB_FPS)
+#define WB_PLAYER_WIZ_SPAWN_ANIMATION_FRAME_CNT 22
 
 #define WB_PLAYER_WIZ_ACC_Y (0.33333333333333333 * 50 / WB_FPS)
 #define WB_PLAYER_WIZ_DEC_Y (0.33333333333333333 * 50 / WB_FPS)
@@ -217,8 +222,10 @@
 
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
 #define WB_PLAYER_WIZ_SPRITE_ATLAS_Y (0 * WB_SPRITE_SIZE)
-#define WB_PLAYER_CAT_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
-#define WB_PLAYER_CAT_SPRITE_ATLAS_Y (1 * WB_SPRITE_SIZE)
+#define WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
+#define WB_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_Y (1 * WB_SPRITE_SIZE)
+#define WB_PLAYER_CAT_SPRITE_ATLAS_X (6 * WB_SPRITE_SIZE)
+#define WB_PLAYER_CAT_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
 
 #define WB_PLAYER_CAT_REST_OFFSET_X 40
 #define WB_PLAYER_CAT_REST_OFFSET_VEL (WB_PLAYER_CAT_VEL / 2)
@@ -243,7 +250,7 @@
 #define WB_PARTICLE_DECAY_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
 
 #define WB_PROJECTILE_BEAM_SPRITE_ATLAS_X (10 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y ( 1 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BEAM_SPRITE_ATLAS_Y ( 2 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT 16 // rkrkgkgkbkbkwkwk
 #define WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED (1.0f / 1.0f * 50 / WB_FPS)
 #define WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT 3
@@ -251,27 +258,27 @@
 
 #define WB_PROJECTILE_VEL (8.0f * 50 / WB_FPS * 2)
 #define WB_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BULLET_SPRITE_ATLAS_Y (3 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_X (1 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLAZER_SPRITE_ATLAS_Y (3 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_X (2 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NW_SPRITE_ATLAS_Y (3 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_X (3 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_SPRAY_N_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
 #define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_X (4 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_X (5 * WB_SPRITE_SIZE)
-#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_Y (2 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_SPRAY_NE_SPRITE_ATLAS_Y (3 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
+#define WB_PROJECTILE_BLINKER_SPRITE_ATLAS_Y (4 * WB_SPRITE_SIZE)
 
 #define WB_PARTICLE_POWERUP_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
-#define WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y (4 * WB_SPRITE_SIZE)
+#define WB_PARTICLE_POWERUP_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
 #define WB_PARTICLE_DECAY_SPRITE_ATLAS_X (12 * WB_SPRITE_SIZE)
-#define WB_PARTICLE_DECAY_SPRITE_ATLAS_Y ( 4 * WB_SPRITE_SIZE)
+#define WB_PARTICLE_DECAY_SPRITE_ATLAS_Y ( 5 * WB_SPRITE_SIZE)
 
 #define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X (0 * WB_SPRITE_SIZE)
-#define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
+#define WB_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y (6 * WB_SPRITE_SIZE)
 #define WB_ENEMY_CIRCLE_SPRITE_ATLAS_X (4 * WB_SPRITE_SIZE)
-#define WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y (5 * WB_SPRITE_SIZE)
+#define WB_ENEMY_CIRCLE_SPRITE_ATLAS_Y (6 * WB_SPRITE_SIZE)
 
 #define WB_POWERUP_SPRITE_ATLAS_X ( 0 * WB_SPRITE_SIZE)
 #define WB_POWERUP_MAXED_SPRITE_ATLAS_X (15 * WB_SPRITE_SIZE)
@@ -299,7 +306,7 @@
 #define WB_SOUND_BLINKER_PATH "sound/blinker.wav"
 #define WB_SOUND_BOMB_PATH "sound/bomb.wav"
 #define WB_SOUND_CATHIT_PATH "sound/cathit.wav"
-#define WB_SOUND_EXPLODE_PATH "sound/explode.wav"
+#define WB_SOUND_WIZDEATH_PATH "sound/wizdeath.wav"
 #define WB_SOUND_GAMEOVER_PATH "sound/gameover.wav"
 
 // Key Bindings
@@ -325,7 +332,7 @@ typedef enum {
     WB_GAMESTATE_GETREADY,
     WB_GAMESTATE_SPAWN,
     WB_GAMESTATE_PLAY,
-    WB_GAMESTATE_HIT,
+    WB_GAMESTATE_DEATH,
     WB_GAMESTATE_PAUSE,
     WB_GAMESTATE_GAMEOVER,
     WB_GAMESTATE_SCOREBOARD,
@@ -378,13 +385,14 @@ typedef enum {
     WB_MOVEPATTERN_BOUNCE,
     WB_MOVEPATTERN_BOUNCE_FLOOR,
     WB_MOVEPATTERN_BOUNCE_CEIL,
-    WB_MOVEPATTERN_JAY,
-    WB_MOVEPATTERN_RAID
+    WB_MOVEPATTERN_ARC,
+    WB_MOVEPATTERN_RAID,
+    WB_MOVEPATTERN_LENSE
 } WBMovepatternType;
 
 typedef enum {
     WB_DIRECTION_NEGATIVE = -1,
-    WB_DIRECTION_POSITIVE = 1,
+    WB_DIRECTION_POSITIVE = 1
 } WBDirectionType;
 
 typedef enum {
@@ -563,7 +571,7 @@ typedef struct {
     ma_sound blinker;
     ma_sound bomb;
     ma_sound cathit;
-    ma_sound explode;
+    ma_sound wizdeath;
     ma_sound gameover;
 } WBSound;
 
@@ -606,18 +614,18 @@ extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 extern void wbPlayerCatInit(WBCat* cat);
 extern void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt);
 
-extern void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
+extern int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
 extern void wbBufferClear(void* buffer);
 
-extern void wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type);
+extern int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type);
 extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbProjectileBufferInit(WBProjectileBuffer* projectile_buffer);
-extern void wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
+extern int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
 extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbShaderInit(WBShader* shader);

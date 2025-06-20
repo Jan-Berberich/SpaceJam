@@ -1,9 +1,11 @@
 #include "wizball.h"
 
-void wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel) {
-    WBProjectile* projectile = wbBufferAppend(projectile_buffer, type, pos);
+int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel) {
+    int idx = wbBufferAppend(projectile_buffer, type, pos);
+    WBProjectile* projectile = &projectile_buffer->entries[idx];
     projectile->vel.x = vel->x;
     projectile->vel.y = vel->y;
+    return idx;
 }
 
 void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {

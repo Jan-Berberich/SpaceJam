@@ -6,11 +6,11 @@ void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     }
     wiz->health = WB_PLAYER_WIZ_HEALTH_MAX;
     wiz->pos.x = randfin(time(NULL), pos_x_min, pos_x_max);
-    wiz->pos.y = WB_PLAYER_WIZ_INIT_POS_Y;
+    wiz->pos.y = WB_PLAYER_WIZ_SPAWN_POS_Y;
     wiz->vel_x_key = 0.0f;
     wiz->vel.x = 0.0f;
     wiz->vel_y_key = 0.0f;
-    wiz->vel.y = 0.0f;
+    wiz->vel.y = WB_PLAYER_WIZ_SPAWN_VEL_Y;
     wiz->next_bullet_direction = WB_DIRECTION_POSITIVE;
     wiz->next_spray_direction = WB_DIRECTION_NEGATIVE;
     wiz->facing = WB_DIRECTION_POSITIVE;

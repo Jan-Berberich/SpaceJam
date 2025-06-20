@@ -1,14 +1,16 @@
 #include "wizball.h"
 
-void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
+int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
     WBBufferHead* buffer_head = buffer;
     WBEntityHead* entity_head;
+    int idx = 0;
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
         assert(buffer_head->cnt - 1 < WB_ENEMY_CNT_MAX);
         WBEnemy* enemy = ((WBEnemyBuffer*)buffer_head)->entries;
         while (enemy->head.type != WB_ENEMY_NONE) {
             enemy++;
+            idx++;
         }
         enemy->frame_age = 0;
         entity_head = &enemy->head;
@@ -19,6 +21,7 @@ void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
         WBParticle* particle = ((WBParticleBuffer*)buffer_head)->entries;
         while (particle->head.type != WB_PARTICLE_NONE) {
             particle++;
+            idx++;
         }
         particle->frame_age = 0;
         entity_head = &particle->head;
@@ -29,6 +32,7 @@ void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
         WBProjectile* projectile = ((WBProjectileBuffer*)buffer_head)->entries;
         while (projectile->head.type != WB_PROJECTILE_NONE) {
             projectile++;
+            idx++;
         }
         entity_head = &projectile->head;
         break;
@@ -40,7 +44,7 @@ void* wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
 
     buffer_head->cnt++;
 
-    return entity_head;
+    return idx;
 }
 
 void wbBufferRemove(void* buffer, int idx) {
