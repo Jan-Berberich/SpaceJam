@@ -11,6 +11,8 @@ void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
     wiz->vel.x = 0.0f;
     wiz->vel_y_key = 0.0f;
     wiz->vel.y = WB_PLAYER_WIZ_SPAWN_VEL_Y;
+    wiz->collision_vec.x = 0.0f;
+    wiz->collision_vec.y = 0.0f;
     wiz->next_bullet_direction = WB_DIRECTION_POSITIVE;
     wiz->next_spray_direction = WB_DIRECTION_NEGATIVE;
     wiz->facing = WB_DIRECTION_POSITIVE;
@@ -136,12 +138,11 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     if (!(gamestate->powerup.unlocked & WB_POWERUP_CAT)) {
         cat->pos.x = map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2;
         cat->pos.y = wiz->pos.y < (float)map->atlas.background.height / WB_MAP_CNT / 2 ?
-                   - WB_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_SPRITE_SIZE;
+                   - WB_GRAPHIC_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_GRAPHIC_SPRITE_SIZE;
         return;
     }
 
     int pos_y_buffer_idx = frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
-    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
     if (!cat->hold_position) {
         cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
         cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
@@ -159,4 +160,6 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_MAP_VIEW_WIDTH / 2 - WB_PLAYER_CAT_WIDTH / 2);
     cat->pos.y = fmaxf(cat->pos.y, WB_MAP_CEIL_HEIGHT  + WB_PLAYER_CAT_CEIL_OFFSET);
     cat->pos.y = fminf(cat->pos.y, WB_MAP_FLOOR_HEIGHT - WB_PLAYER_CAT_FLOOR_OFFSET);
+
+    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
 }

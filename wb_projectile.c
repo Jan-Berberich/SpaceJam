@@ -25,6 +25,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             // render both parts from one projectile
             map->view.beam = true;
             projectile->head.pos = wiz->pos;
+            projectile->head.color_key += WB_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED;
+            projectile->head.color_key -= projectile->head.color_key >= WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT ? WB_PROJECTILE_BEAM_ANIMATION_COLOR_CNT : 0;
             projectile->head.animation_key += WB_PROJECTILE_BEAM_ANIMATION_SPEED;
             if (projectile->head.animation_key >= WB_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(projectile_buffer, i);
