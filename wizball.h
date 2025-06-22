@@ -78,6 +78,9 @@
 #define WB_WINDOW_LEVEL_OFFSET_X 108
 #define WB_WINDOW_LEVEL_OFFSET_Y 4
 
+#define WB_GRAPHIC_VERTICES_PER_SPRITE 4
+#define WB_GRAPHIC_INDICES_PER_SPRITE 6
+
 #define WB_SCORE_ENEMY 50
 #define WB_SCORE_DROPLET 50
 #define WB_SCORE_POWERUP 100
@@ -613,8 +616,9 @@ typedef struct {
 } WBMap;
 
 typedef struct {
-    float vertices[4 * 4];
-    unsigned int indices[3 * 2];
+    float vertices[WB_GRAPHIC_VERTICES_PER_SPRITE * 4]; // x, y, u, v
+    unsigned int indices[WB_GRAPHIC_INDICES_PER_SPRITE]; // 2 tris
+    int sprite_cnt;
     GLuint vbo, vao, ebo, program;
 } WBShader;
 
