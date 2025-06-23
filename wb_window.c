@@ -10,7 +10,7 @@ bool wbWindowInit(WBWindow* window) {
 
     // Create a windowed mode window and its OpenGL context
     // Parameters: width, height, title, monitor (for fullscreen), share (for context sharing)
-    window->handle = glfwCreateWindow(WB_WINDOW_WIDTH, WB_WINDOW_HEIGHT, "Wizball", NULL, NULL);
+    window->handle = glfwCreateWindow(WB_GRAPHIC_WINDOW_WIDTH, WB_GRAPHIC_WINDOW_HEIGHT, "Wizball", NULL, NULL);
     if (!window->handle) {
         fprintf(stderr, "Failed to create GLFW window\n"); // Print error if window creation fails
         glfwTerminate(); // Terminate GLFW before exiting
@@ -40,7 +40,7 @@ void wbWindowLockAspectRatio(WBWindow* window) {
     glfwGetWindowSize(window->handle, &window->width, &window->height);
 
     // Aspect ratio lock
-    static float target_aspect = (float)WB_WINDOW_WIDTH / (float)WB_WINDOW_HEIGHT;
+    static float target_aspect = (float)WB_GRAPHIC_WINDOW_WIDTH / (float)WB_GRAPHIC_WINDOW_HEIGHT;
     float window_aspect = (float)window->width / (float)window->height;
     int viewport_x = 0, viewport_y = 0, viewport_w = window->width, viewport_h = window->height;
 

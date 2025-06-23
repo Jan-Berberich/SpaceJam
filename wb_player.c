@@ -1,51 +1,51 @@
 #include "wizball.h"
 
 void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max) {
-    for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
-        wiz->collider_angles[i] = (float)i * M_2PI / WB_PLAYER_WIZ_COLLISION_ANGLE_CNT;
+    for (int i = 0; i < WB_GAMERULE_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
+        wiz->collider_angles[i] = (float)i * M_2PI / WB_GAMERULE_PLAYER_WIZ_COLLISION_ANGLE_CNT;
     }
-    wiz->health = WB_PLAYER_WIZ_HEALTH_MAX;
+    wiz->health = WB_GAMERULE_PLAYER_WIZ_HEALTH_MAX;
     wiz->pos.x = randfin(time(NULL), pos_x_min, pos_x_max);
-    wiz->pos.y = WB_PLAYER_WIZ_SPAWN_POS_Y;
+    wiz->pos.y = WB_GAMERULE_PLAYER_WIZ_SPAWN_POS_Y;
     wiz->vel_x_key = 0.0f;
     wiz->vel.x = 0.0f;
     wiz->vel_y_key = 0.0f;
-    wiz->vel.y = WB_PLAYER_WIZ_SPAWN_VEL_Y;
+    wiz->vel.y = WB_GAMERULE_PLAYER_WIZ_SPAWN_VEL_Y;
     wiz->collision_vec.x = 0.0f;
     wiz->collision_vec.y = 0.0f;
     wiz->next_bullet_direction = WB_DIRECTION_POSITIVE;
     wiz->next_spray_direction = WB_DIRECTION_NEGATIVE;
     wiz->facing = WB_DIRECTION_POSITIVE;
 
-    wiz->vel_x_values[0] = WB_PLAYER_WIZ_VEL_X_0;
-    wiz->vel_x_values[1] = WB_PLAYER_WIZ_VEL_X_1;
-    wiz->vel_x_values[2] = WB_PLAYER_WIZ_VEL_X_2;
-    wiz->vel_x_values[3] = WB_PLAYER_WIZ_VEL_X_3;
-    wiz->vel_x_values[4] = WB_PLAYER_WIZ_VEL_X_4;
-    wiz->vel_x_values[5] = WB_PLAYER_WIZ_VEL_X_5;
-    wiz->vel_x_values[6] = WB_PLAYER_WIZ_VEL_X_6;
-    wiz->vel_x_values[7] = WB_PLAYER_WIZ_VEL_X_7;
-    wiz->animation_speed_values[0] = WB_PLAYER_WIZ_ANIMATION_SPEED_0;
-    wiz->animation_speed_values[1] = WB_PLAYER_WIZ_ANIMATION_SPEED_1;
-    wiz->animation_speed_values[2] = WB_PLAYER_WIZ_ANIMATION_SPEED_2;
-    wiz->animation_speed_values[3] = WB_PLAYER_WIZ_ANIMATION_SPEED_3;
-    wiz->animation_speed_values[4] = WB_PLAYER_WIZ_ANIMATION_SPEED_4;
-    wiz->animation_speed_values[5] = WB_PLAYER_WIZ_ANIMATION_SPEED_5;
-    wiz->animation_speed_values[6] = WB_PLAYER_WIZ_ANIMATION_SPEED_6;
-    wiz->animation_speed_values[7] = WB_PLAYER_WIZ_ANIMATION_SPEED_7;
+    wiz->vel_x_values[0] = WB_GAMERULE_PLAYER_WIZ_VEL_X_0;
+    wiz->vel_x_values[1] = WB_GAMERULE_PLAYER_WIZ_VEL_X_1;
+    wiz->vel_x_values[2] = WB_GAMERULE_PLAYER_WIZ_VEL_X_2;
+    wiz->vel_x_values[3] = WB_GAMERULE_PLAYER_WIZ_VEL_X_3;
+    wiz->vel_x_values[4] = WB_GAMERULE_PLAYER_WIZ_VEL_X_4;
+    wiz->vel_x_values[5] = WB_GAMERULE_PLAYER_WIZ_VEL_X_5;
+    wiz->vel_x_values[6] = WB_GAMERULE_PLAYER_WIZ_VEL_X_6;
+    wiz->vel_x_values[7] = WB_GAMERULE_PLAYER_WIZ_VEL_X_7;
+    wiz->animation_speed_values[0] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_0;
+    wiz->animation_speed_values[1] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_1;
+    wiz->animation_speed_values[2] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_2;
+    wiz->animation_speed_values[3] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_3;
+    wiz->animation_speed_values[4] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_4;
+    wiz->animation_speed_values[5] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_5;
+    wiz->animation_speed_values[6] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_6;
+    wiz->animation_speed_values[7] = WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_7;
 
-    wiz->vel_y_values[0] = WB_PLAYER_WIZ_VEL_Y_0;
-    wiz->vel_y_values[1] = WB_PLAYER_WIZ_VEL_Y_1;
-    wiz->vel_y_values[2] = WB_PLAYER_WIZ_VEL_Y_2;
-    wiz->vel_y_values[3] = WB_PLAYER_WIZ_VEL_Y_3;
-    wiz->vel_y_values[4] = WB_PLAYER_WIZ_VEL_Y_4;
+    wiz->vel_y_values[0] = WB_GAMERULE_PLAYER_WIZ_VEL_Y_0;
+    wiz->vel_y_values[1] = WB_GAMERULE_PLAYER_WIZ_VEL_Y_1;
+    wiz->vel_y_values[2] = WB_GAMERULE_PLAYER_WIZ_VEL_Y_2;
+    wiz->vel_y_values[3] = WB_GAMERULE_PLAYER_WIZ_VEL_Y_3;
+    wiz->vel_y_values[4] = WB_GAMERULE_PLAYER_WIZ_VEL_Y_4;
 
     wiz->animation_angle = 0.0f;
 }
 
 void wbPlayerCatInit(WBCat* cat) {
-    cat->health = WB_PLAYER_CAT_HEALTH_MAX;
-    cat->rest_offset_x = WB_PLAYER_CAT_REST_OFFSET_X;
+    cat->health = WB_GAMERULE_PLAYER_CAT_HEALTH_MAX;
+    cat->rest_offset_x = WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X;
     cat->next_spray_direction = WB_DIRECTION_NEGATIVE;
 }
 
@@ -59,9 +59,9 @@ void wbPlayerWizSetCollisionVec(WBWiz* wiz, WBMap* map, int level) {
     // Check directions around the player for collision (circle approximation)
     float* angles = wiz->collider_angles;
     int x; int y;
-    for (int i = 0; i < WB_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
-        x = xc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
-        y = yc + roundf((float)WB_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
+    for (int i = 0; i < WB_GAMERULE_PLAYER_WIZ_COLLISION_ANGLE_CNT; i++) {
+        x = xc + roundf(WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS * cosf(angles[i]));
+        y = yc + roundf(WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS * sinf(angles[i]));
         is_collision = wbMapGetCollision(map, x, y, level);
         collision_cnt += is_collision;
         collision_vec.x += is_collision * (x - xc);
@@ -76,9 +76,9 @@ void wbPlayerWizSetCollisionVec(WBWiz* wiz, WBMap* map, int level) {
 }
 
 void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
-    int pos_y = roundf(wiz->pos.y / WB_SUBPIXEL_CNT) * WB_SUBPIXEL_CNT;
-    bool map_ceil_collision = pos_y - WB_PLAYER_WIZ_COLLISION_RADIUS < WB_MAP_CEIL_HEIGHT;
-    bool map_floor_collision = pos_y + WB_PLAYER_WIZ_COLLISION_RADIUS > WB_MAP_FLOOR_HEIGHT;
+    int pos_y = roundf(wiz->pos.y / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT;
+    bool map_ceil_collision = pos_y - WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS < WB_GAMERULE_MAP_CEIL_HEIGHT;
+    bool map_floor_collision = pos_y + WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS > WB_GAMERULE_MAP_FLOOR_HEIGHT;
     if (map_ceil_collision || map_floor_collision) {
         wiz->collision_vec.x = 0.0f;
         wiz->collision_vec.y = map_floor_collision ? 1.0f : -1.0f;
@@ -88,21 +88,21 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
     }
 
     if (wiz->collision_vec.x || wiz->collision_vec.y) {
-        if (fabsf(wiz->collision_vec.x) > WB_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN) {
+        if (fabsf(wiz->collision_vec.x) > WB_GAMERULE_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN) {
             wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(wiz->collision_vec.x);
         }
         if (fabsf(wiz->collision_vec.y) > 0.01f) {
             if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
-                wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
+                wiz->vel.y += WB_GAMERULE_GRAVITY;
                 wiz->vel.y = -fabsf(wiz->vel.y) * fsgnf(wiz->collision_vec.y);
             }
             else {
                 if (map_ceil_collision || map_floor_collision) {
                     wiz->vel_y_key = -fsgnf(wiz->collision_vec.y);
-                    wiz->vel_y_key += WB_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
+                    wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
                 }
                 else {
-                    wiz->vel_y_key -= WB_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
+                    wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
                     wiz->vel_y_key = -fabsf(wiz->vel_y_key) * fsgnf(wiz->collision_vec.y);
                 }
             }
@@ -118,7 +118,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
         wiz->vel.y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
     if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
-        wiz->vel.y += WB_PLAYER_WIZ_GRAVITY;
+        wiz->vel.y += WB_GAMERULE_GRAVITY;
     }
     wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
 
@@ -126,28 +126,28 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     wiz->pos.y += wiz->vel.y;
 
     wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))];
-    wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
-    wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
+    wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
+    wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
 
     map->view.center_x = wiz->pos.x;
-    map->view.center_x = fmaxf(map->view.center_x, WB_MAP_VIEW_WIDTH / 2);
-    map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_MAP_VIEW_WIDTH / 2 + 1);
+    map->view.center_x = fmaxf(map->view.center_x, WB_GRAPHIC_MAP_VIEW_WIDTH / 2);
+    map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + 1);
 }
 
 void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt) {
     if (!(gamestate->powerup.unlocked & WB_POWERUP_CAT)) {
-        cat->pos.x = map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2;
+        cat->pos.x = map->view.center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2;
         cat->pos.y = wiz->pos.y < (float)map->atlas.background.height / WB_MAP_CNT / 2 ?
                    - WB_GRAPHIC_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_GRAPHIC_SPRITE_SIZE;
         return;
     }
 
-    int pos_y_buffer_idx = frame_cnt % WB_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
+    int pos_y_buffer_idx = frame_cnt % WB_GAMERULE_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
     if (!cat->hold_position) {
-        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
-        cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_PLAYER_CAT_VEL)
+        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
+        cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_GAMERULE_PLAYER_CAT_VEL)
                             * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);
-        cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_PLAYER_CAT_VEL)
+        cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_GAMERULE_PLAYER_CAT_VEL)
                             * fsgnf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y);
         cat->facing = fsgnf(wiz->pos.x - cat->pos.x);
     }
@@ -156,10 +156,10 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     cat->pos.x += cat->vel.x + wiz->vel.x;
     cat->pos.y += cat->vel.y;
 
-    cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_MAP_VIEW_WIDTH / 2 + WB_PLAYER_CAT_WIDTH / 2);
-    cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_MAP_VIEW_WIDTH / 2 - WB_PLAYER_CAT_WIDTH / 2);
-    cat->pos.y = fmaxf(cat->pos.y, WB_MAP_CEIL_HEIGHT  + WB_PLAYER_CAT_CEIL_OFFSET);
-    cat->pos.y = fminf(cat->pos.y, WB_MAP_FLOOR_HEIGHT - WB_PLAYER_CAT_FLOOR_OFFSET);
+    cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
+    cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
 
     cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
 }

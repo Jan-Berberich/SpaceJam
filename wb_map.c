@@ -28,18 +28,18 @@ bool wbMapInit(WBMap* map) {
     }
     stbi_image_free(data);
 
-    data = malloc(WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_LAYER_CNT * 4 * (sizeof *data));
+    data = malloc(WB_GRAPHIC_MAP_DUST_SPRITE_SIZE * WB_GRAPHIC_MAP_DUST_SPRITE_SIZE * WB_GRAPHIC_MAP_DUST_LAYER_CNT * 4 * (sizeof *data));
     if (!data) {
         fprintf(stderr, "Failed to allocate memory for dust texture\n");
         return false;
     }
     uint8_t* p = data;
     srand(15);
-    for (int i = 0; i < WB_MAP_DUST_LAYER_CNT; i++) {
-        for (int y = 0; y < WB_MAP_DUST_SPRITE_SIZE; y++) {
-            for (int x = 0; x < WB_MAP_DUST_SPRITE_SIZE; x++) {
+    for (int i = 0; i < WB_GRAPHIC_MAP_DUST_LAYER_CNT; i++) {
+        for (int y = 0; y < WB_GRAPHIC_MAP_DUST_SPRITE_SIZE; y++) {
+            for (int x = 0; x < WB_GRAPHIC_MAP_DUST_SPRITE_SIZE; x++) {
                 // Randomly place dust specks
-                uint8_t alpha = (float)rand() / RAND_MAX < WB_MAP_DUST_DENSITY ? 128 : 0;
+                uint8_t alpha = (float)rand() / RAND_MAX < WB_GRAPHIC_MAP_DUST_DENSITY ? 128 : 0;
                 *p++ = 255; // white dust
                 *p++ = 255;
                 *p++ = 255;
@@ -47,8 +47,8 @@ bool wbMapInit(WBMap* map) {
             }
         }
     }
-    map_atlas->dust.width = WB_MAP_DUST_SPRITE_SIZE * WB_MAP_DUST_LAYER_CNT;
-    map_atlas->dust.height = WB_MAP_DUST_SPRITE_SIZE;
+    map_atlas->dust.width = WB_GRAPHIC_MAP_DUST_SPRITE_SIZE * WB_GRAPHIC_MAP_DUST_LAYER_CNT;
+    map_atlas->dust.height = WB_GRAPHIC_MAP_DUST_SPRITE_SIZE;
     wbTextureInit(&map_atlas->dust, data, map_atlas->dust.width, map_atlas->dust.height);
     free(data);
     

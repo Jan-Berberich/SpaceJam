@@ -9,25 +9,25 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate
         switch (particle->head.type) {
             case WB_PARTICLE_POWERUP:
             if (gamestate->state == WB_GAMESTATE_PLAY &&
-                particle->head.pos.x > wiz->pos.x - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.x <= wiz->pos.x + WB_PARTICLE_HITBOX_SIZE / 2 &&
-                particle->head.pos.y > wiz->pos.y - WB_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_PARTICLE_HITBOX_SIZE / 2) {
+                particle->head.pos.x > wiz->pos.x - WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.x <= wiz->pos.x + WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 &&
+                particle->head.pos.y > wiz->pos.y - WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= wiz->pos.y + WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2) {
                 
                 wbBufferRemove(particle_buffer, i);
                 ma_sound_seek_to_pcm_frame(&sound->powerup_collect, 0);
                 ma_sound_start(&sound->powerup_collect);
                 gamestate->powerup.slot = (gamestate->powerup.slot + 1) % WB_POWERUP_SLOT_CNT;
-                gamestate->score += WB_SCORE_POWERUP;
+                gamestate->score += WB_GAMERULE_SCORE_POWERUP;
             }
             break;
 
             case WB_PARTICLE_DECAY:
             // for decay of other enemies with no animated color: set color_key > WB_ENEMY_ANIMATION_COLOR_CNT + 1, dont update anymore
             if (particle->head.color_key >= 0) {
-                particle->head.color_key += WB_ENEMY_ANIMATION_COLOR_SPEED;
-                particle->head.color_key -= particle->head.color_key >= WB_ENEMY_ANIMATION_COLOR_CNT ? WB_ENEMY_ANIMATION_COLOR_CNT : 0;
+                particle->head.color_key += WB_GRAPHIC_ENEMY_ANIMATION_COLOR_SPEED;
+                particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT ? WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT : 0;
             }
-            particle->head.animation_key += WB_PARTICLE_DECAY_ANIMATION_SPEED;
-            if (particle->head.animation_key >= WB_PARTICLE_DECAY_ANIMATION_FRAME_CNT) {
+            particle->head.animation_key += WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_SPEED;
+            if (particle->head.animation_key >= WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(particle_buffer, i);
             }
             

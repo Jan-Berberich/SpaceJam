@@ -29,9 +29,9 @@ float rsqrtf(float f) {
     return y;
 }
 
-void rgbaSplitf(uint32_t rgba, float* r, float* g, float* b, float* a) {
-    *r = (float)((rgba >> 24) & 0xFF) / 0xFF;
-    *g = (float)((rgba >> 16) & 0xFF) / 0xFF;
-    *b = (float)((rgba >>  8) & 0xFF) / 0xFF;
-    *a = (float)((rgba >>  0) & 0xFF) / 0xFF;
+void ui32to4f(float rgba[4], uint32_t color) {
+    rgba[0] = (float)((color >> 24) & 0xFF) / 0xFF;
+    rgba[1] = (float)((color >> 16) & 0xFF) / 0xFF;
+    rgba[2] = (float)((color >>  8) & 0xFF) / 0xFF;
+    rgba[3] = (float)((color >>  0) & 0xFF) / 0xFF;
 }

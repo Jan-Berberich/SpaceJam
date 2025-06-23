@@ -9,4 +9,4 @@ extern float randfin(uint32_t seed, float a, float b);
 /* Quake III fast inverse square root algorithm */
 extern float rsqrtf(float f);
 
-extern void rgbaSplitf(uint32_t rgba, float* r, float* g, float* b, float* a);
+extern void ui32to4f(float rgba[4], uint32_t color);
