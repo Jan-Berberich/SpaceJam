@@ -2,8 +2,8 @@
 
 void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
     if (gamestate->state != WB_GAMESTATE_HIGHSCORE) {
-        ma_sound_seek_to_pcm_frame(sound->titlescreen, 0);
-        ma_sound_start(sound->titlescreen);
+        ma_sound_seek_to_pcm_frame(&sound->titlescreen, 0);
+        ma_sound_start(&sound->titlescreen);
     }
     gamestate->lifes = 3;
     gamestate->score = 0;
@@ -19,9 +19,9 @@ void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
 void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBMap* map,
     WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer) {
     
-    ma_sound_stop(sound->titlescreen);
-    ma_sound_seek_to_pcm_frame(sound->getready, 0);
-    ma_sound_start(sound->getready);
+    ma_sound_stop(&sound->titlescreen);
+    ma_sound_seek_to_pcm_frame(&sound->getready, 0);
+    ma_sound_start(&sound->getready);
     wbBufferClear(particle_buffer);
     wbBufferClear(enemy_buffer);
     wbBufferClear(projectile_buffer);

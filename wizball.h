@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-#define WB_NO_SOUND
+//#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -293,6 +293,7 @@
 #define WB_GRAPHIC_TEXT_SCOREBOARD1_FRAME_CNT (3480 * WB_FPS / 1000)
 #define WB_GRAPHIC_TEXT_SCOREBOARD2_FRAME_CNT (4040 * WB_FPS / 1000)
 #define WB_GRAPHIC_TEXT_SCOREBOARD3_FRAME_CNT (5240 * WB_FPS / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD4_FRAME_CNT (5260 * WB_FPS / 1000)
 // ~GRAPHIC
 
 // GAMERULE

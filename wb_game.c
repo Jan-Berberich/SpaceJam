@@ -185,6 +185,7 @@ bool wbGameInit(WBGame* game) {
     }
 
     // Initialize gamestate
+    game->gamestate.state = -1;
     wbGamestateSetupTitlescreen(&game->gamestate, &game->sound);
 
     // Initialize enemies
@@ -1131,7 +1132,7 @@ void wbGameRender(WBGame* game) {
                 replace_colors_loc, game->graphic.gui_blue_animation_colors
             );
         }
-        wbGameDrawText(game, "one  plr              two  plrs  ", 1.0f, WB_GRAPHIC_TEXT_SCOREBOARD3_FRAME_CNT,
+        wbGameDrawText(game, "one  plr              two  plrs  ", 1.0f, WB_GRAPHIC_TEXT_SCOREBOARD4_FRAME_CNT,
             0.0f, 2.0f - 2.0f * 255 / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
             replace_color_speed_loc, WB_GRAPHIC_TEXT_TOPSCORES_ANIMATION_COLOR_SPEED,
