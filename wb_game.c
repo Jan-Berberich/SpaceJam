@@ -1073,10 +1073,10 @@ void wbGameRender(WBGame* game) {
             replace_color_cnt_loc, WB_GRAPHIC_TEXT_TOPSCORES_ANIMATION_COLOR_CNT, WB_GRAPHIC_TEXT_TOPSCORES_ANIMATION_COLOR_CNT,
             replace_colors_loc, game->graphic.text_topscores_animation_colors
         );
-        glUniform1f(replace_color_reflect_height_loc, WB_GRAPHIC_WINDOW_HEIGHT);
+        glUniform1f(replace_color_reflect_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE - 1));
         cnt = (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_FRAME_CNT) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT < WB_GRAPHIC_TEXT_HIGHSCORE_ANIMATION_COLOR_CNT ?
               (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_FRAME_CNT) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT + 1 : WB_GRAPHIC_TEXT_HIGHSCORE_ANIMATION_COLOR_CNT;
-        glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_FRAME_CNT + 3.0 * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT);
+        glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_FRAME_CNT);
         wbGameDrawText(game, "1. 050000          ", 2.0f, WB_GRAPHIC_TEXT_HIGHSCORE1_FRAME_CNT,
             0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 1,
@@ -1084,6 +1084,7 @@ void wbGameRender(WBGame* game) {
             replace_color_cnt_loc, cnt, WB_GRAPHIC_TEXT_HIGHSCORE_ANIMATION_COLOR_CNT,
             replace_colors_loc, game->graphic.text_highscore_animation_colors
         );
+        glUniform1ui(frame_counter_loc, game->gamestate.frame_counter);
         wbGameDrawText(game, "         SENSI SOFT", 1.0f, WB_GRAPHIC_TEXT_HIGHSCORE2_FRAME_CNT,
             0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y + (WB_GRAPHIC_TEXT_LARGE_SPRITE_SIZE - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE) / 2 + 1) / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
@@ -1091,12 +1092,12 @@ void wbGameRender(WBGame* game) {
             replace_color_cnt_loc, WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT, WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT,
             replace_colors_loc, game->graphic.gui_red_animation_colors
         );
-        glUniform1f(replace_color_reflect_height_loc, 0);
         for (int i = 0; i < 6; i++) {
-            int frame = i < 3 ? WB_GRAPHIC_TEXT_SCOREBOARD1_FRAME_CNT : WB_GRAPHIC_TEXT_SCOREBOARD1_FRAME_CNT + WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
+            glUniform1f(replace_color_reflect_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i));
+            int frame = WB_GRAPHIC_TEXT_SCOREBOARD1_FRAME_CNT + i * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
             cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT < WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT ?
                   (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT + 1 : WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
-            glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_SCOREBOARD1_FRAME_CNT + 9.5f * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT - WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT * i);
+            glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - frame);
             sprintf(text, "   %06i           %01i.               ", 20000, i + 2);
             wbGameDrawText(game, text, 1.0f, frame,
                 0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i) / WB_GRAPHIC_WINDOW_HEIGHT,
@@ -1106,12 +1107,12 @@ void wbGameRender(WBGame* game) {
                 replace_colors_loc, game->graphic.gui_blue_animation_colors
             );
         }
-        glUniform1f(replace_color_reflect_height_loc, WB_GRAPHIC_WINDOW_HEIGHT);
-        for (int i = 6; i > 0;) {i--;
-            int frame = i >= 3 ? WB_GRAPHIC_TEXT_SCOREBOARD2_FRAME_CNT : WB_GRAPHIC_TEXT_SCOREBOARD2_FRAME_CNT + WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
+        for (int i = 0; i < 6; i++) {
+            glUniform1f(replace_color_reflect_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE - 5));
+            int frame = WB_GRAPHIC_TEXT_SCOREBOARD2_FRAME_CNT + (6 - 1 - i) * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
             cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT < WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT ?
                   (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCOREBOARD_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLOR_HEIGHT + 1 : WB_GRAPHIC_GUI_ANIMATION_COLOR_CNT;
-            glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_SCOREBOARD2_FRAME_CNT + WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT * i);
+            glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - frame);
             sprintf(text, "%01i.                     %06i        ", i + 2, 20000);
             wbGameDrawText(game, text, 1.0f, frame,
                 0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i) / WB_GRAPHIC_WINDOW_HEIGHT,
@@ -1121,6 +1122,7 @@ void wbGameRender(WBGame* game) {
                 replace_colors_loc, game->graphic.gui_red_animation_colors
             );
         }
+        glUniform1ui(frame_counter_loc, game->gamestate.frame_counter);
         for (int i = 0; i < 6; i++) {
             i == 0 ? sprintf(text, "          %s                 %s %s", "jop", "krx", "nif") : 
                      sprintf(text, "          %s                 %s %s", "---", "---", "---");
