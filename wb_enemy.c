@@ -28,7 +28,7 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
             vel.y = -vel.y;
         }
         int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, &pos, &vel, WB_MOVEPATTERN_INERT);
-        enemy_buffer->entries[idx].head.color_key = fmod(frame_counter * WB_GRAPHIC_ENEMY_ANIMATION_COLOR_SPEED, WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT);
+        enemy_buffer->entries[idx].head.color_key = fmod(frame_counter * WB_GRAPHIC_ENEMY_COLORPALLET_SPEED, WB_GRAPHIC_ENEMY_COLORPALLET_CNT);
         wbBufferRemove(enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
     }
 }
@@ -108,8 +108,8 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
         enemy->head.pos.x += enemy->vel.x;
         enemy->head.pos.y += enemy->vel.y;
         if (enemy->head.color_key >= 0) {
-            enemy->head.color_key += WB_GRAPHIC_ENEMY_ANIMATION_COLOR_SPEED;
-            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT ? WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT : 0;
+            enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED;
+            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
         }
         enemy->frame_age++;
 

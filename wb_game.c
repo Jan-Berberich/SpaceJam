@@ -417,7 +417,7 @@ void wbGameProcessInput(WBGame* game) {
 
         if (!view->beam && powerup->unlocked & (WB_POWERUP_BEAM | WB_POWERUP_DOUBLE)) {
             int idx = wbProjectileAppend(&game->projectile_buffer, WB_PROJECTILE_BEAM, &wiz->pos, &vel);
-            game->projectile_buffer.entries[idx].head.color_key = randfin(time(NULL), 0, WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_COLOR_CNT);
+            game->projectile_buffer.entries[idx].head.color_key = randfin(time(NULL), 0, WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_CNT);
         }
     }
     game->window.prev_key_state[WB_KEY_WIZ_LEFT] = wiz_left;
@@ -595,7 +595,7 @@ void wbGameDrawEntities(WBGame* game, GLint replace_colors_loc) {
             offset_v = WB_GRAPHIC_PARTICLE_DECAY_SPRITE_ATLAS_Y / sprite_atlas_width;
             uint32_t color = game->graphic.colorpallet.enemy[(int)particle->head.color_key];
             ui32to4f(rgba, color);
-            glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+            glUniform4fv(replace_colors_loc, 1, rgba);
             break;
         }
         offset_x = 2.0f * roundf((particle->head.pos.x - game->view.center_x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width;
@@ -624,7 +624,7 @@ void wbGameDrawEntities(WBGame* game, GLint replace_colors_loc) {
             offset_v = WB_GRAPHIC_ENEMY_CIRCLE_SPRITE_ATLAS_Y / sprite_atlas_height;
             uint32_t color = game->graphic.colorpallet.enemy[(int)enemy->head.color_key];
             ui32to4f(rgba, color);
-            glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+            glUniform4fv(replace_colors_loc, 1, rgba);
             break;
         }
         offset_x = 2.0f * roundf((enemy->head.pos.x - game->view.center_x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width;
@@ -673,7 +673,7 @@ void wbGameDrawEntities(WBGame* game, GLint replace_colors_loc) {
                 int color_key = (int)projectile->head.color_key % 2 ? projectile->head.color_key / 4 + 1 : 0;
                 uint32_t color = game->graphic.colorpallet.beam[color_key];
                 ui32to4f(rgba, color);
-                glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+                glUniform4fv(replace_colors_loc, 1, rgba);
                 projectile->head.pos.y -= 0.5f * WB_GRAPHIC_PROJECTILE_BEAM_OFFSET_Y;
                 offset_x = 2.0f * roundf((projectile->head.pos.x - game->view.center_x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width;
                 offset_y = 2.0f * WB_GRAPHIC_VIEW_OFFSET_Y / window_height
@@ -798,10 +798,10 @@ void wbGameDrawGui(WBGame* game, GLint replace_colors_loc) {
 
     // powerup slots
     for (int i = 0; i < WB_POWERUP_SLOT_CNT; i++) {
-        int animation_color_idx = i == game->gamestate.powerup.slot ? (uint64_t)((double)game->frame_cnt* WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED + 0.5) % WB_GRAPHIC_COLORPALLET_BLUE6_CNT : 1;
-        uint32_t color = game->graphic.colorpallet.blue6[animation_color_idx];
+        int colorpallet_idx = i == game->gamestate.powerup.slot ? (uint64_t)((double)game->frame_cnt* WB_GRAPHIC_GUI_COLORPALLET_SPEED + 0.5) % WB_GRAPHIC_COLORPALLET_BLUE6_CNT : 1;
+        uint32_t color = game->graphic.colorpallet.blue6[colorpallet_idx];
         ui32to4f(rgba, color);
-        glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+        glUniform4fv(replace_colors_loc, 1, rgba);
         offset_x = -1.0f + (window_width - (WB_POWERUP_SLOT_CNT - 1) * WB_GRAPHIC_GUI_POWERUP_STRIDE) / window_width + 2.0f * i * WB_GRAPHIC_GUI_POWERUP_STRIDE / window_width;
         offset_y = 2.0f - 2.0f * WB_GRAPHIC_GUI_POWERUP_STRIDE / window_height;
         int powerup_slotstate = ((game->gamestate.powerup.unlocked >> 2 * i) & WB_POWERUP_SLOTMASK);
@@ -821,10 +821,10 @@ void wbGameDrawGui(WBGame* game, GLint replace_colors_loc) {
     }
 
     // 1UP
-    int animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_COLORPALLET_RGB8_CNT;
-    uint32_t color = game->graphic.colorpallet.red8[animation_color_idx];
+    int colorpallet_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_COLORPALLET_SPEED) % WB_GRAPHIC_COLORPALLET_RGB8_CNT;
+    uint32_t color = game->graphic.colorpallet.red8[colorpallet_idx];
     ui32to4f(rgba, color);
-    glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+    glUniform4fv(replace_colors_loc, 1, rgba);
     width_x = 3.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     offset_x = -1.0f + 3.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     height_y = WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_height;
@@ -854,9 +854,9 @@ void wbGameDrawGui(WBGame* game, GLint replace_colors_loc) {
     }
 
     // lifes
-    color = game->graphic.colorpallet.green8[(animation_color_idx - 2 + WB_GRAPHIC_COLORPALLET_RGB8_CNT) % WB_GRAPHIC_COLORPALLET_RGB8_CNT];
+    color = game->graphic.colorpallet.green8[(colorpallet_idx - 2 + WB_GRAPHIC_COLORPALLET_RGB8_CNT) % WB_GRAPHIC_COLORPALLET_RGB8_CNT];
     ui32to4f(rgba, color);
-    glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+    glUniform4fv(replace_colors_loc, 1, rgba);
     offset_x += 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     sprintf(str, "%01i", game->gamestate.lifes ? game->gamestate.lifes - 1 : 0);
     offset_u = (WB_GRAPHIC_TEXT_DIGIT_SPRITE_ATLAS_X + (*str - '0') * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE) / sprite_atlas_width;
@@ -865,9 +865,9 @@ void wbGameDrawGui(WBGame* game, GLint replace_colors_loc) {
     );
     offset_x += 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     // enemy_cnt
-    color = game->graphic.colorpallet.blue8[(animation_color_idx - 1 + WB_GRAPHIC_COLORPALLET_RGB8_CNT) % WB_GRAPHIC_COLORPALLET_RGB8_CNT];
+    color = game->graphic.colorpallet.blue8[(colorpallet_idx - 1 + WB_GRAPHIC_COLORPALLET_RGB8_CNT) % WB_GRAPHIC_COLORPALLET_RGB8_CNT];
     ui32to4f(rgba, color);
-    glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+    glUniform4fv(replace_colors_loc, 1, rgba);
     offset_x += 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     sprintf(str, "%02i", game->gamestate.enemy_cnt);
     for (char* p = str; *p; p++) {
@@ -887,11 +887,11 @@ void wbGameDrawGui(WBGame* game, GLint replace_colors_loc) {
     // score2
 
     // level
-    uint32_t* animation_colors = (uint32_t*)((uint8_t*)game->graphic.colorpallet.red8 + game->gamestate.level % 3 * (sizeof game->graphic.colorpallet.red8));
-    animation_color_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_LEVEL_ANIMATION_COLOR_SPEED) % WB_GRAPHIC_COLORPALLET_RGB8_CNT;
-    color = animation_colors[animation_color_idx];
+    uint32_t* colorpallet = (uint32_t*)((uint8_t*)game->graphic.colorpallet.red8 + game->gamestate.level % 3 * (sizeof game->graphic.colorpallet.red8));
+    colorpallet_idx = (uint64_t)((double)game->frame_cnt * WB_GRAPHIC_GUI_LEVEL_COLORPALLET_SPEED) % WB_GRAPHIC_COLORPALLET_RGB8_CNT;
+    color = colorpallet[colorpallet_idx];
     ui32to4f(rgba, color);
-    glUniform4fv(replace_colors_loc, 1, rgba); // #FF00FFFF
+    glUniform4fv(replace_colors_loc, 1, rgba);
     width_x = 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_width;
     offset_x = -1.0f + 2.0f * WB_GRAPHIC_GUI_LEVEL_OFFSET_X / window_width;
     height_y = 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / window_height;
@@ -1021,7 +1021,7 @@ void wbGameRender(WBGame* game) {
 
     // Set the key color
     GLint key_color_loc = glGetUniformLocation(game->shader.program, "keyColor");
-    glUniform4f(key_color_loc, 1.0f, 0.0f, 1.0f, 1.0f); // #FF00FFFF
+    glUniform4f(key_color_loc, WB_GRAPHIC_KEY_COLOR_R, WB_GRAPHIC_KEY_COLOR_G, WB_GRAPHIC_KEY_COLOR_B, WB_GRAPHIC_KEY_COLOR_A);
     // Set the frame cnt
     GLint frame_counter_loc = glGetUniformLocation(game->shader.program, "frameCounter");
     glUniform1ui(frame_counter_loc, game->gamestate.frame_counter);
@@ -1060,52 +1060,52 @@ void wbGameRender(WBGame* game) {
     switch (game->gamestate.state) {
         case WB_GAMESTATE_TITLESCREEN:
         static char text[32];
-        int cnt = game->gamestate.frame_counter * WB_GRAPHIC_TEXT_MIRROR_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_TEXT_WIZBALL_SPRITE_HEIGHT / 2 ?
-                  game->gamestate.frame_counter * WB_GRAPHIC_TEXT_MIRROR_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_ALL32_CNT;
+        int cnt = game->gamestate.frame_counter * WB_GRAPHIC_TEXT_MIRROR_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_TEXT_WIZBALL_SPRITE_HEIGHT / 2 ?
+                  game->gamestate.frame_counter * WB_GRAPHIC_TEXT_MIRROR_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_ALL32_CNT;
         wbGameDrawText(game, "WIZBALL", 1.0f, 0,
             0.0f, 2.0f - (2.0f * WB_GRAPHIC_TEXT_WIZBALL_OFFSET_Y + WB_GRAPHIC_TEXT_WIZBALL_SPRITE_HEIGHT) / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 1,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_MIRROR_ANIMATION_COLOR_SPEED,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_MIRROR_COLORPALLET_SPEED,
             replace_color_cnt_loc, cnt, WB_GRAPHIC_COLORPALLET_ALL32_CNT,
             replace_colors_loc, game->graphic.colorpallet.all32
         );
         wbGameDrawText(game, "top scores", 1.0f, WB_GRAPHIC_TEXT_TOPSCORES_SHOW_FRAME,
             0.0f, 2.0f - (2.0f * WB_GRAPHIC_TEXT_TOPSCORES_OFFSET_Y) / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_PULSE_ANIMATION_COLOR_SPEED,
-            replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_BLUE4_CNT, WB_GRAPHIC_COLORPALLET_BLUE4_CNT,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_PULSE_COLORPALLET_SPEED,
+            replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB4_CNT, WB_GRAPHIC_COLORPALLET_RGB4_CNT,
             replace_colors_loc, game->graphic.colorpallet.blue4
         );
         glUniform1f(replace_color_mirror_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE - 1));
-        cnt = (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_GREEN4_CNT ?
-              (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_GREEN4_CNT;
+        cnt = (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_RGB4_CNT ?
+              (game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_RGB4_CNT;
         glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME);
         wbGameDrawText(game, "1. 050000          ", 2.0f, WB_GRAPHIC_TEXT_HIGHSCORE1_SHOW_FRAME,
             0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 1,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED,
-            replace_color_cnt_loc, cnt, WB_GRAPHIC_COLORPALLET_GREEN4_CNT,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED,
+            replace_color_cnt_loc, cnt, WB_GRAPHIC_COLORPALLET_RGB4_CNT,
             replace_colors_loc, game->graphic.colorpallet.green4
         );
         glUniform1ui(frame_counter_loc, game->gamestate.frame_counter);
         wbGameDrawText(game, "         SENSI SOFT", 1.0f, WB_GRAPHIC_TEXT_HIGHSCORE2_SHOW_FRAME,
             0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y + (WB_GRAPHIC_TEXT_LARGE_SPRITE_SIZE - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE) / 2 + 1) / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_ANIMATION_COLOR_SPEED,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED,
             replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB8_CNT, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
             replace_colors_loc, game->graphic.colorpallet.red8
         );
         for (int i = 0; i < 6; i++) {
             glUniform1f(replace_color_mirror_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i));
             int frame = WB_GRAPHIC_TEXT_SCOREBOARD1_SHOW_FRAME + i * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
-            cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_RGB8_CNT ?
-                  (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_RGB8_CNT;
+            cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_RGB8_CNT ?
+                  (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_RGB8_CNT;
             glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - frame);
             sprintf(text, "   %06i           %01i.               ", 20000, i + 2);
             wbGameDrawText(game, text, 1.0f, frame,
                 0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i) / WB_GRAPHIC_WINDOW_HEIGHT,
                 key_color_mode_loc, 1,
-                replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED,
+                replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED,
                 replace_color_cnt_loc, cnt, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
                 replace_colors_loc, game->graphic.colorpallet.blue8
             );
@@ -1113,14 +1113,14 @@ void wbGameRender(WBGame* game) {
         for (int i = 0; i < 6; i++) {
             glUniform1f(replace_color_mirror_height_loc, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE - 5));
             int frame = WB_GRAPHIC_TEXT_SCOREBOARD2_SHOW_FRAME + (6 - 1 - i) * WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT;
-            cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_RGB8_CNT ?
-                  (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_RGB8_CNT;
+            cnt = (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < WB_GRAPHIC_COLORPALLET_RGB8_CNT ?
+                  (game->gamestate.frame_counter - frame) * WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : WB_GRAPHIC_COLORPALLET_RGB8_CNT;
             glUniform1ui(frame_counter_loc, game->gamestate.frame_counter - frame);
             sprintf(text, "%01i.                     %06i        ", i + 2, 20000);
             wbGameDrawText(game, text, 1.0f, frame,
                 0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i) / WB_GRAPHIC_WINDOW_HEIGHT,
                 key_color_mode_loc, 1,
-                replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_ANIMATION_COLOR_SPEED,
+                replace_color_speed_loc, WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED,
                 replace_color_cnt_loc, cnt, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
                 replace_colors_loc, game->graphic.colorpallet.red8
             );
@@ -1132,7 +1132,7 @@ void wbGameRender(WBGame* game) {
             wbGameDrawText(game, text, 1.0f, WB_GRAPHIC_TEXT_SCOREBOARD3_SHOW_FRAME,
                 0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_TOPSCORES_TABLE_OFFSET_Y + WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y * i) / WB_GRAPHIC_WINDOW_HEIGHT,
                 key_color_mode_loc, 0,
-                replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_ANIMATION_COLOR_SPEED,
+                replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED,
                 replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB8_CNT, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
                 replace_colors_loc, game->graphic.colorpallet.blue8
             );
@@ -1140,8 +1140,8 @@ void wbGameRender(WBGame* game) {
         wbGameDrawText(game, "one  plr              two  plrs  ", 1.0f, WB_GRAPHIC_TEXT_SCOREBOARD4_SHOW_FRAME,
             0.0f, 2.0f - 2.0f * 255 / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_PULSE_ANIMATION_COLOR_SPEED,
-            replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RED4_CNT, WB_GRAPHIC_COLORPALLET_RED4_CNT,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_PULSE_COLORPALLET_SPEED,
+            replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB4_CNT, WB_GRAPHIC_COLORPALLET_RGB4_CNT,
             replace_colors_loc, game->graphic.colorpallet.red4
         );
         break;
@@ -1151,7 +1151,7 @@ void wbGameRender(WBGame* game) {
         wbGameDrawText(game, "GET READY!", 1.0f, 0,
             0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_ANIMATION_COLOR_SPEED,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED,
             replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB8_CNT, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
             replace_colors_loc, game->graphic.colorpallet.blue8
         );
@@ -1191,14 +1191,14 @@ void wbGameRender(WBGame* game) {
         wbGameDrawText(game, "GAME OVER", 1.0f, 0,
             0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_GAMEOVER_OFFSET_Y) / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_ANIMATION_COLOR_SPEED,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED,
             replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB8_CNT, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
             replace_colors_loc, game->graphic.colorpallet.blue8
         );
         wbGameDrawText(game, "player one", 1.0f, 0,
             0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             key_color_mode_loc, 0,
-            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_ANIMATION_COLOR_SPEED,
+            replace_color_speed_loc, WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED,
             replace_color_cnt_loc, WB_GRAPHIC_COLORPALLET_RGB8_CNT, WB_GRAPHIC_COLORPALLET_RGB8_CNT,
             replace_colors_loc, game->graphic.colorpallet.blue8
         );

@@ -21,10 +21,10 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate
             break;
 
             case WB_PARTICLE_DECAY:
-            // for decay of other enemies with no animated color: set color_key > WB_ENEMY_ANIMATION_COLOR_CNT + 1, dont update anymore
+            // for decay of other enemies with no animated color: set color_key > WB_ENEMY_COLORPALLET_CNT + 1, dont update anymore
             if (particle->head.color_key >= 0) {
-                particle->head.color_key += WB_GRAPHIC_ENEMY_ANIMATION_COLOR_SPEED;
-                particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT ? WB_GRAPHIC_ENEMY_ANIMATION_COLOR_CNT : 0;
+                particle->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED;
+                particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
             }
             particle->head.animation_key += WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_SPEED;
             if (particle->head.animation_key >= WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_FRAME_CNT) {
