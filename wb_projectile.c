@@ -8,14 +8,14 @@ int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType t
     return idx;
 }
 
-void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBView* view, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemies = enemy_buffer->entries;
     WBParticle* particles = particle_buffer->entries;
     WBProjectile* projectile;
-    map->view.bullet_wiz_cnt = 0;
-    map->view.bullet_cat_cnt = 0;
-    map->view.beam = false;
-    map->view.spray = false;
+    view->bullet_wiz_cnt = 0;
+    view->bullet_cat_cnt = 0;
+    view->beam = false;
+    view->spray = false;
     for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
         projectile = &projectile_buffer->entries[i];
         switch (projectile->head.type) {
@@ -23,7 +23,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
 
             case WB_PROJECTILE_BEAM:
             // render both parts from one projectile
-            map->view.beam = true;
+            view->beam = true;
             projectile->head.pos = wiz->pos;
             projectile->head.color_key += WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_COLOR_SPEED;
             projectile->head.color_key -= projectile->head.color_key >= WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_COLOR_CNT ? WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_COLOR_CNT : 0;
@@ -68,20 +68,20 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
                 }
             } if (j != WB_PARTICLE_CNT_MAX) continue;
             // map hit?
-            if (projectile->head.pos.x < map->view.center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= map->view.center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 ||
+            if (projectile->head.pos.x < view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 || projectile->head.pos.x >= view->center_x + WB_GRAPHIC_VIEW_WIDTH / 2 ||
                 projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_GAMERULE_MAP_HORIZON_HEIGHT ||
                 wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)) {
                 
                 wbBufferRemove(projectile_buffer, i);
                 continue;
             }
-            map->view.bullet_wiz_cnt += projectile->head.type == WB_PROJECTILE_BULLET_WIZ
-                                     || projectile->head.type == WB_PROJECTILE_BLAZER_WIZ;
-            map->view.bullet_cat_cnt += projectile->head.type == WB_PROJECTILE_BULLET_CAT
-                                     || projectile->head.type == WB_PROJECTILE_BLAZER_CAT;
-            map->view.spray           = projectile->head.type == WB_PROJECTILE_SPRAY_NW
-                                     || projectile->head.type == WB_PROJECTILE_SPRAY_N
-                                     || projectile->head.type == WB_PROJECTILE_SPRAY_NE;
+            view->bullet_wiz_cnt += projectile->head.type == WB_PROJECTILE_BULLET_WIZ
+                                 || projectile->head.type == WB_PROJECTILE_BLAZER_WIZ;
+            view->bullet_cat_cnt += projectile->head.type == WB_PROJECTILE_BULLET_CAT
+                                 || projectile->head.type == WB_PROJECTILE_BLAZER_CAT;
+            view->spray           = projectile->head.type == WB_PROJECTILE_SPRAY_NW
+                                 || projectile->head.type == WB_PROJECTILE_SPRAY_N
+                                 || projectile->head.type == WB_PROJECTILE_SPRAY_NE;
         }
     }
 }

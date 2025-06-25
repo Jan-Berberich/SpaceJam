@@ -110,7 +110,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
     }
 }
 
-void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
+void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBView* view, WBGamestate* gamestate) {
     if ((wiz->collision_vec.x || wiz->collision_vec.y) || (gamestate->powerup.unlocked & WB_POWERUP_THRUST) || (gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
         wiz->vel.x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
@@ -129,16 +129,16 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
     wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
 
-    map->view.center_x = wiz->pos.x;
-    map->view.center_x = fmaxf(map->view.center_x, WB_GRAPHIC_MAP_VIEW_WIDTH / 2);
-    map->view.center_x = fminf(map->view.center_x, map->atlas.background.width - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + 1);
+    view->center_x = wiz->pos.x;
+    view->center_x = fmaxf(view->center_x, WB_GRAPHIC_VIEW_WIDTH / 2);
+    view->center_x = fminf(view->center_x, map->background_atlas.width - WB_GRAPHIC_VIEW_WIDTH / 2 + 1);
 }
 
-void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt) {
+void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBView* view, WBGamestate* gamestate, uint64_t frame_cnt) {
     if (!(gamestate->powerup.unlocked & WB_POWERUP_CAT)) {
-        cat->pos.x = map->view.center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2;
-        cat->pos.y = wiz->pos.y < (float)map->atlas.background.height / WB_MAP_CNT / 2 ?
-                   - WB_GRAPHIC_SPRITE_SIZE : (float)map->atlas.background.height / WB_MAP_CNT + WB_GRAPHIC_SPRITE_SIZE;
+        cat->pos.x = view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2;
+        cat->pos.y = wiz->pos.y < (float)map->background_atlas.height / WB_MAP_CNT / 2 ?
+                   - WB_GRAPHIC_SPRITE_SIZE : (float)map->background_atlas.height / WB_MAP_CNT + WB_GRAPHIC_SPRITE_SIZE;
         return;
     }
 
@@ -156,8 +156,8 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     cat->pos.x += cat->vel.x + wiz->vel.x;
     cat->pos.y += cat->vel.y;
 
-    cat->pos.x = fmaxf(cat->pos.x, map->view.center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
-    cat->pos.x = fminf(cat->pos.x, map->view.center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.x = fminf(cat->pos.x, view->center_x + WB_GRAPHIC_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
     cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
     cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
 

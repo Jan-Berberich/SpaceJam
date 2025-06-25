@@ -16,7 +16,7 @@ void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
     gamestate->state = WB_GAMESTATE_TITLESCREEN;
 }
 
-void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBMap* map,
+void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* view,
     WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer) {
     
     ma_sound_stop(&sound->titlescreen);
@@ -25,7 +25,7 @@ void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBMap* map
     wbBufferClear(particle_buffer);
     wbBufferClear(enemy_buffer);
     wbBufferClear(projectile_buffer);
-    map->view.center_x = 0.0f;
+    view->center_x = 0.0f;
     for (int i = 0; i < 4; i++) {
         wbEnemyInsertRandoms(enemy_buffer, gamestate->frame_counter);
     }
