@@ -70,21 +70,30 @@ void wbBufferClear(void* buffer) {
         case WB_BUFFER_ENEMY:
         WBEnemy* entity = ((WBEnemyBuffer*)buffer_head)->entries;
         for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
-            entity++->head.type = WB_ENEMY_NONE;
+            entity->head.color_key = 0.0f;
+            entity->head.animation_key = 0.0f;
+            entity->head.type = WB_ENEMY_NONE;
+            entity++;
         }
         break;
 
         case WB_BUFFER_PARTICLE:
         WBParticle* particle = ((WBParticleBuffer*)buffer_head)->entries;
         for (int i = 0; i < WB_PARTICLE_CNT_MAX; i++) {
-            particle++->head.type = WB_PARTICLE_NONE;
+            particle->head.color_key = 0.0f;
+            particle->head.animation_key = 0.0f;
+            particle->head.type = WB_PARTICLE_NONE;
+            particle++;
         }
         break;
 
         case WB_BUFFER_PROJECTILE:
         WBProjectile* projectile = ((WBProjectileBuffer*)buffer_head)->entries;
         for (int i = 0; i < WB_PROJECTILE_CNT_MAX; i++) {
-            projectile++->head.type = WB_PROJECTILE_NONE;
+            projectile->head.color_key = 0.0f;
+            projectile->head.animation_key = 0.0f;
+            projectile->head.type = WB_PROJECTILE_NONE;
+            projectile++;
         }
         break;
     }

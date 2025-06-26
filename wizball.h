@@ -48,7 +48,7 @@
 
 
 
-#define WB_FPS 1000 /*50*/
+#define WB_FPS 250 /*50*/
 
 #define WB_MAP_CNT 6
 #define WB_POWERUP_SLOT_CNT 7
@@ -63,6 +63,7 @@
 #define WB_GRAPHIC_SPRITE_SIZE 64
 #define WB_GRAPHIC_SPRITE_VERTICES_CNT 4
 #define WB_GRAPHIC_SPRITE_INDICES_CNT 6
+#define WB_GRAPHIC_BATCH_CNT 64
 
 #define WB_GRAPHIC_KEY_COLOR_R 1.0f
 #define WB_GRAPHIC_KEY_COLOR_G 0.0f
@@ -657,8 +658,9 @@ typedef struct {
 } WBUniformLoc;
 
 typedef struct {
-    float vertices[WB_GRAPHIC_SPRITE_VERTICES_CNT * 4]; // x, y, u, v
-    unsigned int indices[WB_GRAPHIC_SPRITE_INDICES_CNT]; // 2 tris
+    float vertices[WB_GRAPHIC_SPRITE_VERTICES_CNT * 4 * WB_GRAPHIC_BATCH_CNT]; // x, y, u, v
+    unsigned int indices[WB_GRAPHIC_SPRITE_INDICES_CNT * WB_GRAPHIC_BATCH_CNT]; // 2 tris
+    int batch_cnt;
     GLuint vbo, vao, ebo, program;
     WBUniformLoc loc;
 } WBShader;

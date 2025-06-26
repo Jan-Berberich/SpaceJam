@@ -114,6 +114,15 @@ void wbShaderInit(WBShader* shader) {
     shader->program = wbShaderCreate(vertex_shader_src, fragment_shader_src);
     glUseProgram(shader->program); // Use the shader program
 
+    for (int i = 0; i < WB_GRAPHIC_BATCH_CNT; i++) {
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 0] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 0;
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 1] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 1;
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 2] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 2;
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 3] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 2;
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 4] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 3;
+        shader->indices[WB_GRAPHIC_SPRITE_INDICES_CNT * i + 5] = WB_GRAPHIC_SPRITE_VERTICES_CNT * i + 0;
+    }
+
     shader->indices[0] = 0; shader->indices[1] = 1; shader->indices[2] = 2; // first triangle
     shader->indices[3] = 2; shader->indices[4] = 3; shader->indices[5] = 0; // second triangle
 
@@ -123,7 +132,7 @@ void wbShaderInit(WBShader* shader) {
 
     glBindVertexArray(shader->vao);
     glBindBuffer(GL_ARRAY_BUFFER, shader->vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(shader->vertices), shader->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(shader->vertices), shader->vertices, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shader->ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(shader->indices), shader->indices, GL_STATIC_DRAW);
