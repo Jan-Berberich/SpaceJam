@@ -518,7 +518,7 @@ void wbGameDraw(WBShader* shader, GLuint texture_id,
     wbGameDrawBatch(shader, texture_id);
 }
 
-void wbGameDrawText(WBGame* game, char* text, WBTextType text_type, float width_scale, float height_scale, double draw_frame,
+void wbGameDrawText(WBGame* game, char* text, WBTextType text_type, float width_scale, float height_scale, uint64_t draw_frame,
     float offset_x, float offset_y,
     uint32_t* colors, int color_cnt, float color_speed, WBColorMode color_mode) {
     
@@ -531,8 +531,8 @@ void wbGameDrawText(WBGame* game, char* text, WBTextType text_type, float width_
 
     static float replace_colors[WB_GRAPHIC_COLORPALLET_ALL32_CNT * 4];
     if (color_mode == 1) {
-        int cnt = (game->gamestate.frame_counter - draw_frame) * color_speed / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT < color_cnt ?
-                  (game->gamestate.frame_counter - draw_frame) * color_speed / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1 : color_cnt;
+        int cnt = (game->gamestate.frame_counter - draw_frame) * color_speed / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1;
+        cnt = cnt > color_cnt ? color_cnt : cnt;
         for (int i = 0; i < color_cnt; i++) {
             uint32_t color = i >= cnt ? 0x000000FF : colors[i];
             int idx = (-i + color_cnt) % color_cnt;
