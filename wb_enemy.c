@@ -45,7 +45,7 @@ void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int co
     }
 }
 
-void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
+void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time) {
     uint32_t seed = glfwGetTime() * 1e9;
     WBVec2f pos;
     float pos_y_offset = WB_GRAPHIC_TEXT_OFFSET_Y + 0.5 * WB_GRAPHIC_TEXT_LARGE_SPRITE_SIZE;
@@ -63,7 +63,7 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
             vel.y = -vel.y;
         }
         int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET, &pos, &vel, WB_MOVEPATTERN_INERT);
-        enemy_buffer->entries[idx].head.color_key = fmod(frame_counter * WB_GRAPHIC_ENEMY_COLORPALLET_SPEED, WB_GRAPHIC_ENEMY_COLORPALLET_CNT);
+        enemy_buffer->entries[idx].head.color_key = fmod(time * WB_GRAPHIC_ENEMY_COLORPALLET_SPEED, WB_GRAPHIC_ENEMY_COLORPALLET_CNT);
         wbBufferRemove(enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
     }
 }
@@ -147,7 +147,7 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
 
             case WB_ENEMY_SPINNERCYAN:
             wbEnemyMovepatternUpdate(enemy);
-            enemy->head.animation_key += WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED;
+            enemy->head.animation_key += WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED * gamestate->delta_time;
             enemy->head.animation_key -= enemy->head.animation_key >= WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT ? WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT : 0;
             break;
 
@@ -160,9 +160,9 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
             if (enemy->head.pos.y < WB_GAMERULE_MAP_CEIL_HEIGHT || enemy->head.pos.y > WB_GAMERULE_MAP_FLOOR_HEIGHT ||
                 wbMapGetCollision(map, enemy->head.pos.x, enemy->head.pos.y, gamestate->level)) {
             
-                enemy->head.animation_key += WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED;
+                enemy->head.animation_key += WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED * gamestate->delta_time;
             } else {
-                enemy->head.animation_key += enemy->head.animation_key > 0 ? WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED : 0;
+                enemy->head.animation_key += enemy->head.animation_key > 0 ? WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED * gamestate->delta_time : 0;
             }
             enemy->head.animation_key = enemy->head.animation_key >= WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_FRAME_CNT ? 0 : enemy->head.animation_key;
             break;
@@ -171,7 +171,7 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
         enemy->head.pos.x += enemy->vel.x;
         enemy->head.pos.y += enemy->vel.y;
         if (enemy->head.color_key >= 0) {
-            enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED;
+            enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED * gamestate->delta_time;
             enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
         }
         enemy->movepattern_frame_cnt++;

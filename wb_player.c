@@ -127,7 +127,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     wiz->pos.x += wiz->vel.x;
     wiz->pos.y += wiz->vel.y;
 
-    wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))];
+    wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))] * gamestate->delta_time;
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
     wiz->animation_angle -= wiz->animation_angle >= -0.5f + WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
 

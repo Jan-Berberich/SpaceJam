@@ -23,10 +23,10 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGam
             case WB_PARTICLE_DECAY:
             // for decay of other enemies with no animated color: set color_key > WB_ENEMY_COLORPALLET_CNT + 1, dont update anymore
             if (particle->head.color_key >= 0) {
-                particle->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED;
+                particle->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED * gamestate->delta_time;
                 particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
             }
-            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED;
+            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED * gamestate->delta_time;
             if (particle->head.animation_key >= WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(particle_buffer, i);
             }
@@ -34,7 +34,7 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGam
 
             case WB_PARTICLE_DROPLET_FALL:
             particle->head.pos.y += WB_GAMERULE_PARTICLE_DROPLET_FALL_VEL;
-            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED;
+            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED * gamestate->delta_time;
             particle->head.animation_key -= particle->head.animation_key >= WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT ? WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT : 0;
             if (particle->head.pos.y >= WB_GAMERULE_MAP_FLOOR_HEIGHT) {
                 int idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DROPLET_SPLAT, &particle->head.pos);
@@ -44,7 +44,7 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGam
             break;
 
             case WB_PARTICLE_DROPLET_SPLAT:
-            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED;
+            particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED * gamestate->delta_time;
             if (particle->head.animation_key >= WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_ANIMATION_CNT) {
                 wbBufferRemove(particle_buffer, i);
             }

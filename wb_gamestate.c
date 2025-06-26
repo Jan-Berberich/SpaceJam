@@ -13,6 +13,7 @@ void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
     gamestate->powerup.unlocked = WB_POWERUP_NONE;
     gamestate->powerup.permanent = WB_POWERUP_NONE;
     gamestate->frame_counter = 0;
+    gamestate->time = 0.0;
     gamestate->state = WB_GAMESTATE_TITLESCREEN;
 }
 
@@ -28,6 +29,7 @@ void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* vi
     wbBufferClear(projectile_buffer);
     view->center_x = 0.0f;
     gamestate->frame_counter = 0;
+    gamestate->time = 0.0;
     for (int i = 0; i < 4; i++) {
         wbEnemyInsertRandoms(enemy_buffer, gamestate->frame_counter);
     }

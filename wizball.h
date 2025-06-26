@@ -49,6 +49,7 @@
 
 // TODO: with variable fps, limit delta_time to 1/50. The game will run slower with lower fps then 50 to avoid crashes :D
 #define WB_FPS 1000 /*50*/
+#define WB_FPS_MIN (1.0 / 1.0)
 
 #define WB_MAP_CNT 6
 #define WB_POWERUP_SLOT_CNT 7
@@ -97,18 +98,18 @@
 #define WB_GRAPHIC_PLAYER_CAT_SPRITE_ATLAS_X (6 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PLAYER_CAT_SPRITE_ATLAS_Y (2 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_0 (0.0f          * 50 / WB_FPS)
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_1 (1.0f / 21.00f * 50 / WB_FPS) /* 21    frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_2 (1.0f / 10.67f * 50 / WB_FPS) /* 32/ 3 frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_3 (1.0f /  5.33f * 50 / WB_FPS) /* 16/ 3 frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_4 (1.0f /  4.27f * 50 / WB_FPS) /* 47/11 frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_5 (1.0f /  3.00f * 50 / WB_FPS) /*  3    frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_6 (1.0f /  2.67f * 50 / WB_FPS) /*  8/ 3 frames / animation frame */
-#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_7 (1.0f /  2.00f * 50 / WB_FPS) /* added for sprint */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_0 (0.0f          * 50)
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_1 (1.0f / 21.00f * 50) /* 21    frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_2 (1.0f / 10.67f * 50) /* 32/ 3 frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_3 (1.0f /  5.33f * 50) /* 16/ 3 frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_4 (1.0f /  4.27f * 50) /* 47/11 frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_5 (1.0f /  3.00f * 50) /*  3    frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_6 (1.0f /  2.67f * 50) /*  8/ 3 frames / animation frame */
+#define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_SPEED_7 (1.0f /  2.00f * 50) /* added for sprint */
 #define WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT 16
-#define WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED (1.0f / 3.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED (1.0f / 3.0f * 50)
 #define WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_FRAME_CNT 22
-#define WB_GRAPHIC_PLAYER_CAT_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PLAYER_CAT_ANIMATION_SPEED (1.0f / 4.0f * 50)
 #define WB_GRAPHIC_PLAYER_CAT_ANIMATION_FRAME_CNT 3
 
 // enemy
@@ -119,12 +120,12 @@
 #define WB_GRAPHIC_ENEMY_DROPLET_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_ENEMY_DROPLET_SPRITE_ATLAS_Y (7 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED (1.0f / 6.0f * 50)
 #define WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT 4
-#define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED (1.0f / 3.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED (1.0f / 3.0f * 50)
 #define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_FRAME_CNT 11
 
-#define WB_GRAPHIC_ENEMY_COLORPALLET_SPEED (1.0f / 5.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_ENEMY_COLORPALLET_SPEED (1.0f / 5.0f * 50)
 #define WB_GRAPHIC_ENEMY_COLORPALLET_CNT 4
 #define WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET 2
 #define WB_GRAPHIC_ENEMY_COLORPALLET_RED_OFFSET 0
@@ -140,7 +141,7 @@
 #define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_SPRITE_ATLAS_X (7 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_SPRITE_ATLAS_Y (8 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_PARTICLE_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PARTICLE_ANIMATION_SPEED (1.0f / 4.0f * 50)
 #define WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT 4
 #define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_ANIMATION_CNT 9
 
@@ -160,10 +161,10 @@
 #define WB_GRAPHIC_PROJECTILE_BEAM_SPRITE_ATLAS_X (10 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PROJECTILE_BEAM_SPRITE_ATLAS_Y ( 2 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_SPEED (1.0f / 4.0f * 50)
 #define WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_FRAME_CNT 3
 
-#define WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_SPEED (1.0f / 1.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_SPEED (1.0f / 1.0f * 50)
 #define WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_CNT 16 // rkrkgkgkbkbkwkwk
 
 #define WB_GRAPHIC_PROJECTILE_BEAM_OFFSET_Y (48 * 2)
@@ -173,8 +174,8 @@
 #define WB_GRAPHIC_GUI_POWERUP_MAXED_SPRITE_ATLAS_X (15 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_Y (14 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_GUI_LEVEL_COLORPALLET_SPEED (1.0f / 2.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_GUI_COLORPALLET_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_GUI_LEVEL_COLORPALLET_SPEED (1.0f / 2.0f * 50)
+#define WB_GRAPHIC_GUI_COLORPALLET_SPEED (1.0f / 4.0f * 50)
 
 #define WB_GRAPHIC_GUI_POWERUP_STRIDE 53
 #define WB_GRAPHIC_GUI_SCORE_OFFSET_Y 63
@@ -194,10 +195,10 @@
 #define WB_GRAPHIC_TEXT_SMALL_MINUS_SPRITE_ATLAS_OFFSET 26
 #define WB_GRAPHIC_TEXT_SMALL_DOT_SPRITE_ATLAS_OFFSET 27
 
-#define WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED (2.0f / 3.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_TEXT_MIRROR_COLORPALLET_SPEED (1.0f / 2.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED (1.0f / 4.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_TEXT_PULSE_COLORPALLET_SPEED (1.0f / 7.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED (2.0f / 3.0f * 50)
+#define WB_GRAPHIC_TEXT_MIRROR_COLORPALLET_SPEED (1.0f / 2.0f * 50)
+#define WB_GRAPHIC_TEXT_BLINK_COLORPALLET_SPEED (1.0f / 4.0f * 50)
+#define WB_GRAPHIC_TEXT_PULSE_COLORPALLET_SPEED (1.0f / 7.0f * 50)
 
 #define WB_GRAPHIC_TEXT_CHAR_CNT 32
 
@@ -214,14 +215,14 @@
 #define WB_GRAPHIC_TEXT_TOPSCORES_TABLE_STRIDE_Y (2 * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE)
 #define WB_GRAPHIC_TEXT_GAMEOVER_OFFSET_Y (WB_GRAPHIC_TEXT_OFFSET_Y - 11)
 #define WB_GRAPHIC_TEXT_COLORBAND_HEIGHT 2
-#define WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_FRAME_CNT (60.0 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_TOPSCORES_DRAW_FRAME (920 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_HIGHSCORE1_DRAW_FRAME (1940 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_HIGHSCORE2_DRAW_FRAME (2260 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_SCOREBOARD1_DRAW_FRAME (3390 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_SCOREBOARD2_DRAW_FRAME (4040 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_SCOREBOARD3_DRAW_FRAME (5240 * WB_FPS / 1000)
-#define WB_GRAPHIC_TEXT_SCOREBOARD4_DRAW_FRAME (5260 * WB_FPS / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD_DELAY_TIME (60.0 / 1000)
+#define WB_GRAPHIC_TEXT_TOPSCORES_DRAW_TIME (920.0 / 1000)
+#define WB_GRAPHIC_TEXT_HIGHSCORE1_DRAW_TIME (1940.0 / 1000)
+#define WB_GRAPHIC_TEXT_HIGHSCORE2_DRAW_TIME (2260.0 / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD1_DRAW_TIME (3390.0 / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD2_DRAW_TIME (4040.0 / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD3_DRAW_TIME (5240.0 / 1000)
+#define WB_GRAPHIC_TEXT_SCOREBOARD4_DRAW_TIME (5260.0 / 1000)
 
 // colorpallet (max colors per pallet is 32 in shader)
 #define WB_GRAPHIC_COLORPALLET_ENEMY_0 0x803648FF /* #803648FF */
@@ -320,7 +321,8 @@
 // GAMERULE
 
 // control & movement
-#define WB_GAMERULE_PROCESS_INPUT_FRAME_CNT (WB_FPS / 50)
+#define WB_GAMERULE_PROCESS_INPUT_FRAME_CNT (WB_FPS / 50) // weg damit
+#define WB_GAMERULE_PROCESS_INPUT_TIME (1.0 / 50.0)
 #define WB_GAMERULE_AUTOFIRE_FRAME_CNT (12 * WB_FPS / 50)
 #define WB_GAMERULE_POWERUP_WIGGLE_CNT 4
 #define WB_GAMERULE_POWERUP_WIGGLE_SPEED (1.0f / 10.0f * 50 / WB_FPS)
@@ -641,9 +643,8 @@ typedef struct {
 } WBProjectileBuffer;
 
 typedef struct {
+    GLint time;
     GLint key_color;
-    GLint frame_counter;
-    GLint delta_time;
     GLint key_alpha;
     GLint tex_size;
     GLint key_color_mode;
@@ -732,7 +733,9 @@ typedef struct {
     int highscore;
     int score2;
     int level;
-    uint64_t frame_counter;
+    uint64_t frame_counter; // weg damit
+    double time;
+    double delta_time;
 } WBGamestate;
 
 typedef struct {
@@ -742,8 +745,8 @@ typedef struct {
     WBMap map;
     WBSound sound;
     WBGraphic graphic;
-    double last_frame_time;
-    uint64_t frame_cnt;
+    double last_frame_time; // weg damit
+    uint64_t frame_cnt; // weg damit
     WBPlayer player;
     WBEnemyBuffer enemy_buffer;
     WBParticleBuffer particle_buffer;
@@ -765,7 +768,7 @@ extern void wbBufferRemove(void* buffer, int idx);
 extern void wbBufferClear(void* buffer);
 
 extern void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colorpallet_offset, WBMovepatternType movepattern_type, WBView* view);
-extern void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter);
+extern void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time);
 extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
