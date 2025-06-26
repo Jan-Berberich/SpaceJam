@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-//#define WB_NO_SOUND
+#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -47,7 +47,7 @@
 #include "utils.h"
 
 
-
+// TODO: with variable fps, limit delta_time to 1/50. The game will run slower with lower fps then 50 to avoid crashes :D
 #define WB_FPS 1000 /*50*/
 
 #define WB_MAP_CNT 6
@@ -79,8 +79,8 @@
 #define WB_GRAPHIC_MAP_SUBPIXEL_CNT 1.0f /*2.0f*/
 #define WB_GRAPHIC_MAP_DUST_SUBPIXEL_CNT 4.0f
 
-#define WB_GRAPHIC_VIEW_WIDTH 600 /*570*/
-#define WB_GRAPHIC_VIEW_OFFSET_Y 70 /*70*/
+#define WB_GRAPHIC_MAP_VIEW_WIDTH 600 /*570*/
+#define WB_GRAPHIC_MAP_VIEW_OFFSET_Y 70 /*70*/
 
 #define WB_GRAPHIC_MAP_DUST_SPRITE_SIZE 64
 #define WB_GRAPHIC_MAP_DUST_LAYER_CNT 4
@@ -112,26 +112,37 @@
 #define WB_GRAPHIC_PLAYER_CAT_ANIMATION_FRAME_CNT 3
 
 // enemy
-#define WB_GRAPHIC_ENEMY_SPINNERBLUE_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
-#define WB_GRAPHIC_ENEMY_SPINNERBLUE_SPRITE_ATLAS_Y (6 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_ENEMY_SPINNERCYAN_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_ENEMY_SPINNERCYAN_SPRITE_ATLAS_Y (6 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_ENEMY_CIRCLE_SPRITE_ATLAS_X (4 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_ENEMY_CIRCLE_SPRITE_ATLAS_Y (6 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_ENEMY_DROPLET_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_ENEMY_DROPLET_SPRITE_ATLAS_Y (7 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_ENEMY_SPINNERBLUE_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT 4
+#define WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED (1.0f / 6.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT 4
+#define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED (1.0f / 3.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_FRAME_CNT 11
 
 #define WB_GRAPHIC_ENEMY_COLORPALLET_SPEED (1.0f / 5.0f * 50 / WB_FPS)
 #define WB_GRAPHIC_ENEMY_COLORPALLET_CNT 4
-#define WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET 1
+#define WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET 2
+#define WB_GRAPHIC_ENEMY_COLORPALLET_RED_OFFSET 0
+#define WB_GRAPHIC_ENEMY_COLORPALLET_CYAN_OFFSET 1
 
 // particle
 #define WB_GRAPHIC_PARTICLE_POWERUP_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PARTICLE_POWERUP_SPRITE_ATLAS_Y (5 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PARTICLE_DECAY_SPRITE_ATLAS_X (12 * WB_GRAPHIC_SPRITE_SIZE)
 #define WB_GRAPHIC_PARTICLE_DECAY_SPRITE_ATLAS_Y ( 5 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_PARTICLE_DROPLET_FALL_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_PARTICLE_DROPLET_FALL_SPRITE_ATLAS_Y (8 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_SPRITE_ATLAS_X (7 * WB_GRAPHIC_SPRITE_SIZE)
+#define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_SPRITE_ATLAS_Y (8 * WB_GRAPHIC_SPRITE_SIZE)
 
-#define WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
-#define WB_GRAPHIC_PARTICLE_DECAY_ANIMATION_FRAME_CNT 4
+#define WB_GRAPHIC_PARTICLE_ANIMATION_SPEED (1.0f / 4.0f * 50 / WB_FPS)
+#define WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT 4
+#define WB_GRAPHIC_PARTICLE_DROPLET_SPLAT_ANIMATION_CNT 9
 
 // projectile
 #define WB_GRAPHIC_PROJECTILE_BULLET_SPRITE_ATLAS_X (0 * WB_GRAPHIC_SPRITE_SIZE)
@@ -213,12 +224,13 @@
 #define WB_GRAPHIC_TEXT_SCOREBOARD4_DRAW_FRAME (5260 * WB_FPS / 1000)
 
 // colorpallet (max colors per pallet is 32 in shader)
-#define WB_GRAPHIC_COLORPALLET_ENEMY_0 0xFF0000FF
-#define WB_GRAPHIC_COLORPALLET_ENEMY_1 0xFFFFFFFF /* #FFFFFFFF */
-#define WB_GRAPHIC_COLORPALLET_ENEMY_2 0xCCD454FF /* #CCD454FF */
-#define WB_GRAPHIC_COLORPALLET_ENEMY_3 0x9CE57DFF /* #9CE57DFF */
-#define WB_GRAPHIC_COLORPALLET_ENEMY_4 0x616DDDFF /* #616DDDFF */
-#define WB_GRAPHIC_COLORPALLET_ENEMY_CNT 5
+#define WB_GRAPHIC_COLORPALLET_ENEMY_0 0x803648FF /* #803648FF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_1 0x71BCA9FF /* #71BCA9FF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_2 0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_3 0xCCD454FF /* #CCD454FF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_4 0x9CE57DFF /* #9CE57DFF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_5 0x616DDDFF /* #616DDDFF */
+#define WB_GRAPHIC_COLORPALLET_ENEMY_CNT 6
 #define WB_GRAPHIC_COLORPALLET_BEAM_0 0x000000FF /* #000000FF */
 #define WB_GRAPHIC_COLORPALLET_BEAM_1 0x803648FF /* #803648FF */
 #define WB_GRAPHIC_COLORPALLET_BEAM_2 0x9CE57DFF /* #9CE57DFF */
@@ -323,8 +335,8 @@
 #define WB_GAMERULE_MAP_CEIL_HEIGHT 4
 #define WB_GAMERULE_MAP_FLOOR_HEIGHT 288
 #define WB_GAMERULE_MAP_HORIZON_HEIGHT 240
-#define WB_GAMERULE_VIEW_BULLET_WIZ_CNT_MAX (int)round(2.0f * WB_GRAPHIC_VIEW_WIDTH / 570)
-#define WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX (int)round(1.0f * WB_GRAPHIC_VIEW_WIDTH / 570)
+#define WB_GAMERULE_VIEW_BULLET_WIZ_CNT_MAX (int)round(2.0f * WB_GRAPHIC_MAP_VIEW_WIDTH / 570)
+#define WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX (int)round(1.0f * WB_GRAPHIC_MAP_VIEW_WIDTH / 570)
 
 // player wiz
 #define WB_GAMERULE_PLAYER_WIZ_HEALTH_MAX 1
@@ -375,6 +387,7 @@
 #define WB_GAMERULE_PROJECTILE_BEAM_HITBOX_SIZE (48 * 2)
 #define WB_GAMERULE_PARTICLE_HITBOX_SIZE 48 // ?
 #define WB_GAMERULE_PARTICLE_POWERUP_DROP_CHANCE 0.1f // ?
+#define WB_GAMERULE_PARTICLE_DROPLET_FALL_VEL (1.0f * 50 / WB_FPS * 2)
 
 // gamestate
 #define WB_GAMERULE_GAMESTATE_HIT_FRAME_CNT (4 * WB_FPS)
@@ -436,9 +449,9 @@ typedef enum {
 
 typedef enum {
     WB_ENEMY_NONE,
-    WB_ENEMY_BLOB,
+    WB_ENEMY_DROPLET,
     WB_ENEMY_SPINNERYELLOW,
-    WB_ENEMY_SPINNERBLUE,
+    WB_ENEMY_SPINNERCYAN,
     WB_ENEMY_CIRCLE,
     WB_ENEMY_SQUARE,
     WB_ENEMY_RHOMBUS,
@@ -453,7 +466,8 @@ typedef enum {
     WB_PARTICLE_NONE,
     WB_PARTICLE_POWERUP,
     WB_PARTICLE_DECAY,
-    WB_PARTICLE_DROPLET,
+    WB_PARTICLE_DROPLET_FALL,
+    WB_PARTICLE_DROPLET_SPLAT,
     WB_PARTICLE_CNT
 } WBParticleType;
 
@@ -592,9 +606,9 @@ typedef struct {
 typedef struct {
     WBEntityHead head;
     WBMovepatternType movepattern_type;
+    uint64_t movepattern_frame_cnt;
     WBVec2f vel;
     int attack_period;
-    float frame_age;
 } WBEnemy;
 
 typedef struct {
@@ -625,21 +639,6 @@ typedef struct {
     WBBufferHead head;
     WBProjectile entries[WB_PROJECTILE_CNT_MAX];
 } WBProjectileBuffer;
-
-typedef struct {
-    int bullet_wiz_cnt;
-    int bullet_cat_cnt;
-    bool beam;
-    bool spray;
-    float center_x;
-} WBView;
-
-typedef struct {
-    WBTexture dust_texture;
-    WBTexture background_atlas;
-    WBTexture foreground_atlas;
-    bool* collider;
-} WBMap;
 
 typedef struct {
     GLint key_color;
@@ -673,7 +672,7 @@ typedef struct {
 } WBWindow;
 
 typedef struct {
-    ma_engine engine;
+    ma_engine _engine;
     ma_sound titlescreen;
     ma_sound getready;
     ma_sound fire;
@@ -705,10 +704,26 @@ typedef  struct {
 
 typedef struct {
     WBTexture sprite_atlas;
-    WBMap map;
+    WBTexture dust_texture;
+    WBTexture background_atlas;
+    WBTexture foreground_atlas;
     WBColorpallet colorpallet;
     char text[WB_GRAPHIC_TEXT_CHAR_CNT];
 } WBGraphic;
+
+typedef struct {
+    int bullet_wiz_cnt;
+    int bullet_cat_cnt;
+    bool beam;
+    bool spray;
+    float center_x;
+} WBView;
+
+typedef struct {
+    WBGraphic* graphic_handle;
+    bool* collider_atlas;
+    WBView view;
+} WBMap;
 
 typedef struct {
     WBGamestateType state;
@@ -724,7 +739,7 @@ typedef struct {
     WBGamestate gamestate;
     WBWindow window;
     WBShader shader;
-    WBView view;
+    WBMap map;
     WBSound sound;
     WBGraphic graphic;
     double last_frame_time;
@@ -740,32 +755,38 @@ extern void wbWindowLockAspectRatio(WBWindow* window);
 
 extern void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max);
 extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
-extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBView* view, WBGamestate* gamestate);
+extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
 extern void wbPlayerCatInit(WBCat* cat);
-extern void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBView* view, WBGamestate* gamestate, uint64_t frame_cnt);
+extern void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt);
 
 extern int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
 extern void wbBufferClear(void* buffer);
 
-extern int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type);
+extern void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colorpallet_offset, WBMovepatternType movepattern_type, WBView* view);
 extern void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter);
-extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
+extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
-extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBWiz* wiz, WBGamestate* gamestate, WBSound* sound);
+extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbProjectileBufferInit(WBProjectileBuffer* projectile_buffer);
 extern int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
-extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBView* view, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
+extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 
 extern void wbShaderInit(WBShader* shader);
+extern void wbShaderUninit(WBShader* shader);
 
-extern bool wbMapInit(WBMap* map);
+extern bool wbMapInitCollider(WBMap* map, uint8_t* data);
 extern bool wbMapGetCollision(WBMap* map, int x, int y, int level);
 
-extern void wbTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
+extern void wbGraphicTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
+extern bool wbGraphicInit(WBGraphic* graphic, WBMap* map);
+extern void wbGraphicUninit(WBGraphic* graphic, WBMap* map);
+
+extern bool wbSoundInit(WBSound* sound);
+extern void wbSoundUninit(WBSound* sound);
 
 extern void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound);
 extern void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* view, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer);

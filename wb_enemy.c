@@ -1,13 +1,48 @@
 #include "wizball.h"
 
-int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
+int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, int colorpallet_offset, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
     int idx = wbBufferAppend(enemy_buffer, enemy_type, pos);
     WBEnemy* enemy = &enemy_buffer->entries[idx];
     enemy->vel.x = vel->x;
     enemy->vel.y = vel->y;
     enemy->movepattern_type = movepattern_type;
-    enemy->frame_age = 0;
+    enemy->movepattern_frame_cnt = 0;
+    enemy->head.color_key = colorpallet_offset == WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET ?
+        randfin(glfwGetTime() * 1e9, 0.0f, WB_GRAPHIC_ENEMY_COLORPALLET_CNT) :
+        colorpallet_offset - WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET;
+    if (enemy->head.type == WB_ENEMY_SPINNERCYAN || enemy->head.type == WB_ENEMY_SPINNERYELLOW) {
+        enemy->head.animation_key = randfin(glfwGetTime() * 1e9, 0.0, WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT);
+    }
     return idx;
+}
+
+void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colorpallet_offset, WBMovepatternType movepattern_type, WBView* view) {
+    WBVec2f pos;
+    WBVec2f vel = {0.0f};
+    uint32_t seed = glfwGetTime() * 1e9;
+    switch (movepattern_type) {
+        case WB_MOVEPATTERN_INERT:
+        for (int i = 0; i < 8; i++) {
+            pos.x = randfin(seed++, 200, 3000);
+            if (pos.x > view->center_x - WB_GRAPHIC_WINDOW_WIDTH / 2 && pos.x < view->center_x + WB_GRAPHIC_WINDOW_WIDTH / 2) {
+                i--;
+                continue;
+            }
+            pos.y = randfin(seed++,  50,  200);
+            wbEnemyAppend(enemy_buffer, enemy_tpye, colorpallet_offset, &pos, &vel, movepattern_type);
+        }
+        break;
+        case WB_MOVEPATTERN_CIRCLE:
+        for (int i = 0; i < 8; i++) { // TODO: temporary
+            pos.x = randfin(seed++, 200, 3000);
+            if (pos.x > view->center_x - WB_GRAPHIC_WINDOW_WIDTH / 2 && pos.x < view->center_x + WB_GRAPHIC_WINDOW_WIDTH / 2) {
+                i--;
+                continue;
+            }
+            pos.y = randfin(seed++,   0,  150);
+            wbEnemyAppend(enemy_buffer, enemy_tpye, colorpallet_offset, &pos, &vel, movepattern_type);
+        }
+    }
 }
 
 void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
@@ -27,7 +62,7 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
             pos.y = -pos.y + pos_y_offset;
             vel.y = -vel.y;
         }
-        int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, &pos, &vel, WB_MOVEPATTERN_INERT);
+        int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET, &pos, &vel, WB_MOVEPATTERN_INERT);
         enemy_buffer->entries[idx].head.color_key = fmod(frame_counter * WB_GRAPHIC_ENEMY_COLORPALLET_SPEED, WB_GRAPHIC_ENEMY_COLORPALLET_CNT);
         wbBufferRemove(enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
     }
@@ -35,24 +70,40 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, uint64_t frame_counter) {
 
 void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemies = enemy_buffer->entries;
-    if ((WBEnemyType)enemies[idx].head.type == WB_ENEMY_SPINNERBLUE || randfin(time(NULL), 0.0f, 1.0f) < WB_GAMERULE_PARTICLE_POWERUP_DROP_CHANCE) {
-        wbBufferAppend(&particle_buffer->head, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
+    int particle_idx;
+    switch (enemies[idx].head.type) {
+        case WB_ENEMY_SPINNERCYAN:
+        wbBufferAppend(particle_buffer, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
         ma_sound_stop(&sound->fire);
         ma_sound_seek_to_pcm_frame(&sound->powerup_drop, 0);
         ma_sound_start(&sound->powerup_drop);
-    }
-    else {
-        int particle_idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
-        WBParticle* particle = &particle_buffer->entries[particle_idx];
-        particle->head.color_key = enemies[idx].head.color_key;
-        ma_sound_seek_to_pcm_frame(&sound->decay, 0);
-        ma_sound_start(&sound->decay);
+        break;
+
+        case WB_ENEMY_DROPLET:
+        particle_idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DROPLET_FALL, &enemies[idx].head.pos);
+        particle_buffer->entries[particle_idx].head.color_key = enemies[idx].head.color_key;
+        // TODO: play sound
+        break;
+
+        default:
+        if (randfin(time(NULL), 0.0f, 1.0f) < WB_GAMERULE_PARTICLE_POWERUP_DROP_CHANCE) {
+            wbBufferAppend(particle_buffer, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
+            ma_sound_stop(&sound->fire);
+            ma_sound_seek_to_pcm_frame(&sound->powerup_drop, 0);
+            ma_sound_start(&sound->powerup_drop);
+        } else {
+            particle_idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
+            particle_buffer->entries[particle_idx].head.color_key = enemies[idx].head.color_key;
+            ma_sound_seek_to_pcm_frame(&sound->decay, 0);
+            ma_sound_start(&sound->decay);
+        }
+        break;
     }
     wbBufferRemove(enemy_buffer, idx);
     gamestate->score += WB_GAMERULE_SCORE_ENEMY;
 }
 
-void wbEnemyMovepatternUpdate(WBEnemy* enemy) {
+bool wbEnemyMovepatternUpdate(WBEnemy* enemy) {
     switch (enemy->movepattern_type) {
         case WB_MOVEPATTERN_INERT:
         break;
@@ -63,8 +114,8 @@ void wbEnemyMovepatternUpdate(WBEnemy* enemy) {
         case WB_MOVEPATTERN_STEP_UP:
         break;
         case WB_MOVEPATTERN_CIRCLE:
-        enemy->vel.x = 100.0f * cosf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
-        enemy->vel.y = 100.0f * sinf(2.0f * enemy->frame_age / WB_FPS) / WB_FPS;
+        enemy->vel.x = 100.0f * cosf(2.0f * enemy->movepattern_frame_cnt / WB_FPS) / WB_FPS;
+        enemy->vel.y = 100.0f * sinf(2.0f * enemy->movepattern_frame_cnt / WB_FPS) / WB_FPS;
         break;
         case WB_MOVEPATTERN_BOUNCE:
         break;
@@ -79,12 +130,12 @@ void wbEnemyMovepatternUpdate(WBEnemy* enemy) {
     }
 }
 
-void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
     WBEnemy* enemy;
     gamestate->enemy_cnt = WB_ENEMY_CNT_MAX;
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
         enemy = &enemy_buffer->entries[i];
-        switch ((WBEnemyType)enemy->head.type) {
+        switch (enemy->head.type) {
             case WB_ENEMY_NONE:
             gamestate->enemy_cnt--;
             continue;
@@ -94,14 +145,26 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
             wbEnemyMovepatternUpdate(enemy);
             break;
 
-            case WB_ENEMY_SPINNERBLUE:
-            enemy->head.animation_key += WB_GRAPHIC_ENEMY_SPINNERBLUE_ANIMATION_SPEED;
-            enemy->head.animation_key -= enemy->head.animation_key >= WB_GRAPHIC_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT ? WB_GRAPHIC_ENEMY_SPINNERBLUE_ANIMATION_FRAME_CNT : 0;
+            case WB_ENEMY_SPINNERCYAN:
             wbEnemyMovepatternUpdate(enemy);
+            enemy->head.animation_key += WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_SPEED;
+            enemy->head.animation_key -= enemy->head.animation_key >= WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT ? WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT : 0;
             break;
 
             case WB_ENEMY_CIRCLE:
             wbEnemyMovepatternUpdate(enemy);
+            break;
+
+            case WB_ENEMY_DROPLET:
+            wbEnemyMovepatternUpdate(enemy);
+            if (enemy->head.pos.y < WB_GAMERULE_MAP_CEIL_HEIGHT || enemy->head.pos.y > WB_GAMERULE_MAP_FLOOR_HEIGHT ||
+                wbMapGetCollision(map, enemy->head.pos.x, enemy->head.pos.y, gamestate->level)) {
+            
+                enemy->head.animation_key += WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED;
+            } else {
+                enemy->head.animation_key += enemy->head.animation_key > 0 ? WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED : 0;
+            }
+            enemy->head.animation_key = enemy->head.animation_key >= WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_FRAME_CNT ? 0 : enemy->head.animation_key;
             break;
         }
 
@@ -111,14 +174,14 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
             enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED;
             enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
         }
-        enemy->frame_age++;
+        enemy->movepattern_frame_cnt++;
 
         if (gamestate->state == WB_GAMESTATE_PLAY &&
-            enemy->head.pos.x > cat->pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= cat->pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->head.pos.y > cat->pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= cat->pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
+            enemy->head.pos.x > player->cat.pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= player->cat.pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > player->cat.pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= player->cat.pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
             
             wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
-            if (--cat->health) {
+            if (--player->cat.health) {
                 ma_sound_seek_to_pcm_frame(&sound->cathit, 0);
                 ma_sound_start(&sound->cathit);
             }
@@ -126,11 +189,11 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBWiz* wiz, WBCat* cat, WBPartic
         }
 
         if (gamestate->state == WB_GAMESTATE_PLAY &&
-            enemy->head.pos.x > wiz->pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= wiz->pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
-            enemy->head.pos.y > wiz->pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= wiz->pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
+            enemy->head.pos.x > player->wiz.pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= player->wiz.pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
+            enemy->head.pos.y > player->wiz.pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= player->wiz.pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
             
             wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
-            wiz->health--;
+            player->wiz.health--;
         }
     }
 }

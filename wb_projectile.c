@@ -8,7 +8,8 @@ int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType t
     return idx;
 }
 
-void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBView* view, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+    WBView* view = &map->view;
     WBEnemy* enemies = enemy_buffer->entries;
     WBParticle* particles = particle_buffer->entries;
     WBProjectile* projectile;
@@ -68,7 +69,7 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBVie
                 }
             } if (j != WB_PARTICLE_CNT_MAX) continue;
             // map hit?
-            if (projectile->head.pos.x < view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 || projectile->head.pos.x >= view->center_x + WB_GRAPHIC_VIEW_WIDTH / 2 ||
+            if (projectile->head.pos.x < view->center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 || projectile->head.pos.x >= view->center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 ||
                 projectile->head.pos.y < 0 || projectile->head.pos.y >= WB_GAMERULE_MAP_HORIZON_HEIGHT ||
                 wbMapGetCollision(map, roundf(projectile->head.pos.x), roundf(projectile->head.pos.y), gamestate->level)) {
                 

@@ -144,3 +144,10 @@ void wbShaderInit(WBShader* shader) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 }
+
+void wbShaderUninit(WBShader* shader) {
+    glDeleteVertexArrays(1, &shader->vao);
+    glDeleteBuffers(1, &shader->vbo);
+    glDeleteBuffers(1, &shader->ebo);
+    glDeleteProgram(shader->program);
+}
