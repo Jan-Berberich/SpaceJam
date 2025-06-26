@@ -142,6 +142,14 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBView* view, WBGames
         return;
     }
 
+    cat->pos.x += cat->vel.x + wiz->vel.x;
+    cat->pos.y += cat->vel.y;
+
+    cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.x = fminf(cat->pos.x, view->center_x + WB_GRAPHIC_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
+    cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
+    cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
+
     int pos_y_buffer_idx = frame_cnt % WB_GAMERULE_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
     if (!cat->hold_position) {
         cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
@@ -152,14 +160,6 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBView* view, WBGames
         cat->facing = fsgnf(wiz->pos.x - cat->pos.x);
     }
     cat->facing = cat->vel.x < 0 ? WB_DIRECTION_NEGATIVE : cat->vel.x > 0 ? WB_DIRECTION_POSITIVE : cat->facing;
-
-    cat->pos.x += cat->vel.x + wiz->vel.x;
-    cat->pos.y += cat->vel.y;
-
-    cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
-    cat->pos.x = fminf(cat->pos.x, view->center_x + WB_GRAPHIC_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
-    cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
-    cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
 
     cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
 }

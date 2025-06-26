@@ -42,6 +42,7 @@ bool wbGameInit(WBGame* game) {
     graphic->colorpallet.enemy[1] = WB_GRAPHIC_COLORPALLET_ENEMY_1;
     graphic->colorpallet.enemy[2] = WB_GRAPHIC_COLORPALLET_ENEMY_2;
     graphic->colorpallet.enemy[3] = WB_GRAPHIC_COLORPALLET_ENEMY_3;
+    graphic->colorpallet.enemy[4] = WB_GRAPHIC_COLORPALLET_ENEMY_4;
     graphic->colorpallet.beam[0] = WB_GRAPHIC_COLORPALLET_BEAM_0;
     graphic->colorpallet.beam[1] = WB_GRAPHIC_COLORPALLET_BEAM_1;
     graphic->colorpallet.beam[2] = WB_GRAPHIC_COLORPALLET_BEAM_2;
@@ -693,7 +694,7 @@ void wbGameDrawEntities(WBGame* game) {
             case WB_PARTICLE_DECAY:
             offset_u = WB_GRAPHIC_PARTICLE_DECAY_SPRITE_ATLAS_X / sprite_atlas_width + (int)particle->head.animation_key * width_u;
             offset_v = WB_GRAPHIC_PARTICLE_DECAY_SPRITE_ATLAS_Y / sprite_atlas_width;
-            uint32_t color = game->graphic.colorpallet.enemy[(int)particle->head.color_key];
+            uint32_t color = game->graphic.colorpallet.enemy[(int)particle->head.color_key + WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET];
             ui32to4f(rgba, color);
             glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
             break;
@@ -721,7 +722,7 @@ void wbGameDrawEntities(WBGame* game) {
             case WB_ENEMY_CIRCLE:
             offset_u = WB_GRAPHIC_ENEMY_CIRCLE_SPRITE_ATLAS_X / sprite_atlas_width;
             offset_v = WB_GRAPHIC_ENEMY_CIRCLE_SPRITE_ATLAS_Y / sprite_atlas_height;
-            uint32_t color = game->graphic.colorpallet.enemy[(int)enemy->head.color_key];
+            uint32_t color = game->graphic.colorpallet.enemy[(int)enemy->head.color_key + WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET];
             ui32to4f(rgba, color);
             glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
             break;
@@ -1130,7 +1131,7 @@ int wbGameRun() {
                 wbGamestateSetupGetready(&game.gamestate, &game.sound, &game.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer);
             }
             game.window.prev_key_state[GLFW_KEY_SPACE] = space_pressed;
-            if (game.gamestate.frame_counter > 0 /*WB_GAMEPLAY_TITLESCREEN_FRAME_CNT*/) {}
+            if (++game.gamestate.frame_counter > 0 /*WB_GAMEPLAY_TITLESCREEN_FRAME_CNT*/) {}
             break;
 
             case WB_GAMESTATE_GETREADY:
@@ -1166,6 +1167,7 @@ int wbGameRun() {
                 game.gamestate.state = WB_GAMESTATE_SPAWN;
             }
             game.window.prev_key_state[GLFW_KEY_SPACE] = space_pressed;
+            ++game.gamestate.frame_counter;
             break;
 
             case WB_GAMESTATE_SPAWN:
@@ -1176,7 +1178,7 @@ int wbGameRun() {
             wbEnemyUpdate(&game.enemy_buffer, &game.player.wiz, &game.player.cat, &game.particle_buffer, &game.gamestate, &game.sound);
             wbProjectileUpdate(&game.projectile_buffer, &game.graphic.map, &game.view, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
             wbGameRender(&game);
-            if (game.gamestate.frame_counter * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED >= WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_FRAME_CNT) {
+            if (++game.gamestate.frame_counter * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED >= WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_FRAME_CNT) {
                 game.player.wiz.animation_angle = 0.0f;
                 game.gamestate.state = WB_GAMESTATE_PLAY;
             }
@@ -1226,6 +1228,7 @@ int wbGameRun() {
                 game.gamestate.frame_counter = 0;
                 game.gamestate.state = WB_GAMESTATE_DEATH;
             }
+            ++game.gamestate.frame_counter;
             break;
 
             case WB_GAMESTATE_DEATH:
@@ -1237,7 +1240,7 @@ int wbGameRun() {
             game.gamestate.lifes++;
             wbGameRender(&game);
             game.gamestate.lifes--;
-            if (game.gamestate.frame_counter >= WB_GAMERULE_GAMESTATE_HIT_FRAME_CNT) {
+            if (++game.gamestate.frame_counter >= WB_GAMERULE_GAMESTATE_HIT_FRAME_CNT) {
                 if (game.gamestate.lifes) {
                     wbGamestateSetupGetready(&game.gamestate, &game.sound, &game.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer);
                 } else {
@@ -1251,13 +1254,12 @@ int wbGameRun() {
 
             case WB_GAMESTATE_GAMEOVER:
             wbGameRender(&game);
-            if (game.gamestate.frame_counter >= WB_GAMERULE_GAMESTATE_GAMEOVER_FRAME_CNT) {
+            if (++game.gamestate.frame_counter >= WB_GAMERULE_GAMESTATE_GAMEOVER_FRAME_CNT) {
                 wbGamestateSetupTitlescreen(&game.gamestate, &game.sound);
             }
             break;
         }
 
-        game.gamestate.frame_counter++;
         game.last_frame_time = frame_time;
         game.frame_cnt++;
     }
