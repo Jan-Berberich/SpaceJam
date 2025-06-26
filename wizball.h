@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-#define WB_NO_SOUND
+//#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -48,7 +48,7 @@
 
 
 
-#define WB_FPS 250 /*50*/
+#define WB_FPS 1000 /*50*/
 
 #define WB_MAP_CNT 6
 #define WB_POWERUP_SLOT_CNT 7

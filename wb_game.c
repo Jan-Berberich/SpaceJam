@@ -1073,7 +1073,7 @@ void wbGameRender(WBGame* game) {
             0.0f, 2.0f - (2.0f * WB_GRAPHIC_TEXT_TOPSCORES_OFFSET_Y) / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colorpallet.blue4, WB_GRAPHIC_COLORPALLET_RGB4_CNT, WB_GRAPHIC_TEXT_PULSE_COLORPALLET_SPEED, WB_COLORMODE_FILL);
         glUniform1f(game->shader.loc.replace_color_mirror_height, WB_GRAPHIC_WINDOW_HEIGHT - (WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE - 1));
-        glUniform1ui(game->gamestate.frame_counter, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_DRAW_FRAME);
+        glUniform1ui(game->shader.loc.frame_counter, game->gamestate.frame_counter - WB_GRAPHIC_TEXT_HIGHSCORE1_DRAW_FRAME);
         wbGameDrawText(game, "1. 050000          ", WB_TEXT_DIGIT, 2.0f, 1.0f, WB_GRAPHIC_TEXT_HIGHSCORE1_DRAW_FRAME,
             0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_HIGHSCORE_OFFEST_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colorpallet.green4, WB_GRAPHIC_COLORPALLET_RGB4_CNT, WB_GRAPHIC_TEXT_SCROLL_COLORPALLET_SPEED, WB_COLORMODE_SCROLL);
