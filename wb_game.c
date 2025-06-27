@@ -71,12 +71,14 @@ void wbGameUninit(WBGame* game) {
 }
 
 void wbGameProcessInput(WBGame* game) {
-    static double timer = WB_GAMERULE_PROCESS_INPUT_TIME;
-    timer += game->gamestate.delta_time;
-    if (timer < WB_GAMERULE_PROCESS_INPUT_TIME) {
+    static double input_time = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
+    static double timer = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
+    if (timer < input_time) {
+        timer += game->gamestate.delta_time;
         return;
     }
-    timer = 0;
+    timer += game->gamestate.delta_time;
+    timer -= input_time;
 
     WBView* view = &game->map.view;
     
@@ -185,28 +187,28 @@ void wbGameProcessInput(WBGame* game) {
         wiz_down   = false;
     }
     if (wiz_right) {
-        wiz->vel_x_key += WB_GAMERULE_PLAYER_WIZ_ACC_X * WB_GAMERULE_PROCESS_INPUT_TIME;
+        wiz->vel_x_key += WB_GAMERULE_PLAYER_WIZ_ACC_X * input_time;
         wiz->vel_x_key = fminf(wiz->vel_x_key,   WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint);
     }
     if (wiz_left) {
-        wiz->vel_x_key -= WB_GAMERULE_PLAYER_WIZ_ACC_X * WB_GAMERULE_PROCESS_INPUT_TIME;
+        wiz->vel_x_key -= WB_GAMERULE_PLAYER_WIZ_ACC_X * input_time;
         wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !sprint));
     }
 
     float vel_x, vel_y;
     if (powerup->unlocked & WB_POWERUP_ANTIGRAV) {
         if (wiz_down) {
-            wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
+            wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * input_time;
             wiz->vel_y_key = fminf(wiz->vel_y_key,  WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT - 1);
         }
         if (wiz_up) {
-            wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
+            wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * input_time;
             wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT + 1);
         }
         vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
-        wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * WB_GAMERULE_PROCESS_INPUT_TIME * (!wiz_left && !wiz_right);
+        wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * input_time * (!wiz_left && !wiz_right);
         vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
-        wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * WB_GAMERULE_PROCESS_INPUT_TIME * (!wiz_up && !wiz_down);
+        wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * input_time * (!wiz_up && !wiz_down);
     }
 
     static double last_wiz_fire_time = 0.0;
@@ -215,8 +217,8 @@ void wbGameProcessInput(WBGame* game) {
         (game->gamestate.state == WB_GAMESTATE_PLAY || game->gamestate.state == WB_GAMESTATE_SPAWN)) {
         WBVec2f vel;
         if (view->bullet_wiz_cnt < WB_GAMERULE_VIEW_BULLET_WIZ_CNT_MAX) {
-            if (game->gamestate.time - last_wiz_fire_time <  1.05 * WB_GAMERULE_PROCESS_INPUT_TIME &&
-                game->gamestate.time - last_cat_fire_time >= 1.05 * WB_GAMERULE_PROCESS_INPUT_TIME) {
+            if (game->gamestate.time - last_wiz_fire_time <  1.05 * input_time &&
+                game->gamestate.time - last_cat_fire_time >= 1.05 * input_time) {
                 //ma_sound_seek_to_pcm_frame(&game->sound.fire_spam, 0); // TODO: remove fire_spam?
                 //ma_sound_start(&game->sound.fire_spam);
             } else {
@@ -283,8 +285,8 @@ void wbGameProcessInput(WBGame* game) {
         wiz_fire && !game->window.prev_key_state[WB_KEY_WIZ_FIRE] || autofire) {
         WBVec2f vel;
         if (view->bullet_cat_cnt < WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX) {
-            if (game->gamestate.time - last_cat_fire_time <  1.05 * WB_GAMERULE_PROCESS_INPUT_TIME &&
-                game->gamestate.time - last_wiz_fire_time >= 1.05 * WB_GAMERULE_PROCESS_INPUT_TIME) {
+            if (game->gamestate.time - last_cat_fire_time <  1.05 * input_time &&
+                game->gamestate.time - last_wiz_fire_time >= 1.05 * input_time) {
                 //ma_sound_seek_to_pcm_frame(&game->sound.fire_spam, 0);
                 //ma_sound_start(&game->sound.fire_spam);
             } else {
@@ -1052,18 +1054,26 @@ int wbGameRun() {
 
         // --- Fullscreen toggle on Alt+Enter or F11 ---
         static int prev_f11 = 0, prev_alt_enter = 0;
-        int f11 = glfwGetKey(game.window.handle, GLFW_KEY_F11);
-        int alt = glfwGetKey(game.window.handle, GLFW_KEY_LEFT_ALT) || glfwGetKey(game.window.handle, GLFW_KEY_RIGHT_ALT);
-        int enter = glfwGetKey(game.window.handle, GLFW_KEY_ENTER);
-
-        if ((f11 && !prev_f11) || ((alt && enter) && !(prev_alt_enter))) {
+        int key_f11 = glfwGetKey(game.window.handle, GLFW_KEY_F11);
+        int key_alt = glfwGetKey(game.window.handle, GLFW_KEY_LEFT_ALT) || glfwGetKey(game.window.handle, GLFW_KEY_RIGHT_ALT);
+        int key_enter = glfwGetKey(game.window.handle, GLFW_KEY_ENTER);
+        if ((key_f11 && !prev_f11) || ((key_alt && key_enter) && !(prev_alt_enter))) {
             wbWindowToggleFullscreen(&game.window);
-            // Update viewport after toggling fullscreen
             wbWindowLockAspectRatio(&game.window);
         }
-        prev_f11 = f11;
-        prev_alt_enter = alt && enter;
+        prev_f11 = key_f11;
+        prev_alt_enter = key_alt && key_enter;
         // --- End fullscreen toggle ---
+
+        // --- VSync toggle on Alt+V ---
+        static int prev_alt_v = 0;
+        int key_v = glfwGetKey(game.window.handle, GLFW_KEY_V);
+        if ((key_alt && key_v) && !(prev_alt_v)) {
+            game.window.vsync ^= 1;
+            glfwSwapInterval(game.window.vsync);
+        }
+        prev_alt_v = key_alt && key_v;
+        // --- End VSync toggle ---
 
         bool space_pressed = glfwGetKey(game.window.handle, GLFW_KEY_SPACE);
 

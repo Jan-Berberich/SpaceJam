@@ -46,10 +46,10 @@
 
 #include "utils.h"
 
-
-// TODO: with variable fps, limit delta_time to 1/50. The game will run slower with lower fps then 50 to avoid crashes :D
 #define WB_FPS_MAX 9999
 #define WB_FPS_MIN 50
+
+#define WB_GAMERULE_PROCESS_INPUT_SPEED 50 /* 50 */
 
 #define WB_MAP_CNT 6
 #define WB_POWERUP_SLOT_CNT 7
@@ -59,7 +59,7 @@
 #define WB_PROJECTILE_CNT_MAX 64
 
 // GRAPHIC
-#define WB_GRAPHIC_VSYNC 0
+#define WB_GRAPHIC_VSYNC 1
 
 #define WB_GRAPHIC_SUBPIXEL_CNT 2.0f
 
@@ -323,7 +323,6 @@
 // GAMERULE
 
 // control & movement
-#define WB_GAMERULE_PROCESS_INPUT_TIME (1.0f / 50.0)
 #define WB_GAMERULE_AUTOFIRE_HOLD_TIME (12.0f / 50)
 #define WB_GAMERULE_POWERUP_WIGGLE_CNT 4
 #define WB_GAMERULE_POWERUP_WIGGLE_SPEED (1.0f / 10.0f * 50)
@@ -379,7 +378,7 @@
 #define WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET 22
 
 #define WB_GAMERULE_PLAYER_CAT_VEL (4.0f * 50 * 2)
-#define WB_GAMERULE_PLAYER_CAT_MOVEDELAY_INPUT_FRAME_CNT 8 /* 8 * 50fps * WB_GAMERULE_PROCESS_INPUT_TIME) */
+#define WB_GAMERULE_PLAYER_CAT_MOVEDELAY_INPUT_FRAME_CNT (8 * WB_GAMERULE_PROCESS_INPUT_SPEED / 50)
 
 #define WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL (WB_GAMERULE_PLAYER_CAT_VEL / 2)
 #define WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X 40
@@ -673,6 +672,7 @@ typedef struct {
     int height;
     int windowed_x, windowed_y, windowed_width, windowed_height;
     bool is_fullscreen;
+    bool vsync;
     int prev_key_state[GLFW_KEY_LAST + 1];
 } WBWindow;
 

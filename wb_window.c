@@ -35,8 +35,12 @@ bool wbWindowInit(WBWindow* window) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard alpha blending
 
+    // Initially windowed
+    window->is_fullscreen = false;
+
     // VSync
-    glfwSwapInterval(WB_GRAPHIC_VSYNC);
+    window->vsync = WB_GRAPHIC_VSYNC;
+    glfwSwapInterval(window->vsync);
 }
 
 void wbWindowLockAspectRatio(WBWindow* window) {
