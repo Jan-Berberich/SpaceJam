@@ -26,8 +26,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             // render both parts from one projectile
             view->beam = true;
             projectile->head.pos = wiz->pos;
-            projectile->head.color_key += WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_SPEED * gamestate->delta_time;
-            projectile->head.color_key -= projectile->head.color_key >= WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_CNT ? WB_GRAPHIC_PROJECTILE_BEAM_COLORPALLET_CNT : 0;
+            projectile->head.color_key += WB_GRAPHIC_PROJECTILE_BEAM_COLORMAP_SPEED * gamestate->delta_time;
+            projectile->head.color_key -= projectile->head.color_key >= WB_GRAPHIC_PROJECTILE_BEAM_COLORMAP_CNT ? WB_GRAPHIC_PROJECTILE_BEAM_COLORMAP_CNT : 0;
             projectile->head.animation_key += WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_SPEED * gamestate->delta_time;
             if (projectile->head.animation_key >= WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_FRAME_CNT) {
                 wbBufferRemove(projectile_buffer, i);
@@ -44,8 +44,8 @@ void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz
             break;
 
             default:
-            projectile->head.pos.x += projectile->vel.x;
-            projectile->head.pos.y += projectile->vel.y;
+            projectile->head.pos.x += projectile->vel.x * gamestate->delta_time;
+            projectile->head.pos.y += projectile->vel.y * gamestate->delta_time;
             int j;
             // enemy hit?
             for (j = 0; j < WB_ENEMY_CNT_MAX; j++) {

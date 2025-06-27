@@ -47,6 +47,7 @@ void wbPlayerCatInit(WBCat* cat) {
     cat->health = WB_GAMERULE_PLAYER_CAT_HEALTH_MAX;
     cat->rest_offset_x = WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X;
     cat->next_spray_direction = WB_DIRECTION_NEGATIVE;
+    cat->pos_y_buffer_idx = 0;
 }
 
 void wbPlayerWizSetCollisionVec(WBWiz* wiz, WBMap* map, int level) {
@@ -93,16 +94,16 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
         }
         if (fabsf(wiz->collision_vec.y) > 0.01f) {
             if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
-                wiz->vel.y += WB_GAMERULE_GRAVITY;
-                wiz->vel.y = -fabsf(wiz->vel.y) * fsgnf(wiz->collision_vec.y);
+                wiz->vel.y += WB_GAMERULE_GRAVITY * gamestate->delta_time;
+                wiz->vel.y = -fsgnf(wiz->collision_vec.y) * fabsf(wiz->vel.y);
             }
             else {
                 if (map_ceil_collision || map_floor_collision) {
                     wiz->vel_y_key = -fsgnf(wiz->collision_vec.y);
-                    wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
+                    wiz->vel_y_key += fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * gamestate->delta_time;
                 }
                 else {
-                    wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * fsgnf(wiz->collision_vec.y);
+                    wiz->vel_y_key -= fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * gamestate->delta_time;
                     wiz->vel_y_key = -fabsf(wiz->vel_y_key) * fsgnf(wiz->collision_vec.y);
                 }
             }
@@ -120,12 +121,12 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
         wiz->vel.y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
     }
     if (!(gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV)) {
-        wiz->vel.y += WB_GAMERULE_GRAVITY;
+        wiz->vel.y += WB_GAMERULE_GRAVITY * gamestate->delta_time;
     }
     wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
 
-    wiz->pos.x += wiz->vel.x;
-    wiz->pos.y += wiz->vel.y;
+    wiz->pos.x += wiz->vel.x * gamestate->delta_time;
+    wiz->pos.y += wiz->vel.y * gamestate->delta_time;
 
     wiz->animation_angle += fsgnf(wiz->vel_x_key) * wiz->animation_speed_values[(int)roundf(fabsf(wiz->vel_x_key))] * gamestate->delta_time;
     wiz->animation_angle += wiz->animation_angle <  -0.5f ? WB_GRAPHIC_PLAYER_WIZ_ANIMATION_FRAME_CNT : 0;
@@ -136,7 +137,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     view->center_x = fminf(view->center_x, map_atlas->width - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + 1);
 }
 
-void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate, uint64_t frame_cnt) {
+void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     WBTexture* map_atlas = &map->graphic_handle->background_atlas;
     WBView* view = &map->view;
     if (!(gamestate->powerup.unlocked & WB_POWERUP_CAT)) {
@@ -146,24 +147,22 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
         return;
     }
 
-    cat->pos.x += cat->vel.x + wiz->vel.x;
-    cat->pos.y += cat->vel.y;
+    cat->pos.x += (cat->vel.x + wiz->vel.x) * gamestate->delta_time;
+    cat->pos.y += cat->vel.y * gamestate->delta_time;
 
     cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
     cat->pos.x = fminf(cat->pos.x, view->center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
     cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
     cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
 
-    int pos_y_buffer_idx = frame_cnt % WB_GAMERULE_PLAYER_CAT_MOVEDELAY_FRAME_CNT;
     if (!cat->hold_position) {
-        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing), WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL) * wiz->facing;
-        cat->pos.x += fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_GAMERULE_PLAYER_CAT_VEL)
-                            * fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x);
-        cat->pos.y += fminf(fabsf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y), WB_GAMERULE_PLAYER_CAT_VEL)
-                            * fsgnf(cat->pos_y_buffer[pos_y_buffer_idx] - cat->pos.y);
+        cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing),
+                                    WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL * gamestate->delta_time) * wiz->facing;
+        cat->pos.x += fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x)
+                    * fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_GAMERULE_PLAYER_CAT_VEL * gamestate->delta_time);
+        cat->pos.y += fsgnf(cat->pos_y_buffer[cat->pos_y_buffer_idx] - cat->pos.y)
+                    * fminf(fabsf(cat->pos_y_buffer[cat->pos_y_buffer_idx] - cat->pos.y), WB_GAMERULE_PLAYER_CAT_VEL * gamestate->delta_time);
         cat->facing = fsgnf(wiz->pos.x - cat->pos.x) ? fsgnf(wiz->pos.x - cat->pos.x) : cat->facing;
     }
     cat->facing = cat->vel.x < 0 ? WB_DIRECTION_NEGATIVE : cat->vel.x > 0 ? WB_DIRECTION_POSITIVE : cat->facing;
-
-    cat->pos_y_buffer[pos_y_buffer_idx] = wiz->pos.y;
 }

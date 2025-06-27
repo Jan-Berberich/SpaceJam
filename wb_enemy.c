@@ -6,10 +6,10 @@ int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, int color
     enemy->vel.x = vel->x;
     enemy->vel.y = vel->y;
     enemy->movepattern_type = movepattern_type;
-    enemy->movepattern_frame_cnt = 0;
-    enemy->head.color_key = colorpallet_offset == WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET ?
-        randfin(glfwGetTime() * 1e9, 0.0f, WB_GRAPHIC_ENEMY_COLORPALLET_CNT) :
-        colorpallet_offset - WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET;
+    enemy->time = 0.0;
+    enemy->head.color_key = colorpallet_offset == WB_GRAPHIC_ENEMY_COLORMAP_OFFSET ?
+        randfin(glfwGetTime() * 1e9, 0.0f, WB_GRAPHIC_ENEMY_COLORMAP_CNT) :
+        colorpallet_offset - WB_GRAPHIC_ENEMY_COLORMAP_OFFSET;
     if (enemy->head.type == WB_ENEMY_SPINNERCYAN || enemy->head.type == WB_ENEMY_SPINNERYELLOW) {
         enemy->head.animation_key = randfin(glfwGetTime() * 1e9, 0.0, WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT);
     }
@@ -62,8 +62,8 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time) {
             pos.y = -pos.y + pos_y_offset;
             vel.y = -vel.y;
         }
-        int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORPALLET_OFFSET, &pos, &vel, WB_MOVEPATTERN_INERT);
-        enemy_buffer->entries[idx].head.color_key = fmod(time * WB_GRAPHIC_ENEMY_COLORPALLET_SPEED, WB_GRAPHIC_ENEMY_COLORPALLET_CNT);
+        int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORMAP_OFFSET, &pos, &vel, WB_MOVEPATTERN_INERT);
+        enemy_buffer->entries[idx].head.color_key = fmod(time * WB_GRAPHIC_ENEMY_COLORMAP_SPEED, WB_GRAPHIC_ENEMY_COLORMAP_CNT);
         wbBufferRemove(enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
     }
 }
@@ -114,8 +114,8 @@ bool wbEnemyMovepatternUpdate(WBEnemy* enemy) {
         case WB_MOVEPATTERN_STEP_UP:
         break;
         case WB_MOVEPATTERN_CIRCLE:
-        enemy->vel.x = 100.0f * cosf(2.0f * enemy->movepattern_frame_cnt / WB_FPS) / WB_FPS;
-        enemy->vel.y = 100.0f * sinf(2.0f * enemy->movepattern_frame_cnt / WB_FPS) / WB_FPS;
+        enemy->vel.x = 100.0f * cosf(2.0f * enemy->time);
+        enemy->vel.y = 100.0f * sinf(2.0f * enemy->time);
         break;
         case WB_MOVEPATTERN_BOUNCE:
         break;
@@ -168,13 +168,13 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
             break;
         }
 
-        enemy->head.pos.x += enemy->vel.x;
-        enemy->head.pos.y += enemy->vel.y;
+        enemy->head.pos.x += enemy->vel.x * gamestate->delta_time;
+        enemy->head.pos.y += enemy->vel.y * gamestate->delta_time;
         if (enemy->head.color_key >= 0) {
-            enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORPALLET_SPEED * gamestate->delta_time;
-            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORPALLET_CNT ? WB_GRAPHIC_ENEMY_COLORPALLET_CNT : 0;
+            enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORMAP_SPEED * gamestate->delta_time;
+            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_CNT ? WB_GRAPHIC_ENEMY_COLORMAP_CNT : 0;
         }
-        enemy->movepattern_frame_cnt++;
+        enemy->time += gamestate->delta_time;
 
         if (gamestate->state == WB_GAMESTATE_PLAY &&
             enemy->head.pos.x > player->cat.pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= player->cat.pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
