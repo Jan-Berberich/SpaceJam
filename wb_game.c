@@ -1050,6 +1050,21 @@ int wbGameRun() {
 
         wbWindowLockAspectRatio(&game.window);
 
+        // --- Fullscreen toggle on Alt+Enter or F11 ---
+        static int prev_f11 = 0, prev_alt_enter = 0;
+        int f11 = glfwGetKey(game.window.handle, GLFW_KEY_F11);
+        int alt = glfwGetKey(game.window.handle, GLFW_KEY_LEFT_ALT) || glfwGetKey(game.window.handle, GLFW_KEY_RIGHT_ALT);
+        int enter = glfwGetKey(game.window.handle, GLFW_KEY_ENTER);
+
+        if ((f11 && !prev_f11) || ((alt && enter) && !(prev_alt_enter))) {
+            wbWindowToggleFullscreen(&game.window);
+            // Update viewport after toggling fullscreen
+            wbWindowLockAspectRatio(&game.window);
+        }
+        prev_f11 = f11;
+        prev_alt_enter = alt && enter;
+        // --- End fullscreen toggle ---
+
         bool space_pressed = glfwGetKey(game.window.handle, GLFW_KEY_SPACE);
 
         switch (game.gamestate.state) {

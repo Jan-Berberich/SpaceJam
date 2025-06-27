@@ -34,6 +34,9 @@ bool wbWindowInit(WBWindow* window) {
     glViewport(0, 0, window->width, window->height);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Standard alpha blending
+
+    // VSync
+    glfwSwapInterval(WB_GRAPHIC_VSYNC);
 }
 
 void wbWindowLockAspectRatio(WBWindow* window) {
@@ -58,4 +61,26 @@ void wbWindowLockAspectRatio(WBWindow* window) {
         viewport_w = window->width;
     }
     glViewport(viewport_x, viewport_y, viewport_w, viewport_h);
+}
+
+void wbWindowToggleFullscreen(WBWindow* window) {
+    if (!window || !window->handle) return;
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+    if (!window->is_fullscreen) {
+        // Save windowed position and size
+        glfwGetWindowPos(window->handle, &window->windowed_x, &window->windowed_y);
+        glfwGetWindowSize(window->handle, &window->windowed_width, &window->windowed_height);
+
+        // Switch to fullscreen
+        glfwSetWindowMonitor(window->handle, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        window->is_fullscreen = true;
+    } else {
+        // Restore windowed mode
+        glfwSetWindowMonitor(window->handle, NULL, window->windowed_x, window->windowed_y,
+                             window->windowed_width, window->windowed_height, 0);
+        window->is_fullscreen = false;
+    }
 }

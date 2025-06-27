@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-#define WB_NO_SOUND
+//#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -59,6 +59,8 @@
 #define WB_PROJECTILE_CNT_MAX 64
 
 // GRAPHIC
+#define WB_GRAPHIC_VSYNC 0
+
 #define WB_GRAPHIC_SUBPIXEL_CNT 2.0f
 
 #define WB_GRAPHIC_SPRITE_SIZE 64
@@ -669,6 +671,8 @@ typedef struct {
     GLFWwindow* handle;
     int width;
     int height;
+    int windowed_x, windowed_y, windowed_width, windowed_height;
+    bool is_fullscreen;
     int prev_key_state[GLFW_KEY_LAST + 1];
 } WBWindow;
 
@@ -752,6 +756,7 @@ typedef struct {
 
 extern bool wbWindowInit(WBWindow* window);
 extern void wbWindowLockAspectRatio(WBWindow* window);
+extern void wbWindowToggleFullscreen(WBWindow* window);
 
 extern void wbPlayerWizInit(WBWiz* wiz, float pos_x_min, float pos_x_max);
 extern void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
