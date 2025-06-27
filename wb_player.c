@@ -77,6 +77,15 @@ void wbPlayerWizSetCollisionVec(WBWiz* wiz, WBMap* map, int level) {
 }
 
 void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
+    static double collision_time = 1.0 / WB_GAMERULE_PLAYER_WIZ_HANDLE_COLLISION_SPEED;
+    static double timer = 1.0 / WB_GAMERULE_PLAYER_WIZ_HANDLE_COLLISION_SPEED;
+    if (timer < collision_time) {
+        timer += gamestate->delta_time;
+        return;
+    }
+    timer += gamestate->delta_time;
+    timer -= collision_time;
+
     int pos_y = roundf(wiz->pos.y / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT;
     bool map_ceil_collision = pos_y - WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS < WB_GAMERULE_MAP_CEIL_HEIGHT;
     bool map_floor_collision = pos_y + WB_GAMERULE_PLAYER_WIZ_COLLISION_RADIUS > WB_GAMERULE_MAP_FLOOR_HEIGHT;
@@ -100,10 +109,10 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
             else {
                 if (map_ceil_collision || map_floor_collision) {
                     wiz->vel_y_key = -fsgnf(wiz->collision_vec.y);
-                    wiz->vel_y_key += fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * gamestate->delta_time;
+                    wiz->vel_y_key += fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * collision_time;
                 }
                 else {
-                    wiz->vel_y_key -= fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * gamestate->delta_time;
+                    wiz->vel_y_key -= fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * collision_time;
                     wiz->vel_y_key = -fabsf(wiz->vel_y_key) * fsgnf(wiz->collision_vec.y);
                 }
             }

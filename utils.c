@@ -29,9 +29,18 @@ float rsqrtf(float f) {
     return y;
 }
 
-void ui32to4f(float rgba[4], uint32_t color) {
+void ui32toarr4f(float rgba[4], uint32_t color) {
     rgba[0] = (float)((color >> 24) & 0xFF) / 0xFF;
     rgba[1] = (float)((color >> 16) & 0xFF) / 0xFF;
     rgba[2] = (float)((color >>  8) & 0xFF) / 0xFF;
     rgba[3] = (float)((color >>  0) & 0xFF) / 0xFF;
+}
+
+uint32_t arr4ftoui32(float rgba[4]) {
+    uint32_t color = 0;
+    color |= ((uint32_t)(rgba[0] * 0xFF) & 0xFF) << 24;
+    color |= ((uint32_t)(rgba[1] * 0xFF) & 0xFF) << 16;
+    color |= ((uint32_t)(rgba[2] * 0xFF) & 0xFF) <<  8;
+    color |= ((uint32_t)(rgba[3] * 0xFF) & 0xFF) <<  0;
+    return color;
 }

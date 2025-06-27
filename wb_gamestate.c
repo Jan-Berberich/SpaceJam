@@ -1,7 +1,8 @@
 #include "wizball.h"
 
 void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
-    if (gamestate->state != WB_GAMESTATE_HIGHSCORE) {
+    if (gamestate->state == WB_GAMESTATE_HIGHSCORE) {} // TODO: play highscore music
+    else {
         ma_sound_seek_to_pcm_frame(&sound->titlescreen, 0);
         ma_sound_start(&sound->titlescreen);
     }
@@ -12,7 +13,7 @@ void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound) {
     gamestate->level = 0;
     gamestate->powerup.unlocked = WB_POWERUP_NONE;
     gamestate->powerup.permanent = WB_POWERUP_NONE;
-    gamestate->time = 0.0;
+    gamestate->time = gamestate->delta_time;
     gamestate->state = WB_GAMESTATE_TITLESCREEN;
 }
 
@@ -27,9 +28,6 @@ void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* vi
     wbBufferClear(enemy_buffer);
     wbBufferClear(projectile_buffer);
     view->center_x = 0.0f;
-    gamestate->time = 0.0;
-    for (int i = 0; i < 4; i++) {
-        wbEnemyInsertRandoms(enemy_buffer, gamestate->time);
-    }
+    gamestate->time = -gamestate->delta_time;
     gamestate->state = WB_GAMESTATE_GETREADY;
 }

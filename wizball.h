@@ -49,7 +49,8 @@
 #define WB_FPS_MAX 9999
 #define WB_FPS_MIN 50
 
-#define WB_GAMERULE_PROCESS_INPUT_SPEED 50 /* 50 */
+#define WB_GAMERULE_PROCESS_INPUT_SPEED 50
+#define WB_GAMERULE_PLAYER_WIZ_HANDLE_COLLISION_SPEED 50
 
 #define WB_MAP_CNT 6
 #define WB_POWERUP_SLOT_CNT 7
@@ -406,7 +407,6 @@
 #define WB_SOUND_TITLESCREEN_PATH "sound/titlescreen.wav"
 #define WB_SOUND_GETREADY_PATH "sound/getready.wav"
 #define WB_SOUND_FIRE_PATH "sound/fire.wav"
-#define WB_SOUND_FIRE_SPAM_PATH "sound/fire_spam.wav"
 #define WB_SOUND_POWERUP_DROP_PATH "sound/powerup_drop.wav"
 #define WB_SOUND_POWERUP_COLLECT_PATH "sound/powerup_collect.wav"
 #define WB_SOUND_POWERUP_ACTIVATE_PATH "sound/powerup_activate.wav"
@@ -418,7 +418,12 @@
 #define WB_SOUND_WIZDEATH_PATH "sound/wizdeath.wav"
 #define WB_SOUND_GAMEOVER_PATH "sound/gameover.wav"
 
-// Key Bindings
+// Key Binding
+#define GLFW_KEY_Ü GLFW_KEY_LEFT_BRACKET
+#define WB_KEY_CONFIRM_0 GLFW_KEY_ENTER
+#define WB_KEY_CONFIRM_1 GLFW_KEY_SPACE
+#define WB_KEY_BACK GLFW_KEY_BACKSPACE
+#define WB_KEY_ESCAPE GLFW_KEY_ESCAPE
 #define WB_KEY_WIZ_LEFT GLFW_KEY_A
 #define WB_KEY_WIZ_RIGHT GLFW_KEY_D
 #define WB_KEY_WIZ_UP GLFW_KEY_W
@@ -429,12 +434,19 @@
 #define WB_KEY_CAT_UP GLFW_KEY_UP
 #define WB_KEY_CAT_DOWN GLFW_KEY_DOWN
 #define WB_KEY_CAT_FIRE GLFW_KEY_RIGHT_CONTROL
-#define WB_KEY_POWERUP GLFW_KEY_F /*not in real game*/
-#define WB_KEY_TOGGLEGRAV GLFW_KEY_LEFT_CONTROL /*not in ral game*/
-#define WB_KEY_SPRINT GLFW_KEY_LEFT_SHIFT /*not in real game*/
+/*from here not in original game*/
+#define WB_KEY_POWERUP GLFW_KEY_F
+#define WB_KEY_TOGGLEGRAV GLFW_KEY_LEFT_CONTROL
+#define WB_KEY_SPRINT GLFW_KEY_LEFT_SHIFT
+#define WB_KEY_SLOWDOWN GLFW_KEY_P
+#define WB_KEY_SPEEDUP GLFW_KEY_Ü
+#define WB_KEY_ALT_0 GLFW_KEY_LEFT_ALT
+#define WB_KEY_ALT_1 GLFW_KEY_RIGHT_ALT
+#define WB_KEY_FULLSCREEN_ALT GLFW_KEY_ENTER
+#define WB_KEY_VSYNC_ALT GLFW_KEY_V
+#define WB_KEY_FPS_ALT GLFW_KEY_F
 
 // Enums
-
 typedef enum {
     WB_GAMESTATE_TITLESCREEN,
     WB_GAMESTATE_PLAYERSELECT,
@@ -673,7 +685,6 @@ typedef struct {
     int windowed_x, windowed_y, windowed_width, windowed_height;
     bool is_fullscreen;
     bool vsync;
-    int prev_key_state[GLFW_KEY_LAST + 1];
 } WBWindow;
 
 typedef struct {
@@ -681,7 +692,6 @@ typedef struct {
     ma_sound titlescreen;
     ma_sound getready;
     ma_sound fire;
-    ma_sound fire_spam;
     ma_sound powerup_drop;
     ma_sound powerup_collect;
     ma_sound powerup_activate;

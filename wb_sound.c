@@ -9,8 +9,6 @@ bool wbSoundInit(WBSound* sound) {
         {fprintf(stderr, "Failed to load getready sound\n"); wbSoundUninit(sound); return false;}
     if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_FIRE_PATH, 0, NULL, NULL, &sound->fire) != MA_SUCCESS)
         {fprintf(stderr, "Failed to load fire sound\n"); wbSoundUninit(sound); return false;}
-    if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_FIRE_SPAM_PATH, 0, NULL, NULL, &sound->fire_spam) != MA_SUCCESS)
-        {fprintf(stderr, "Failed to load fire spam sound\n"); wbSoundUninit(sound); return false;}
     if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_POWERUP_DROP_PATH, 0, NULL, NULL, &sound->powerup_drop) != MA_SUCCESS)
         {fprintf(stderr, "Failed to load powerup drop sound\n"); wbSoundUninit(sound); return false;}
     if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_POWERUP_COLLECT_PATH, 0, NULL, NULL, &sound->powerup_collect) != MA_SUCCESS)
@@ -46,7 +44,6 @@ void wbSoundUninit(WBSound* sound) {
     if (&sound->powerup_activate) ma_sound_uninit(&sound->powerup_activate);
     if (&sound->powerup_collect) ma_sound_uninit(&sound->powerup_collect);
     if (&sound->powerup_drop) ma_sound_uninit(&sound->powerup_drop);
-    if (&sound->fire_spam) ma_sound_uninit(&sound->fire_spam);
     if (&sound->fire) ma_sound_uninit(&sound->fire);
     if (&sound->getready) ma_sound_uninit(&sound->getready);
     if (&sound->titlescreen) ma_sound_uninit(&sound->titlescreen);
