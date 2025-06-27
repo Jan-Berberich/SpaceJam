@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-//#define WB_NO_SOUND
+#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -605,7 +605,7 @@ typedef struct {
 typedef struct {
     int health;
     WBVec2f pos, vel;
-    bool hold_position;
+    bool retreat;
     WBDirectionType facing;
     WBDirectionType next_spray_direction;
     float rest_offset_x;
@@ -679,9 +679,14 @@ typedef struct {
 } WBShader;
 
 typedef struct {
+    int pos_x, pos_y, width, height;
+} WBViewport;
+
+typedef struct {
     GLFWwindow* handle;
     int width;
     int height;
+    WBViewport viewport;
     int windowed_x, windowed_y, windowed_width, windowed_height;
     bool is_fullscreen;
     bool vsync;

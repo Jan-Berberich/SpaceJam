@@ -164,7 +164,7 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     cat->pos.y = fmaxf(cat->pos.y, WB_GAMERULE_MAP_CEIL_HEIGHT  + WB_GAMERULE_PLAYER_CAT_CEIL_OFFSET);
     cat->pos.y = fminf(cat->pos.y, WB_GAMERULE_MAP_FLOOR_HEIGHT - WB_GAMERULE_PLAYER_CAT_FLOOR_OFFSET);
 
-    if (!cat->hold_position) {
+    if (cat->retreat) {
         cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing),
                                     WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL * gamestate->delta_time) * wiz->facing;
         cat->pos.x += fsgnf(wiz->pos.x + cat->rest_offset_x - cat->pos.x)

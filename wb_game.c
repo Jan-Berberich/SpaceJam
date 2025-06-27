@@ -188,10 +188,11 @@ void wbGameProcessInput(WBGame* game) {
         wiz_fire_down_time = game->gamestate.time;
     }
     wiz_fire_down_time *= key_wiz_fire;
-    bool autofire = wiz_fire_down_time > 0 &&
-                    game->gamestate.time - wiz_fire_down_time >= WB_GAMERULE_AUTOFIRE_HOLD_TIME &&
-                    powerup->unlocked & WB_POWERUP_CAT;
-    if (autofire) {
+    bool wiz_autofire = wiz_fire_down_time > 0 &&
+                        game->gamestate.time - wiz_fire_down_time >= WB_GAMERULE_AUTOFIRE_HOLD_TIME &&
+                        powerup->unlocked & WB_POWERUP_CAT;
+    bool cat_autofire = wiz_autofire;
+    if (wiz_autofire) {
         key_cat_right |= key_wiz_right;
         key_cat_left  |= key_wiz_left;
         key_cat_up    |= key_wiz_up;
@@ -228,7 +229,7 @@ void wbGameProcessInput(WBGame* game) {
 
     bool mute_wiz_fire = wiz_fire_prev && !cat_fire_prev;
     wiz_fire_prev = false;
-    if ((key_wiz_fire && !key_wiz_fire_prev || autofire) && 
+    if ((key_wiz_fire && !key_wiz_fire_prev || wiz_autofire) && 
         (game->gamestate.state == WB_GAMESTATE_PLAY || game->gamestate.state == WB_GAMESTATE_SPAWN)) {
         
         WBVec2f vel;
@@ -283,20 +284,38 @@ void wbGameProcessInput(WBGame* game) {
         key_wiz_fire_prev = key_wiz_fire;
         return;
     }
-
-    cat->vel.x = 0.0f;
-    cat->vel.y = 0.0f;
-    cat->vel.x += WB_GAMERULE_PLAYER_CAT_VEL * key_cat_right;
-    cat->vel.x -= WB_GAMERULE_PLAYER_CAT_VEL * key_cat_left;
-    cat->vel.y += WB_GAMERULE_PLAYER_CAT_VEL * key_cat_down;
-    cat->vel.y -= WB_GAMERULE_PLAYER_CAT_VEL * key_cat_up;
-
-    cat->hold_position = key_cat_right || key_cat_left || key_cat_up || key_cat_down;
+    
+    if (glfwGetMouseButton(game->window.handle, GLFW_MOUSE_BUTTON_LEFT)) {
+        double mouse_pos_x, mouse_pos_y;
+        glfwGetCursorPos(game->window.handle, &mouse_pos_x, &mouse_pos_y);
+        mouse_pos_x -= game->window.viewport.pos_x;
+        mouse_pos_y -= game->window.viewport.pos_y;
+        mouse_pos_x *= (double)WB_GRAPHIC_WINDOW_WIDTH  / game->window.viewport.width;
+        mouse_pos_y *= (double)WB_GRAPHIC_WINDOW_HEIGHT / game->window.viewport.height;
+        mouse_pos_x -= 0.5f * WB_GRAPHIC_WINDOW_WIDTH - view->center_x;
+        mouse_pos_y -= WB_GRAPHIC_WINDOW_HEIGHT - (double)game->graphic.background_atlas.height / WB_MAP_CNT - WB_GRAPHIC_MAP_VIEW_OFFSET_Y - 1.0f;
+        cat->vel.x = fabs(mouse_pos_x - cat->pos.x) / input_time > WB_GAMERULE_PLAYER_CAT_VEL ?
+                     WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_x - cat->pos.x) : (mouse_pos_x - cat->pos.x) / input_time;
+        cat->vel.y = fabs(mouse_pos_y - cat->pos.y) / input_time > WB_GAMERULE_PLAYER_CAT_VEL ?
+                     WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y) : (mouse_pos_y - cat->pos.y) / input_time;
+        cat->vel.x *= fabs(mouse_pos_x - cat->pos.x) >= WB_GRAPHIC_SUBPIXEL_CNT;
+        cat->vel.y *= fabs(mouse_pos_y - cat->pos.y) >= WB_GRAPHIC_SUBPIXEL_CNT;
+        cat_autofire = true;
+        cat->retreat = false;
+    } else {
+        cat->vel.x = 0.0f;
+        cat->vel.y = 0.0f;
+        cat->vel.x += WB_GAMERULE_PLAYER_CAT_VEL * key_cat_right;
+        cat->vel.x -= WB_GAMERULE_PLAYER_CAT_VEL * key_cat_left;
+        cat->vel.y += WB_GAMERULE_PLAYER_CAT_VEL * key_cat_down;
+        cat->vel.y -= WB_GAMERULE_PLAYER_CAT_VEL * key_cat_up;
+        cat->retreat = !(key_cat_right || key_cat_left || key_cat_up || key_cat_down);
+    }
 
     bool mute_cat_fire = cat_fire_prev && !wiz_fire_prev;
     cat_fire_prev = false;
     if (key_cat_fire && !key_cat_fire_prev ||
-        key_wiz_fire && !key_wiz_fire_prev || autofire) {
+        key_wiz_fire && !key_wiz_fire_prev || cat_autofire) {
         WBVec2f vel;
         if (view->bullet_cat_cnt < WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX) {
             if (mute_cat_fire) {
