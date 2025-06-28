@@ -142,6 +142,25 @@ void wbShaderInit(WBShader* shader) {
     // Texcoord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    shader->loc.key_color                   = glGetUniformLocation(shader->program, "keyColor");
+    shader->loc.time                        = glGetUniformLocation(shader->program, "time");
+    shader->loc.key_alpha                   = glGetUniformLocation(shader->program, "keyAlpha");
+    shader->loc.tex_size                    = glGetUniformLocation(shader->program, "texSize");
+    shader->loc.key_color_mode              = glGetUniformLocation(shader->program, "keyColorMode");
+    shader->loc.window_scale                = glGetUniformLocation(shader->program, "windowScale");
+    shader->loc.replace_color_mirror_height = glGetUniformLocation(shader->program, "replaceColorMirrorHeight");
+    shader->loc.replace_colorband_height    = glGetUniformLocation(shader->program, "replaceColorbandHeight");
+    shader->loc.replace_color_speed         = glGetUniformLocation(shader->program, "replaceColorSpeed");
+    shader->loc.replace_color_cnt           = glGetUniformLocation(shader->program, "replaceColorCnt");
+    shader->loc.replace_colors              = glGetUniformLocation(shader->program, "replaceColors");
+    shader->loc.subpixel_cnt                = glGetUniformLocation(shader->program, "subpixelCnt");
+
+    glUniform4f(shader->loc.key_color, WB_GRAPHIC_KEY_COLOR_R, WB_GRAPHIC_KEY_COLOR_G, WB_GRAPHIC_KEY_COLOR_B, WB_GRAPHIC_KEY_COLOR_A);
+    glUniform1f(shader->loc.key_alpha, -1.0);
+    glUniform1f(shader->loc.tex_size, WB_GRAPHIC_MAP_DUST_SPRITE_SIZE);
+    glUniform1f(shader->loc.replace_colorband_height, WB_GRAPHIC_TEXT_COLORBAND_HEIGHT);
+    glUniform1f(shader->loc.subpixel_cnt, WB_GRAPHIC_SUBPIXEL_CNT);
 }
 
 void wbShaderUninit(WBShader* shader) {

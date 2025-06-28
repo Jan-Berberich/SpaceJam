@@ -65,15 +65,19 @@
 
 #define WB_GRAPHIC_SUBPIXEL_CNT 2.0f
 
+// sprite
 #define WB_GRAPHIC_SPRITE_SIZE           64.0f
 #define WB_GRAPHIC_SPRITE_ATLAS_WIDTH  1024.0f
 #define WB_GRAPHIC_SPRITE_ATLAS_HEIGHT 1024.0f
-#define WB_GRAPHIC_SPRITE_ATLAS_WIDTH_X  (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_WINDOW_WIDTH       )
-#define WB_GRAPHIC_SPRITE_ATLAS_HEIGHT_Y (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_WINDOW_HEIGHT      )
-#define WB_GRAPHIC_SPRITE_ATLAS_WIDTH_U  (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_SPRITE_ATLAS_WIDTH )
-#define WB_GRAPHIC_SPRITE_ATLAS_HEIGHT_V (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT)
+#define WB_GRAPHIC_SPRITE_WIDTH_X  (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_WINDOW_WIDTH       )
+#define WB_GRAPHIC_SPRITE_HEIGHT_Y (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_WINDOW_HEIGHT      )
+#define WB_GRAPHIC_SPRITE_WIDTH_U  (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_SPRITE_ATLAS_WIDTH )
+#define WB_GRAPHIC_SPRITE_HEIGHT_V (WB_GRAPHIC_SPRITE_SIZE / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT)
+// entity
+#define WB_GRAPHIC_ENTITY_OFFSET 2.0f * WB_GRAPHIC_MAP_VIEW_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT \
+                              + (2.0f * WB_GRAPHIC_MAP_VIEW_HEIGHT - WB_GRAPHIC_SPRITE_SIZE) / WB_GRAPHIC_WINDOW_HEIGHT
 
-
+// shader
 #define WB_GRAPHIC_SPRITE_VERTICES_CNT 4
 #define WB_GRAPHIC_SPRITE_INDICES_CNT 6
 #define WB_GRAPHIC_BATCH_CNT 64
@@ -89,10 +93,14 @@
 #define WB_GRAPHIC_WINDOW_HEIGHT 486.0f /*486.0f*/
 
 // map
+#define WB_GRAPHIC_MAP_ATLAS_WIDTH  3365.0f
+#define WB_GRAPHIC_MAP_ATLAS_HEIGHT 1920.0f
+
 #define WB_GRAPHIC_MAP_SUBPIXEL_CNT      1.0f /*2.0f*/
 #define WB_GRAPHIC_MAP_DUST_SUBPIXEL_CNT 4.0f
 
 #define WB_GRAPHIC_MAP_VIEW_WIDTH   600.0f /*570.0f*/
+#define WB_GRAPHIC_MAP_VIEW_HEIGHT (WB_GRAPHIC_MAP_ATLAS_HEIGHT / WB_MAP_CNT)
 #define WB_GRAPHIC_MAP_VIEW_OFFSET_Y 70.0f /* 70.0f*/
 
 #define WB_GRAPHIC_MAP_DUST_SPRITE_SIZE 64.0f
@@ -101,6 +109,11 @@
 #define WB_GRAPHIC_MAP_DUST_SPRITE_SCALE_X 4.0f
 #define WB_GRAPHIC_MAP_DUST_SPRITE_SCALE_Y 2.0f
 #define WB_GRAPHIC_MAP_DUST_VELOCITY_FACTOR 0.5f
+
+#define WB_GRAPHIC_MAP_DUST_ATLAS_WIDTH  (WB_GRAPHIC_MAP_DUST_SPRITE_SIZE * WB_GRAPHIC_MAP_DUST_LAYER_CNT)
+#define WB_GRAPHIC_MAP_DUST_ATLAS_HEIGHT (WB_GRAPHIC_MAP_DUST_SPRITE_SIZE)
+#define WB_GRAPHIC_MAP_DUST_ROW_CNT 2 /*ceil(WB_GAMERULE_MAP_HORIZON_HEIGHT / WB_GRAPHIC_MAP_DUST_SPRITE_SIZEE * WB_GRAPHIC_MAP_DUST_SPRITE_SCALE_Y);*/
+#define WB_GRAPHIC_MAP_DUST_COL_CNT 3 /*ceil(WB_GRAPHIC_MAP_VIEW_WIDTH / WB_GRAPHIC_MAP_DUST_SPRITE_SIZEE * WB_GRAPHIC_MAP_DUST_SPRITE_SCALE_X) + 1;*/
 
 // payer
 #define WB_GRAPHIC_PLAYER_WIZ_SPRITE_ATLAS_X       (0.0f * WB_GRAPHIC_SPRITE_SIZE)
@@ -591,12 +604,6 @@ typedef struct {
 } WBPowerup;
 
 typedef struct {
-    float width; // TODO: remove, use define for compiler optimization
-    float height; // TODO remove
-    GLuint texture_id;
-} WBTexture;
-
-typedef struct {
     uint8_t type;
     WBVec2f pos;
     float color_key;
@@ -739,10 +746,10 @@ typedef  struct {
 } WBColormap;
 
 typedef struct {
-    WBTexture sprite_atlas;
-    WBTexture dust_texture;
-    WBTexture background_atlas;
-    WBTexture foreground_atlas;
+    GLuint sprite_atlas_texture_id;
+    GLuint background_atlas_texture_id;
+    GLuint foreground_atlas_texture_id;
+    GLuint dust_atlas_texture_id;
     WBColormap colormap;
     char text[WB_GRAPHIC_TEXT_CHAR_CNT];
 } WBGraphic;
@@ -756,7 +763,6 @@ typedef struct {
 } WBView;
 
 typedef struct {
-    WBGraphic* graphic_handle;
     bool* collider_atlas;
     WBView view;
 } WBMap;
@@ -775,9 +781,9 @@ typedef struct {
 typedef struct {
     WBGamestate gamestate;
     WBWindow window;
-    WBShader shader;
     WBMap map;
     WBSound sound;
+    WBShader shader;
     WBGraphic graphic;
     WBPlayer player;
     WBEnemyBuffer enemy_buffer;
@@ -817,7 +823,6 @@ extern void wbShaderUninit(WBShader* shader);
 extern bool wbMapInitCollider(WBMap* map, uint8_t* data);
 extern bool wbMapGetCollision(WBMap* map, int x, int y, int level);
 
-extern void wbGraphicTextureInit(WBTexture* texture, uint8_t* data, int width, int height);
 extern bool wbGraphicInit(WBGraphic* graphic, WBMap* map);
 extern void wbGraphicUninit(WBGraphic* graphic, WBMap* map);
 

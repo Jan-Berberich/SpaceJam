@@ -1,13 +1,10 @@
 #include "wizball.h"
 
-void wbGraphicTextureInit(WBTexture* texture, uint8_t* data, int width, int height) {
-    texture->width = width;
-    texture->height = height;
-
-    glGenTextures(1, &texture->texture_id); // Generate a texture ID
-    glBindTexture(GL_TEXTURE_2D, texture->texture_id); // Bind the texture
+void wbGraphicTextureInit(GLuint* texture_id, uint8_t* data, int width, int height) {
+    glGenTextures(1, texture_id); // Generate a texture ID
+    glBindTexture(GL_TEXTURE_2D, *texture_id); // Bind the texture
     // Upload image data to the GPU
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps for scaling
 
     // Set texture parameters
@@ -18,7 +15,6 @@ void wbGraphicTextureInit(WBTexture* texture, uint8_t* data, int width, int heig
 }
 
 bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
-    map->graphic_handle = graphic;
     int width, height, channel_cnt;
     uint8_t* data;
 
@@ -29,7 +25,7 @@ bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
         wbGraphicUninit(graphic, map);
         return false;
     }
-    wbGraphicTextureInit(&graphic->sprite_atlas, data, width, height);
+    wbGraphicTextureInit(&graphic->sprite_atlas_texture_id, data, width, height);
     stbi_image_free(data);
     
     // background atlas
@@ -39,7 +35,7 @@ bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
         wbGraphicUninit(graphic, map);
         return false;
     }
-    wbGraphicTextureInit(&graphic->background_atlas, data, width, height);
+    wbGraphicTextureInit(&graphic->background_atlas_texture_id, data, width, height);
     stbi_image_free(data);
 
     // foreground atlas
@@ -49,7 +45,7 @@ bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
         wbGraphicUninit(graphic, map);
         return false;
     }
-    wbGraphicTextureInit(&graphic->foreground_atlas, data, width, height);
+    wbGraphicTextureInit(&graphic->foreground_atlas_texture_id, data, width, height);
     if (!wbMapInitCollider(map, data)) {
         stbi_image_free(data);
         wbGraphicUninit(graphic, map);
@@ -78,9 +74,7 @@ bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
             }
         }
     }
-    graphic->dust_texture.width = WB_GRAPHIC_MAP_DUST_SPRITE_SIZE * WB_GRAPHIC_MAP_DUST_LAYER_CNT;
-    graphic->dust_texture.height = WB_GRAPHIC_MAP_DUST_SPRITE_SIZE;
-    wbGraphicTextureInit(&graphic->dust_texture, data, graphic->dust_texture.width, graphic->dust_texture.height);
+    wbGraphicTextureInit(&graphic->dust_atlas_texture_id, data, WB_GRAPHIC_MAP_DUST_ATLAS_WIDTH, WB_GRAPHIC_MAP_DUST_ATLAS_HEIGHT);
     free(data);
 
     // colormap
@@ -174,9 +168,9 @@ bool wbGraphicInit(WBGraphic* graphic, WBMap* map) {
 }
 
 void wbGraphicUninit(WBGraphic* graphic, WBMap* map) {
-    if (graphic->sprite_atlas.texture_id) glDeleteTextures(1, &graphic->sprite_atlas.texture_id);
-    if (graphic->background_atlas.texture_id) glDeleteTextures(1, &graphic->background_atlas.texture_id);
-    if (graphic->foreground_atlas.texture_id) glDeleteTextures(1, &graphic->foreground_atlas.texture_id);
-    if (graphic->dust_texture.texture_id) glDeleteTextures(1, &graphic->dust_texture.texture_id);
+    if (graphic->sprite_atlas_texture_id) glDeleteTextures(1, &graphic->sprite_atlas_texture_id);
+    if (graphic->background_atlas_texture_id) glDeleteTextures(1, &graphic->background_atlas_texture_id);
+    if (graphic->foreground_atlas_texture_id) glDeleteTextures(1, &graphic->foreground_atlas_texture_id);
+    if (graphic->dust_atlas_texture_id) glDeleteTextures(1, &graphic->dust_atlas_texture_id);
     if (map->collider_atlas) free(map->collider_atlas);
 }
