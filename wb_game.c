@@ -93,7 +93,7 @@ void wbGameProcessInput(WBGame* game) {
     static bool key_wiz_fire_prev           = true;
     static bool key_cat_fire_prev           = false;
 
-    bool key_alt =                glfwGetKey(game->window.handle, WB_KEY_ALT_0    )          || glfwGetKey(game->window.handle, WB_KEY_ALT_1);
+    bool key_alt =                glfwGetKey(game->window.handle, WB_KEY_ALTL     )          || glfwGetKey(game->window.handle, WB_KEY_ALTR);
     bool key_wiz_up =             glfwGetKey(game->window.handle, WB_KEY_WIZ_UP   )          && !key_alt;
     bool key_wiz_down =           glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN )          && !key_alt;
     bool key_wiz_left =           glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT )          && !key_alt;
@@ -313,7 +313,7 @@ void wbGameProcessInput(WBGame* game) {
             (mouse_pos_y - cat->pos.y) / input_time
         };
         cat->vel.x = fabs(vel.x) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.x : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_x - cat->pos.x);
-        cat->vel.y = fabs(vel.y) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.y / input_time : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y);
+        cat->vel.y = fabs(vel.y) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.y : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y);
         cat->vel.x *= fabs(mouse_pos_x - cat->pos.x) >= WB_GRAPHIC_SUBPIXEL_CNT;
         cat->vel.y *= fabs(mouse_pos_y - cat->pos.y) >= WB_GRAPHIC_SUBPIXEL_CNT;
         cat_autofire = true;
@@ -1064,11 +1064,15 @@ void wbGameRender(WBGame* game) {
     // toggle fps (not in real game)
     static bool show_fps = false;
     static bool key_fps_alt_pref = false;
-    bool key_fps_alt = glfwGetKey(game->window.handle, WB_KEY_FPS_ALT)
-                   && (glfwGetKey(game->window.handle, WB_KEY_ALT_0) || glfwGetKey(game->window.handle, WB_KEY_ALT_1));
+    static float fps_filtered = 0.0f;
+    float fps = 1.0 / game->gamestate.delta_time;
+    float fps_filter_const = game->gamestate.delta_time / WB_FPS_LOWPASS_TIMECONST;
+    fps_filtered = (fps_filter_const * fps + fps_filtered) / (fps_filter_const + 1);
+    bool key_fps_alt = glfwGetKey(game->window.handle, WB_KEY_ALT_FPS)
+                   && (glfwGetKey(game->window.handle, WB_KEY_ALTL) || glfwGetKey(game->window.handle, WB_KEY_ALTR));
     show_fps ^= key_fps_alt && !key_fps_alt_pref;
     if (show_fps) {
-        sprintf(game->graphic.text, "%04i    ", (int)round(1.0 / game->gamestate.delta_time));
+        sprintf(game->graphic.text, "%04i    ", (int)round(fps_filtered));
         wbGameDrawText(game, game->graphic.text, WB_TEXT_DIGIT, 1.0, 1.0, 0,
             1.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.green8, 6, WB_GRAPHIC_GUI_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
@@ -1109,8 +1113,8 @@ int wbGameRun() {
 
         // --- Fullscreen toggle on Alt+Enter ---
         static bool key_fullscreen_alt_pref = false;
-        bool key_alt = glfwGetKey(game.window.handle, WB_KEY_ALT_0) || glfwGetKey(game.window.handle, WB_KEY_ALT_1);
-        bool key_fullscreen_alt = glfwGetKey(game.window.handle, WB_KEY_FULLSCREEN_ALT) && key_alt;
+        bool key_alt = glfwGetKey(game.window.handle, WB_KEY_ALTL) || glfwGetKey(game.window.handle, WB_KEY_ALTR);
+        bool key_fullscreen_alt = glfwGetKey(game.window.handle, WB_KEY_ALT_FULLSCREEN) && key_alt;
         if (key_fullscreen_alt && !key_fullscreen_alt_pref) {
             wbWindowToggleFullscreen(&game.window);
             wbWindowLockAspectRatio(&game.window);
@@ -1120,7 +1124,7 @@ int wbGameRun() {
 
         // --- VSync toggle on Alt+V ---
         static bool key_vsync_alt_prev = false;
-        bool key_vsync_alt = glfwGetKey(game.window.handle, WB_KEY_VSYNC_ALT) && key_alt;
+        bool key_vsync_alt = glfwGetKey(game.window.handle, WB_KEY_ALT_VSYNC) && key_alt;
         if (key_vsync_alt && !key_vsync_alt_prev) {
             game.window.vsync ^= 1;
             glfwSwapInterval(game.window.vsync);

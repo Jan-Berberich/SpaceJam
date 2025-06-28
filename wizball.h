@@ -48,6 +48,7 @@
 
 #define WB_FPS_MAX 9999
 #define WB_FPS_MIN 50
+#define WB_FPS_LOWPASS_TIMECONST 0.2
 
 #define WB_GAMERULE_PROCESS_INPUT_SPEED 50
 #define WB_GAMERULE_PLAYER_WIZ_HANDLE_COLLISION_SPEED 50
@@ -419,7 +420,9 @@
 #define WB_SOUND_GAMEOVER_PATH         "sound/gameover.wav"
 
 // Key Binding
-#define GLFW_KEY_Ü       GLFW_KEY_LEFT_BRACKET
+#define WB_KEY_Ü         GLFW_KEY_LEFT_BRACKET
+#define WB_KEY_MINUS     GLFW_KEY_SLASH
+#define WB_KEY_PLUS      GLFW_KEY_RIGHT_BRACKET
 #define WB_KEY_CONFIRM_0 GLFW_KEY_ENTER
 #define WB_KEY_CONFIRM_1 GLFW_KEY_SPACE
 #define WB_KEY_BACK      GLFW_KEY_BACKSPACE
@@ -437,16 +440,16 @@
 /*from here not in original game*/
 #define WB_KEY_POWERUP            GLFW_KEY_F
 #define WB_KEY_POWERUP_TOGGLEGRAV GLFW_KEY_LEFT_CONTROL
-#define WB_KEY_POWERUP_LEFT       GLFW_KEY_LEFT
-#define WB_KEY_POWERUP_RIGHT      GLFW_KEY_RIGHT
+#define WB_KEY_POWERUP_LEFT       WB_KEY_MINUS
+#define WB_KEY_POWERUP_RIGHT      WB_KEY_PLUS
 #define WB_KEY_SPRINT             GLFW_KEY_LEFT_SHIFT
 #define WB_KEY_SLOWDOWN           GLFW_KEY_P
-#define WB_KEY_SPEEDUP            GLFW_KEY_Ü
-#define WB_KEY_ALT_0              GLFW_KEY_LEFT_ALT
-#define WB_KEY_ALT_1              GLFW_KEY_RIGHT_ALT
-#define WB_KEY_FULLSCREEN_ALT     GLFW_KEY_ENTER
-#define WB_KEY_VSYNC_ALT          GLFW_KEY_V
-#define WB_KEY_FPS_ALT            GLFW_KEY_F
+#define WB_KEY_SPEEDUP            WB_KEY_Ü
+#define WB_KEY_ALTL               GLFW_KEY_LEFT_ALT
+#define WB_KEY_ALTR               GLFW_KEY_RIGHT_ALT
+#define WB_KEY_ALT_FULLSCREEN     GLFW_KEY_ENTER
+#define WB_KEY_ALT_VSYNC          GLFW_KEY_V
+#define WB_KEY_ALT_FPS            GLFW_KEY_F
 
 // Enums
 typedef enum {
