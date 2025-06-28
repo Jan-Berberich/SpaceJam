@@ -8,6 +8,9 @@
 #include "miniaudio.h"
 #endif
 
+// TODO: remove + 2.0 from y sprite render (also mouse - 1), in draw snap pixels with (roundf(... + 0.5) - 0.5)
+// store const vars in draw functions as const in render struct
+
 bool wbGameInit(WBGame* game) {
     // Initialize the GLFW library
     if (!glfwInit()) {
@@ -40,8 +43,6 @@ bool wbGameInit(WBGame* game) {
         return false;
     }
 
-
-    
     // Initialize gamestate
     game->gamestate.state = -1; // avoid reading uninitialized memory
     game->gamestate.delta_time = 0.0;
@@ -72,7 +73,7 @@ void wbGameUninit(WBGame* game) {
 }
 
 void wbGameProcessInput(WBGame* game) {
-    static double input_time = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
+    static const double input_time = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
     static double timer = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
     if (timer < input_time) {
         timer += game->gamestate.delta_time;
@@ -84,40 +85,41 @@ void wbGameProcessInput(WBGame* game) {
     static bool wiz_fire_prev = false;
     static bool cat_fire_prev = false;
 
-    static bool key_togglegrav_prev = false;
-    static bool key_wiz_left_prev = false;
-    static bool key_wiz_right_prev = false;
-    static bool key_wiz_fire_prev = true;
-    static bool key_cat_fire_prev = false;
+    static bool key_powerup_togglegrav_prev = false;
+    static bool key_powerup_left_prev       = false;
+    static bool key_powerup_right_prev      = false;
+    static bool key_wiz_left_prev           = false;
+    static bool key_wiz_right_prev          = false;
+    static bool key_wiz_fire_prev           = true;
+    static bool key_cat_fire_prev           = false;
 
-    bool key_alt = glfwGetKey(game->window.handle, WB_KEY_ALT_0) || glfwGetKey(game->window.handle, WB_KEY_ALT_1);
-    bool key_wiz_up = glfwGetKey(game->window.handle, WB_KEY_WIZ_UP) && !key_alt;
-    bool key_wiz_down = glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN) && !key_alt;
-    bool key_wiz_left = glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT) && !key_alt;
-    bool key_wiz_right = glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT) && !key_alt;
-    bool key_wiz_fire = glfwGetKey(game->window.handle, WB_KEY_WIZ_FIRE) && !key_alt;
-    bool key_cat_up = glfwGetKey(game->window.handle, WB_KEY_CAT_UP) && !key_alt;
-    bool key_cat_down = glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN) && !key_alt;
-    bool key_cat_left = glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT) && !key_alt;
-    bool key_cat_right = glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT) && !key_alt;
-    bool key_cat_fire = glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE) && !key_alt;
-    bool key_wiz_sprint = glfwGetKey(game->window.handle, WB_KEY_SPRINT) && !key_alt; // TODO: not in real game
-    bool key_togglegrav = glfwGetKey(game->window.handle, WB_KEY_TOGGLEGRAV) && !key_alt; // TODO: not in real game
-    bool key_powerup = glfwGetKey(game->window.handle, WB_KEY_POWERUP) && !key_alt; // TODO: not in real game
+    bool key_alt =                glfwGetKey(game->window.handle, WB_KEY_ALT_0    )          || glfwGetKey(game->window.handle, WB_KEY_ALT_1);
+    bool key_wiz_up =             glfwGetKey(game->window.handle, WB_KEY_WIZ_UP   )          && !key_alt;
+    bool key_wiz_down =           glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN )          && !key_alt;
+    bool key_wiz_left =           glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT )          && !key_alt;
+    bool key_wiz_right =          glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT)          && !key_alt;
+    bool key_wiz_fire =           glfwGetKey(game->window.handle, WB_KEY_WIZ_FIRE )          && !key_alt;
+    bool key_cat_up =             glfwGetKey(game->window.handle, WB_KEY_CAT_UP   )          && !key_alt;
+    bool key_cat_down =           glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN )          && !key_alt;
+    bool key_cat_left =           glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT )          && !key_alt;
+    bool key_cat_right =          glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT)          && !key_alt;
+    bool key_cat_fire =           glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE)           && !key_alt;
+    bool key_wiz_sprint =         glfwGetKey(game->window.handle, WB_KEY_SPRINT  )           && !key_alt; // TODO: not in real game
+    bool key_powerup_togglegrav = glfwGetKey(game->window.handle, WB_KEY_POWERUP_TOGGLEGRAV) && !key_alt; // TODO: not in real game
+    bool key_powerup_left =       glfwGetKey(game->window.handle, WB_KEY_POWERUP_LEFT)       && !key_alt; // TODO: not in real game
+    bool key_powerup_right =      glfwGetKey(game->window.handle, WB_KEY_POWERUP_RIGHT)      && !key_alt; // TODO: not in real game
+    bool key_powerup =            glfwGetKey(game->window.handle, WB_KEY_POWERUP      )      && !key_alt; // TODO: not in real game
 
-    WBWiz* wiz = &game->player.wiz;
-    WBCat* cat = &game->player.cat;
+    WBWiz* wiz   = &game->player.wiz;
+    WBCat* cat   = &game->player.cat;
     WBView* view = &game->map.view;
 
     // wbGamestatePowerupProcessInput
-    static int wiggle_cnt = 0;
+    static int    wiggle_cnt  = 0;
     static double wiggle_time = 0;
-    static WBDirectionType wiggle_dir = WB_DIRECTION_POSITIVE;
+    static WBDirectionType wiggle_dir_prev = WB_DIRECTION_NEUTRAL;
 
     WBPowerup* powerup = &game->gamestate.powerup;
-    if (key_togglegrav && !key_togglegrav_prev)
-        powerup->unlocked ^= WB_POWERUP_SLOTMASK;
-    key_togglegrav_prev = key_togglegrav;
 
     static double left_down_time;
     if (key_wiz_left && !key_wiz_left_prev) {
@@ -136,15 +138,17 @@ void wbGameProcessInput(WBGame* game) {
     if (!wiggle_cnt) {
         wiggle_time = game->gamestate.time;
     }
-    WBDirectionType dir = left_down_time > 0 || right_down_time > 0 ?
-                          left_down_time > right_down_time ? WB_DIRECTION_NEGATIVE : WB_DIRECTION_POSITIVE : 0;
-    if (dir != 0 && dir != wiggle_dir) {
+    WBDirectionType wiggle_dir = left_down_time > 0   || right_down_time > 0 ?
+                                 left_down_time        > right_down_time     ?
+                                 WB_DIRECTION_NEGATIVE : WB_DIRECTION_POSITIVE : WB_DIRECTION_NEUTRAL;
+    if (wiggle_dir != WB_DIRECTION_NEUTRAL && wiggle_dir != wiggle_dir_prev) {
         if (game->gamestate.time - wiggle_time < 1.0f / WB_GAMERULE_POWERUP_WIGGLE_SPEED) {
-            wiggle_dir *= -1;
+            wiggle_dir_prev = wiggle_dir;
             wiggle_time = game->gamestate.time;
             wiggle_cnt++;
         }
         else {
+            wiggle_dir_prev = WB_DIRECTION_NEUTRAL;
             wiggle_cnt = 0;
         }
     }
@@ -180,7 +184,17 @@ void wbGameProcessInput(WBGame* game) {
             game->projectile_buffer.entries[idx].head.animation_key = WB_GRAPHIC_PROJECTILE_BEAM_ANIMATION_FRAME_CNT - 1;
         }
         powerup->slot = -1;
+        wiggle_cnt = 0;
     }
+
+    // TODO: for debug shift and toggle powerup
+    powerup->slot -= key_powerup_left  && !key_powerup_left_prev;
+    powerup->slot += key_powerup_right && !key_powerup_right_prev;
+    key_powerup_left_prev  = key_powerup_left;
+    key_powerup_right_prev = key_powerup_right;
+    if (key_powerup_togglegrav && !key_powerup_togglegrav_prev)
+        powerup->unlocked ^= WB_POWERUP_SLOTMASK;
+    key_powerup_togglegrav_prev = key_powerup_togglegrav;
 
     // wbPlayerWizProcessInput
     static double wiz_fire_down_time;
@@ -294,10 +308,12 @@ void wbGameProcessInput(WBGame* game) {
         mouse_pos_y *= (double)WB_GRAPHIC_WINDOW_HEIGHT / game->window.viewport.height;
         mouse_pos_x -= 0.5f * WB_GRAPHIC_WINDOW_WIDTH - view->center_x;
         mouse_pos_y -= WB_GRAPHIC_WINDOW_HEIGHT - (double)game->graphic.background_atlas.height / WB_MAP_CNT - WB_GRAPHIC_MAP_VIEW_OFFSET_Y - 1.0f;
-        cat->vel.x = fabs(mouse_pos_x - cat->pos.x) / input_time > WB_GAMERULE_PLAYER_CAT_VEL ?
-                     WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_x - cat->pos.x) : (mouse_pos_x - cat->pos.x) / input_time;
-        cat->vel.y = fabs(mouse_pos_y - cat->pos.y) / input_time > WB_GAMERULE_PLAYER_CAT_VEL ?
-                     WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y) : (mouse_pos_y - cat->pos.y) / input_time;
+        WBVec2f vel = {
+            (mouse_pos_x - cat->pos.x) / input_time,
+            (mouse_pos_y - cat->pos.y) / input_time
+        };
+        cat->vel.x = fabs(vel.x) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.x : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_x - cat->pos.x);
+        cat->vel.y = fabs(vel.y) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.y / input_time : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y);
         cat->vel.x *= fabs(mouse_pos_x - cat->pos.x) >= WB_GRAPHIC_SUBPIXEL_CNT;
         cat->vel.y *= fabs(mouse_pos_y - cat->pos.y) >= WB_GRAPHIC_SUBPIXEL_CNT;
         cat_autofire = true;
