@@ -15,5 +15,5 @@ bool wbMapInitCollider(WBMap* map, uint8_t* data) {
 
 bool wbMapGetCollision(WBMap* map, int x, int y, int level) {
     WBTexture* map_atlas = &map->graphic_handle->foreground_atlas;
-    return map->collider_atlas[(level * map_atlas->height / WB_MAP_CNT + y) * map_atlas->width + x];
+    return map->collider_atlas[(int)((level * map_atlas->height / WB_MAP_CNT + y) * map_atlas->width + x + 0.5f)];
 }

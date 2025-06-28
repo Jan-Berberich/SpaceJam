@@ -825,11 +825,29 @@ void wbGameDrawPlayerWizSpawn(WBGame* game) {
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(wiz->pos.y / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_height;
     offset_u = WB_GRAPHIC_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_X / sprite_atlas_width
-             + ((uint64_t)(game->gamestate.time * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) % (game->graphic.sprite_atlas.width / WB_GRAPHIC_SPRITE_SIZE)) * width_u;
+             + ((uint64_t)(game->gamestate.time * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) % (uint64_t)(game->graphic.sprite_atlas.width / WB_GRAPHIC_SPRITE_SIZE)) * width_u;
     offset_v = WB_GRAPHIC_PLAYER_WIZ_SPAWN_SPRITE_ATLAS_Y / sprite_atlas_height
-             + ((uint64_t)(game->gamestate.time * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) / (game->graphic.sprite_atlas.width / WB_GRAPHIC_SPRITE_SIZE)) * height_v;
+             + ((uint64_t)(game->gamestate.time * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED) / (uint64_t)(game->graphic.sprite_atlas.width / WB_GRAPHIC_SPRITE_SIZE)) * height_v;
     wbGameDraw(&game->shader, game->graphic.sprite_atlas.texture_id,
         width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v);
+}
+
+void wbGameDrawBatchAppendPowerupSlot(WBGame* game, int slot) {
+    WBGraphic* graphic = &game->graphic;
+    float offset_x = -1.0f + (WB_GRAPHIC_WINDOW_WIDTH - (WB_POWERUP_SLOT_CNT - 1) * WB_GRAPHIC_GUI_POWERUP_STRIDE) / WB_GRAPHIC_WINDOW_WIDTH
+                    + 2.0f * slot * WB_GRAPHIC_GUI_POWERUP_STRIDE / WB_GRAPHIC_WINDOW_WIDTH;
+    float offset_y =  2.0f - 2.0f * WB_GRAPHIC_GUI_POWERUP_STRIDE / WB_GRAPHIC_WINDOW_HEIGHT;
+    WBPowerupType powerup_slotstate = ((game->gamestate.powerup.unlocked >> 2 * slot) & WB_POWERUP_SLOTMASK);
+    if (slot == (int)(0.5f * log2f(WB_POWERUP_WIZSPRAY + 1))) {
+        powerup_slotstate &= 1;
+    }
+    float offset_u = powerup_slotstate < 2 ?
+                     ((2.0f * slot + powerup_slotstate) * WB_GRAPHIC_SPRITE_SIZE + WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_X) / WB_GRAPHIC_SPRITE_ATLAS_WIDTH
+                   : WB_GRAPHIC_GUI_POWERUP_MAXED_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH;
+    static const float offset_v = WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT;
+    wbGameDrawBatchAppend(&game->shader,
+        WB_GRAPHIC_SPRITE_ATLAS_WIDTH_X, offset_x, WB_GRAPHIC_SPRITE_ATLAS_HEIGHT_Y, offset_y,
+        WB_GRAPHIC_SPRITE_ATLAS_WIDTH_U, offset_u, WB_GRAPHIC_SPRITE_ATLAS_HEIGHT_V, offset_v);
 }
 
 void wbGameDrawGui(WBGame* game) {
@@ -845,39 +863,26 @@ void wbGameDrawGui(WBGame* game) {
     float offset_x, offset_y, offset_u, offset_v;
     float rgba[4];
 
-    // powerup slots
+    // powerup inactive slots
     wbGameDrawBatchClear(&game->shader);
-    int i = 0;
+    int slot = 0;
     int powerup_slotstate;
-    offset_y = 2.0f - 2.0f * WB_GRAPHIC_GUI_POWERUP_STRIDE / window_height;
-    offset_v = WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_Y / sprite_atlas_height;
     uint32_t color = game->graphic.colormap.blue6[1];
     ui32toarr4f(rgba, color);
     glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
-    for (; i < WB_POWERUP_SLOT_CNT; i++) {
-        if (i == game->gamestate.powerup.slot) continue;
-        offset_x = -1.0f + (window_width - (WB_POWERUP_SLOT_CNT - 1) * WB_GRAPHIC_GUI_POWERUP_STRIDE) / window_width + 2.0f * i * WB_GRAPHIC_GUI_POWERUP_STRIDE / window_width;
-        powerup_slotstate = ((game->gamestate.powerup.unlocked >> 2 * i) & WB_POWERUP_SLOTMASK);
-        if (i == 4) powerup_slotstate &= 1;
-        offset_u = powerup_slotstate < 2 ?
-            ((2.0f * i + powerup_slotstate) * sprite_size + WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_X) / sprite_atlas_width :
-            WB_GRAPHIC_GUI_POWERUP_MAXED_SPRITE_ATLAS_X / sprite_atlas_width;
-        wbGameDrawBatchAppend(&game->shader,
-            width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v);
+    for (; slot < WB_POWERUP_SLOT_CNT; slot++) {
+        if (slot == game->gamestate.powerup.slot) continue;
+        wbGameDrawBatchAppendPowerupSlot(game, slot);
     }
     wbGameDrawBatch(&game->shader, game->graphic.sprite_atlas.texture_id);
-    i = game->gamestate.powerup.slot;
+    // powerup active slot
+    wbGameDrawBatchClear(&game->shader);
+    slot = game->gamestate.powerup.slot;
     color = game->graphic.colormap.blue6[(uint64_t)(game->gamestate.time * WB_GRAPHIC_GUI_COLORMAP_SPEED + 0.5) % WB_GRAPHIC_COLORMAP_BLUE6_CNT];
     ui32toarr4f(rgba, color);
     glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
-    offset_x = -1.0f + (window_width - (WB_POWERUP_SLOT_CNT - 1) * WB_GRAPHIC_GUI_POWERUP_STRIDE) / window_width + 2.0f * i * WB_GRAPHIC_GUI_POWERUP_STRIDE / window_width;
-    powerup_slotstate = ((game->gamestate.powerup.unlocked >> 2 * i) & WB_POWERUP_SLOTMASK);
-    if (i == 4) powerup_slotstate &= 1;
-    offset_u = powerup_slotstate < 2 ?
-        ((2.0f * i + powerup_slotstate) * sprite_size + WB_GRAPHIC_GUI_POWERUP_SPRITE_ATLAS_X) / sprite_atlas_width :
-        WB_GRAPHIC_GUI_POWERUP_MAXED_SPRITE_ATLAS_X / sprite_atlas_width;
-    wbGameDraw(&game->shader, game->graphic.sprite_atlas.texture_id,
-        width_x, offset_x, height_y, offset_y, width_u, offset_u, height_v, offset_v);
+    wbGameDrawBatchAppendPowerupSlot(game, game->gamestate.powerup.slot);
+    wbGameDrawBatch(&game->shader, game->graphic.sprite_atlas.texture_id);
 
     // 1UP
     offset_y = 2.0f - 2.0f * WB_GRAPHIC_GUI_SCORE_OFFSET_Y / window_height;
