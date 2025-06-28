@@ -450,6 +450,8 @@
 #define WB_KEY_ALT_FULLSCREEN     GLFW_KEY_ENTER
 #define WB_KEY_ALT_VSYNC          GLFW_KEY_V
 #define WB_KEY_ALT_FPS            GLFW_KEY_F
+#define WB_MOUSE_CAT_MOVE         GLFW_MOUSE_BUTTON_RIGHT
+#define WB_MOUSE_CAT_FIRE         GLFW_MOUSE_BUTTON_LEFT
 
 // Enums
 typedef enum {

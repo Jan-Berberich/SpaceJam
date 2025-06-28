@@ -104,6 +104,7 @@ void wbGameProcessInput(WBGame* game) {
     bool key_cat_left =           glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT )          && !key_alt;
     bool key_cat_right =          glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT)          && !key_alt;
     bool key_cat_fire =           glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE)           && !key_alt;
+         key_cat_fire |=          glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_FIRE) && !key_alt;
     bool key_wiz_sprint =         glfwGetKey(game->window.handle, WB_KEY_SPRINT  )           && !key_alt; // TODO: not in real game
     bool key_powerup_togglegrav = glfwGetKey(game->window.handle, WB_KEY_POWERUP_TOGGLEGRAV) && !key_alt; // TODO: not in real game
     bool key_powerup_left =       glfwGetKey(game->window.handle, WB_KEY_POWERUP_LEFT)       && !key_alt; // TODO: not in real game
@@ -197,16 +198,14 @@ void wbGameProcessInput(WBGame* game) {
     key_powerup_togglegrav_prev = key_powerup_togglegrav;
 
     // wbPlayerWizProcessInput
-    static double wiz_fire_down_time;
+    static double wiz_fire_down_time = 1e18;
     if (key_wiz_fire && !key_wiz_fire_prev) {
         wiz_fire_down_time = game->gamestate.time;
     }
-    wiz_fire_down_time *= key_wiz_fire;
-    bool wiz_autofire = wiz_fire_down_time > 0 &&
-                        game->gamestate.time - wiz_fire_down_time >= WB_GAMERULE_AUTOFIRE_HOLD_TIME &&
-                        powerup->unlocked & WB_POWERUP_CAT;
-    bool cat_autofire = wiz_autofire;
-    if (wiz_autofire) {
+    bool autofire = key_wiz_fire
+                 && game->gamestate.time - wiz_fire_down_time >= WB_GAMERULE_AUTOFIRE_HOLD_TIME
+                 && powerup->unlocked & WB_POWERUP_CAT;
+    if (autofire) {
         key_cat_right |= key_wiz_right;
         key_cat_left  |= key_wiz_left;
         key_cat_up    |= key_wiz_up;
@@ -243,7 +242,7 @@ void wbGameProcessInput(WBGame* game) {
 
     bool mute_wiz_fire = wiz_fire_prev && !cat_fire_prev;
     wiz_fire_prev = false;
-    if ((key_wiz_fire && !key_wiz_fire_prev || wiz_autofire) && 
+    if ((key_wiz_fire && !key_wiz_fire_prev || autofire) && 
         (game->gamestate.state == WB_GAMESTATE_PLAY || game->gamestate.state == WB_GAMESTATE_SPAWN)) {
         
         WBVec2f vel;
@@ -299,7 +298,7 @@ void wbGameProcessInput(WBGame* game) {
         return;
     }
     
-    if (glfwGetMouseButton(game->window.handle, GLFW_MOUSE_BUTTON_LEFT)) {
+    if (glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_MOVE)) {
         double mouse_pos_x, mouse_pos_y;
         glfwGetCursorPos(game->window.handle, &mouse_pos_x, &mouse_pos_y);
         mouse_pos_x -= game->window.viewport.pos_x;
@@ -316,7 +315,6 @@ void wbGameProcessInput(WBGame* game) {
         cat->vel.y = fabs(vel.y) <= WB_GAMERULE_PLAYER_CAT_VEL ? vel.y : WB_GAMERULE_PLAYER_CAT_VEL * fsgnf(mouse_pos_y - cat->pos.y);
         cat->vel.x *= fabs(mouse_pos_x - cat->pos.x) >= WB_GRAPHIC_SUBPIXEL_CNT;
         cat->vel.y *= fabs(mouse_pos_y - cat->pos.y) >= WB_GRAPHIC_SUBPIXEL_CNT;
-        cat_autofire = true;
         cat->retreat = false;
     } else {
         cat->vel.x = 0.0f;
@@ -331,7 +329,7 @@ void wbGameProcessInput(WBGame* game) {
     bool mute_cat_fire = cat_fire_prev && !wiz_fire_prev;
     cat_fire_prev = false;
     if (key_cat_fire && !key_cat_fire_prev ||
-        key_wiz_fire && !key_wiz_fire_prev || cat_autofire) {
+        key_wiz_fire && !key_wiz_fire_prev || autofire) {
         WBVec2f vel;
         if (view->bullet_cat_cnt < WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX) {
             if (mute_cat_fire) {
@@ -770,8 +768,7 @@ void wbGameDrawPlayerCat(WBGame* game) {
     float offset_x, offset_y, offset_u, offset_v;
     float map_height = (float)game->graphic.background_atlas.height / WB_MAP_CNT;
 
-    offset_x = 2.0f * roundf((wiz->pos.x - game->map.view.center_x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width
-             + 2.0f * roundf((cat->pos.x - wiz->pos.x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width;
+    offset_x = 2.0f * roundf((cat->pos.x - game->map.view.center_x) / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_width;
     offset_y = 2.0f * WB_GRAPHIC_MAP_VIEW_OFFSET_Y / window_height
              +(2.0f * map_height - sprite_size + 2.0f) / window_height
              - 2.0f * roundf(cat->pos.y / WB_GRAPHIC_SUBPIXEL_CNT) * WB_GRAPHIC_SUBPIXEL_CNT / window_height;
