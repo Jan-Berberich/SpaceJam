@@ -99,7 +99,7 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
     }
 
     if (fabsf(wiz->collision_vec.x) > WB_GAMERULE_PLAYER_WIZ_COLLISION_ANGLE_FLAT_SIN) {
-        wiz->vel_x_key = -fabsf(wiz->vel_x_key) * fsgnf(wiz->collision_vec.x);
+        wiz->vel_x_key = -fsgnf(wiz->collision_vec.x) * fabsf(wiz->vel_x_key);
     }
     if (fabsf(wiz->collision_vec.y) < 0.01f) {
         return;
@@ -118,7 +118,6 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
         wiz->pos.y -= 1.0f;
     }
     else {
-        wiz->vel_y_key -= fsgnf(wiz->collision_vec.y) * WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
         wiz->vel_y_key = -fsgnf(wiz->collision_vec.y) * fabsf(wiz->vel_y_key);
     }
 }
@@ -133,8 +132,10 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
     wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
 
     if (gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV) {
-        wiz->vel.y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
+        float wiz_vel_y_incr = 0.5f * (fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))] - wiz->vel.y);
+        wiz->vel.y += wiz_vel_y_incr;
         wiz->pos.y += wiz->vel.y * gamestate->delta_time;
+        wiz->vel.y += wiz_vel_y_incr;
     } else {
         float wiz_vel_y_incr = 0.5f * WB_GAMERULE_GRAVITY * gamestate->delta_time;
         wiz->vel.y += wiz_vel_y_incr;

@@ -87,7 +87,7 @@ void wbGameProcessInput(WBGame* game) {
     static bool key_powerup_prev            = false;
     static bool key_wiz_left_prev           = false;
     static bool key_wiz_right_prev          = false;
-    static bool key_wiz_fire_prev           = true;
+    static bool key_wiz_fire_prev           = false;
     static bool key_cat_fire_prev           = false;
 
     bool key_alt =                glfwGetKey(game->window.handle, WB_KEY_ALTL     )          || glfwGetKey(game->window.handle, WB_KEY_ALTR);
@@ -243,7 +243,7 @@ void wbGameProcessInput(WBGame* game) {
 
     bool mute_wiz_fire = wiz_fire_prev && !cat_fire_prev;
     wiz_fire_prev = false;
-    if ((key_wiz_fire && !key_wiz_fire_prev || autofire) && 
+    if ((key_wiz_fire && !key_wiz_fire_prev || autofire) && game->gamestate.time &&
         (game->gamestate.state == WB_GAMESTATE_PLAY || game->gamestate.state == WB_GAMESTATE_SPAWN)) {
         
         WBVec2f vel;
