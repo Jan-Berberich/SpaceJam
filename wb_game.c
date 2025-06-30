@@ -72,13 +72,11 @@ void wbGameUninit(WBGame* game) {
 }
 
 void wbGameProcessInput(WBGame* game) {
-    static double timer = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
-    if (timer < WB_GAMERULE_PROCESS_INPUT_TIME) {
-        timer += game->gamestate.delta_time;
-        return;
-    }
+    static const double process_input_time = 1.0 / WB_GAMERULE_PROCESS_INPUT_SPEED;
+    static double timer = process_input_time;
     timer += game->gamestate.delta_time;
-    timer -= WB_GAMERULE_PROCESS_INPUT_TIME;
+    if (timer < process_input_time) return;
+    timer -= process_input_time;
 
     static bool wiz_fire_prev = false;
     static bool cat_fire_prev = false;
@@ -219,27 +217,27 @@ void wbGameProcessInput(WBGame* game) {
         key_wiz_down   = false;
     }
     if (key_wiz_right) {
-        wiz->vel_x_key += WB_GAMERULE_PLAYER_WIZ_ACC_X * WB_GAMERULE_PROCESS_INPUT_TIME;
+        wiz->vel_x_key += WB_GAMERULE_PLAYER_WIZ_ACC_X * process_input_time;
         wiz->vel_x_key = fminf(wiz->vel_x_key,   WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint);
     }
     if (key_wiz_left) {
-        wiz->vel_x_key -= WB_GAMERULE_PLAYER_WIZ_ACC_X * WB_GAMERULE_PROCESS_INPUT_TIME;
+        wiz->vel_x_key -= WB_GAMERULE_PLAYER_WIZ_ACC_X * process_input_time;
         wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint));
     }
 
     if (powerup->unlocked & WB_POWERUP_ANTIGRAV) {
         if (key_wiz_down) {
-            wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
+            wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * process_input_time;
             wiz->vel_y_key = fminf(wiz->vel_y_key,  WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT - 1);
         }
         if (key_wiz_up) {
-            wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
+            wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * process_input_time;
             wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT + 1);
         }
         float vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
-        wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * WB_GAMERULE_PROCESS_INPUT_TIME * (!key_wiz_left && !key_wiz_right);
+        wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * process_input_time * (!key_wiz_left && !key_wiz_right);
         float vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
-        wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * WB_GAMERULE_PROCESS_INPUT_TIME * (!key_wiz_up && !key_wiz_down);
+        wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * process_input_time * (!key_wiz_up && !key_wiz_down);
     }
 
     bool mute_wiz_fire = wiz_fire_prev && !cat_fire_prev;
@@ -314,7 +312,7 @@ void wbGameProcessInput(WBGame* game) {
         if (rnorm > 1.5f / WB_GRAPHIC_SUBPIXEL_CNT) {
             vel.x = 0;
             vel.y = 0;
-        } else if (rnorm < 1.0 / (WB_GAMERULE_PLAYER_CAT_VEL * WB_GAMERULE_PROCESS_INPUT_TIME)) {
+        } else if (rnorm < 1.0 / (WB_GAMERULE_PLAYER_CAT_VEL * process_input_time)) {
             vel.x *= rnorm * WB_GAMERULE_PLAYER_CAT_VEL;
             vel.y *= rnorm * WB_GAMERULE_PLAYER_CAT_VEL;
         } else {
