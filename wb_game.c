@@ -8,6 +8,8 @@
 #include "miniaudio.h"
 #endif
 
+// TODO: make down press bounce height from terrain consistent using +.5 acc, use vel, +.5 acc
+
 bool wbGameInit(WBGame* game) {
     // Initialize the GLFW library
     if (!glfwInit()) {
@@ -225,7 +227,6 @@ void wbGameProcessInput(WBGame* game) {
         wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint));
     }
 
-    float vel_x, vel_y;
     if (powerup->unlocked & WB_POWERUP_ANTIGRAV) {
         if (key_wiz_down) {
             wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
@@ -235,9 +236,9 @@ void wbGameProcessInput(WBGame* game) {
             wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * WB_GAMERULE_PROCESS_INPUT_TIME;
             wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT + 1);
         }
-        vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
+        float vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
         wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * WB_GAMERULE_PROCESS_INPUT_TIME * (!key_wiz_left && !key_wiz_right);
-        vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
+        float vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
         wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * WB_GAMERULE_PROCESS_INPUT_TIME * (!key_wiz_up && !key_wiz_down);
     }
 

@@ -118,6 +118,8 @@ void wbPlayerWizHandleCollision(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) 
         wiz->pos.y -= 1.0f;
     }
     else {
+        wiz->pos.y -= fabsf(wiz->vel_y_key) < WB_GAMERULE_PLAYER_WIZ_DEC_Y * WB_GAMERULE_PROCESS_INPUT_TIME || fsgnf(wiz->vel_y_key) != fsgnf(wiz->collision_vec.y) ?
+                      WB_GRAPHIC_SUBPIXEL_CNT : 0.0f;
         wiz->vel_y_key = -fsgnf(wiz->collision_vec.y) * fabsf(wiz->vel_y_key);
     }
 }
