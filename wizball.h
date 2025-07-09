@@ -48,7 +48,6 @@
 
 #define WB_FPS_MAX 9999
 #define WB_FPS_MIN 50
-#define WB_FPS_LOWPASS_TIMECONST 0.2f
 
 #define WB_GAMERULE_PROCESS_INPUT_SPEED 60 /*50*/
 #define WB_GAMERULE_PLAYER_WIZ_HANDLE_COLLISION_SPEED 9999 /*50*/
@@ -150,11 +149,13 @@
 #define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_SPEED (1.0f / 3.0f * 50)
 #define WB_GRAPHIC_ENEMY_DROPLET_ANIMATION_FRAME_CNT 11
 
+#define WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET 0
+#define WB_GRAPHIC_ENEMY_COLORMAP_GREEN_OFFSET 1
+#define WB_GRAPHIC_ENEMY_COLORMAP_BLUE_OFFSET 2
+#define WB_GRAPHIC_ENEMY_COLORMAP_CYAN_OFFSET 3
+#define WB_GRAPHIC_ENEMY_COLORMAP_OFFSET 4
 #define WB_GRAPHIC_ENEMY_COLORMAP_SPEED (1.0f / 5.0f * 50)
 #define WB_GRAPHIC_ENEMY_COLORMAP_CNT 4
-#define WB_GRAPHIC_ENEMY_COLORMAP_OFFSET 2
-#define WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET 0
-#define WB_GRAPHIC_ENEMY_COLORMAP_CYAN_OFFSET 1
 
 // particle
 #define WB_GRAPHIC_PARTICLE_POWERUP_SPRITE_ATLAS_X       ( 0.0f * WB_GRAPHIC_SPRITE_SIZE)
@@ -206,6 +207,8 @@
 #define WB_GRAPHIC_GUI_SCORE_OFFSET_Y 63.0f
 #define WB_GRAPHIC_GUI_LEVEL_OFFSET_Y  4.0f
 
+#define WB_GRAPHIC_GUI_FPS_LOWPASS_TIMECONST 0.2f
+
 // text
 #define WB_GRAPHIC_TEXT_DIGIT_SPRITE_ATLAS_X ( 0.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE)
 #define WB_GRAPHIC_TEXT_DIGIT_SPRITE_ATLAS_Y (60.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE)
@@ -251,12 +254,14 @@
 
 // colormap (max colors per pallet is 32 in shader)
 #define WB_GRAPHIC_COLORMAP_ENEMY_0  0x803648FF /* #803648FF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_1  0x71BCA9FF /* #71BCA9FF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_2  0xFFFFFFFF /* #FFFFFFFF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_3  0xCCD454FF /* #CCD454FF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_4  0x9CE57DFF /* #9CE57DFF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_5  0x616DDDFF /* #616DDDFF */
-#define WB_GRAPHIC_COLORMAP_ENEMY_CNT 6
+#define WB_GRAPHIC_COLORMAP_ENEMY_1  0x000000FF /**/
+#define WB_GRAPHIC_COLORMAP_ENEMY_2  0x000000FF /**/
+#define WB_GRAPHIC_COLORMAP_ENEMY_3  0x71BCA9FF /* #71BCA9FF */
+#define WB_GRAPHIC_COLORMAP_ENEMY_4  0xFFFFFFFF /* #FFFFFFFF */
+#define WB_GRAPHIC_COLORMAP_ENEMY_5  0xCCD454FF /* #CCD454FF */
+#define WB_GRAPHIC_COLORMAP_ENEMY_6  0x9CE57DFF /* #9CE57DFF */
+#define WB_GRAPHIC_COLORMAP_ENEMY_7  0x616DDDFF /* #616DDDFF */
+#define WB_GRAPHIC_COLORMAP_ENEMY_CNT 8
 #define WB_GRAPHIC_COLORMAP_BEAM_0   0x000000FF /* #000000FF */
 #define WB_GRAPHIC_COLORMAP_BEAM_1   0x803648FF /* #803648FF */
 #define WB_GRAPHIC_COLORMAP_BEAM_2   0x9CE57DFF /* #9CE57DFF */
@@ -566,6 +571,14 @@ typedef enum {
 } WBColorMode;
 
 typedef enum {
+    WB_RGBA_RED,
+    WB_RGBA_GREEN,
+    WB_RGBA_BLUE,
+    WB_RGBA_ALPHA,
+    WB_RGBA_CNT
+} WBRgbaType;
+
+typedef enum {
     WB_POWERUP_NONE     = 0b0000000000000000,
     WB_POWERUP_SLOTMASK = 0b0000000000000011,
 
@@ -770,6 +783,7 @@ typedef struct {
 typedef struct {
     WBGamestateType state;
     WBPowerup powerup;
+    int cauldron_levels[3];
     int score, lifes, enemy_cnt;
     int highscore;
     int score2;
@@ -806,7 +820,7 @@ extern int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
 extern void wbBufferClear(void* buffer);
 
-extern void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colorpallet_offset, WBMovepatternType movepattern_type, WBView* view);
+extern void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colormap_offset, WBMovepatternType movepattern_type, WBView* view);
 extern void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time);
 extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
 extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);

@@ -1,22 +1,21 @@
 #include "wizball.h"
 
-int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, int colorpallet_offset, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
+int wbEnemyAppend(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_type, int colormap_offset, WBVec2f* pos, WBVec2f* vel, WBMovepatternType movepattern_type) {
     int idx = wbBufferAppend(enemy_buffer, enemy_type, pos);
     WBEnemy* enemy = &enemy_buffer->entries[idx];
     enemy->vel.x = vel->x;
     enemy->vel.y = vel->y;
     enemy->movepattern_type = movepattern_type;
     enemy->time = 0.0;
-    enemy->head.color_key = colorpallet_offset == WB_GRAPHIC_ENEMY_COLORMAP_OFFSET ?
-        randfin(glfwGetTime() * 1e9, 0.0f, WB_GRAPHIC_ENEMY_COLORMAP_CNT) :
-        colorpallet_offset - WB_GRAPHIC_ENEMY_COLORMAP_OFFSET;
+    enemy->head.color_key = colormap_offset == WB_GRAPHIC_ENEMY_COLORMAP_OFFSET ?
+        randfin(glfwGetTime() * 1e9, 0.0f, WB_GRAPHIC_ENEMY_COLORMAP_CNT) + WB_GRAPHIC_ENEMY_COLORMAP_OFFSET : colormap_offset;
     if (enemy->head.type == WB_ENEMY_SPINNERCYAN || enemy->head.type == WB_ENEMY_SPINNERYELLOW) {
         enemy->head.animation_key = randfin(glfwGetTime() * 1e9, 0.0, WB_GRAPHIC_ENEMY_SPINNER_ANIMATION_FRAME_CNT);
     }
     return idx;
 }
 
-void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colorpallet_offset, WBMovepatternType movepattern_type, WBView* view) {
+void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colormap_offset, WBMovepatternType movepattern_type, WBView* view) {
     WBVec2f pos;
     WBVec2f vel = {0.0f};
     uint32_t seed = glfwGetTime() * 1e9;
@@ -29,7 +28,7 @@ void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int co
                 continue;
             }
             pos.y = randfin(seed++,  50,  200);
-            wbEnemyAppend(enemy_buffer, enemy_tpye, colorpallet_offset, &pos, &vel, movepattern_type);
+            wbEnemyAppend(enemy_buffer, enemy_tpye, colormap_offset, &pos, &vel, movepattern_type);
         }
         break;
         case WB_MOVEPATTERN_CIRCLE:
@@ -40,7 +39,7 @@ void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int co
                 continue;
             }
             pos.y = randfin(seed++,   0,  150);
-            wbEnemyAppend(enemy_buffer, enemy_tpye, colorpallet_offset, &pos, &vel, movepattern_type);
+            wbEnemyAppend(enemy_buffer, enemy_tpye, colormap_offset, &pos, &vel, movepattern_type);
         }
     }
 }
@@ -63,7 +62,7 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time) {
             vel.y = -vel.y;
         }
         int idx = wbEnemyAppend(enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORMAP_OFFSET, &pos, &vel, WB_MOVEPATTERN_INERT);
-        enemy_buffer->entries[idx].head.color_key = fmod(time * WB_GRAPHIC_ENEMY_COLORMAP_SPEED, WB_GRAPHIC_ENEMY_COLORMAP_CNT);
+        enemy_buffer->entries[idx].head.color_key = fmod(time * WB_GRAPHIC_ENEMY_COLORMAP_SPEED, WB_GRAPHIC_ENEMY_COLORMAP_CNT) + WB_GRAPHIC_ENEMY_COLORMAP_OFFSET;
         wbBufferRemove(enemy_buffer, (idx + 1) % WB_ENEMY_CNT_MAX);
     }
 }
@@ -170,9 +169,9 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
 
         enemy->head.pos.x += enemy->vel.x * gamestate->delta_time;
         enemy->head.pos.y += enemy->vel.y * gamestate->delta_time;
-        if (enemy->head.color_key >= 0) {
+        if (enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_OFFSET) {
             enemy->head.color_key += WB_GRAPHIC_ENEMY_COLORMAP_SPEED * gamestate->delta_time;
-            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_CNT ? WB_GRAPHIC_ENEMY_COLORMAP_CNT : 0;
+            enemy->head.color_key -= enemy->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_CNT + WB_GRAPHIC_ENEMY_COLORMAP_OFFSET ? WB_GRAPHIC_ENEMY_COLORMAP_CNT : 0;
         }
         enemy->time += gamestate->delta_time;
 

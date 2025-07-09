@@ -21,10 +21,9 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGam
             break;
 
             case WB_PARTICLE_DECAY:
-            // for decay of other enemies with no animated color: set color_key > WB_ENEMY_COLORMAP_CNT + 1, dont update anymore
-            if (particle->head.color_key >= 0) {
+            if (particle->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_OFFSET) {
                 particle->head.color_key += WB_GRAPHIC_ENEMY_COLORMAP_SPEED * gamestate->delta_time;
-                particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_CNT ? WB_GRAPHIC_ENEMY_COLORMAP_CNT : 0;
+                particle->head.color_key -= particle->head.color_key >= WB_GRAPHIC_ENEMY_COLORMAP_CNT + WB_GRAPHIC_ENEMY_COLORMAP_OFFSET ? WB_GRAPHIC_ENEMY_COLORMAP_CNT : 0;
             }
             particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED * gamestate->delta_time;
             if (particle->head.animation_key >= WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT) {
@@ -36,6 +35,14 @@ void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGam
             particle->head.pos.y += WB_GAMERULE_PARTICLE_DROPLET_FALL_VEL * gamestate->delta_time;
             particle->head.animation_key += WB_GRAPHIC_PARTICLE_ANIMATION_SPEED * gamestate->delta_time;
             particle->head.animation_key -= particle->head.animation_key >= WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT ? WB_GRAPHIC_PARTICLE_ANIMATION_FRAME_CNT : 0;
+            if (gamestate->state == WB_GAMESTATE_PLAY &&
+                particle->head.pos.x > player->cat.pos.x - WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.x <= player->cat.pos.x + WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 &&
+                particle->head.pos.y > player->cat.pos.y - WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2 && particle->head.pos.y <= player->cat.pos.y + WB_GAMERULE_PARTICLE_HITBOX_SIZE / 2) {
+
+                gamestate->cauldron_levels[(int)particle->head.color_key - WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET]++;
+                wbBufferRemove(particle_buffer, i);
+                break;
+            }
             if (particle->head.pos.y >= WB_GAMERULE_MAP_FLOOR_HEIGHT) {
                 int idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DROPLET_SPLAT, &particle->head.pos);
                 particle_buffer->entries[idx].head.color_key = particle->head.color_key;
