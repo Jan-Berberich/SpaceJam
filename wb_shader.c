@@ -78,6 +78,7 @@ void wbShaderInit(WBShader* shader) {
         "uniform int replaceColorCnt;"
         "uniform float subpixelCnt;"
         "uniform float replaceColorMirrorHeight;"
+        "uniform float fillLevel;"
         "void main() {"
         "    if (TexCoord.x < 0.0 || TexCoord.x > 1.0 || TexCoord.y < 0.0 || TexCoord.y > 1.0) {"
         "        discard;"
@@ -94,6 +95,13 @@ void wbShaderInit(WBShader* shader) {
         "            idx = int(mod(((row_offset + replaceColorMirrorHeight) / subpixelCnt -"
         "                floor(replaceColorSpeed * time)) / replaceColorbandHeight, replaceColorCnt));"
         "            FragColor = replaceColors[idx];"
+        "            break;"
+        "            case 2:"
+        "            if (gl_FragCoord.y * windowScale > (fillLevel + 1) * subpixelCnt) {"
+        "                FragColor = vec4(0.0f);"
+        "            } else {"
+        "                FragColor = replaceColors[0];"
+        "            }"
         "            break;"
         "        }"
         "    }"
@@ -150,6 +158,7 @@ void wbShaderInit(WBShader* shader) {
     shader->loc.key_color_mode              = glGetUniformLocation(shader->program, "keyColorMode");
     shader->loc.window_scale                = glGetUniformLocation(shader->program, "windowScale");
     shader->loc.replace_color_mirror_height = glGetUniformLocation(shader->program, "replaceColorMirrorHeight");
+    shader->loc.fill_level                  = glGetUniformLocation(shader->program, "fillLevel");
     shader->loc.replace_colorband_height    = glGetUniformLocation(shader->program, "replaceColorbandHeight");
     shader->loc.replace_color_speed         = glGetUniformLocation(shader->program, "replaceColorSpeed");
     shader->loc.replace_color_cnt           = glGetUniformLocation(shader->program, "replaceColorCnt");

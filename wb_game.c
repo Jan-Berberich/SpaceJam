@@ -417,14 +417,14 @@ void wbGameDrawText(WBGame* game, char* text, WBTextType text_type, float width_
     
     if (game->gamestate.time < draw_time) return;
     
-    static float replace_colors[WB_GRAPHIC_COLORMAP_ALL32_CNT * WB_RGBA_CNT];
+    static float replace_colors[WB_GRAPHIC_COLORMAP_ALL32_CNT * WB_GRAPHIC_RGBA_CNT];
     if (color_mode == 1) {
         int cnt = (game->gamestate.time - draw_time) * color_speed / WB_GRAPHIC_TEXT_COLORBAND_HEIGHT + 1;
         cnt = cnt > color_cnt ? color_cnt : cnt;
         for (int i = 0; i < color_cnt; i++) {
             uint32_t color = i >= cnt ? 0x000000FF : colors[i];
             int idx = (-i + color_cnt) % color_cnt;
-            ui32toarr4f(&replace_colors[idx * WB_RGBA_CNT], color);
+            ui32toarr4f(&replace_colors[idx * WB_GRAPHIC_RGBA_CNT], color);
         }
         glUniform1f(game->shader.loc.replace_color_speed, color_speed);
         glUniform1i(game->shader.loc.replace_color_cnt, color_cnt);
@@ -568,7 +568,7 @@ void wbGameDrawEntities(WBGame* game) {
     WBEnemy* enemy;
 
     float offset_x, offset_y, offset_u, offset_v;
-    float rgba[WB_RGBA_CNT];
+    float rgba[WB_GRAPHIC_RGBA_CNT];
     uint32_t color;
     uint32_t color_prev;
 
@@ -773,8 +773,23 @@ void wbGameDrawBatchAppendPowerupSlot(WBGame* game, int slot) {
         WB_GRAPHIC_SPRITE_WIDTH_U, offset_u, WB_GRAPHIC_SPRITE_HEIGHT_V, offset_v);
 }
 
+void wbGameDrawCauldron(WBGame* game, float offset_x) {
+    wbGameDrawBatchClear(&game->shader);
+    wbGameDrawBatchAppend(&game->shader,
+        WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
+        WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
+        WB_GRAPHIC_SPRITE_WIDTH_U , WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
+        WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
+    wbGameDrawBatchAppend(&game->shader,
+        WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
+        WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
+        WB_GRAPHIC_SPRITE_WIDTH_U , (WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X + WB_GRAPHIC_SPRITE_SIZE) / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
+        WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
+    wbGameDrawBatch(&game->shader, game->graphic.sprite_atlas_texture_id);
+}
+
 void wbGameDrawGui(WBGame* game) {
-    float rgba[WB_RGBA_CNT];
+    float rgba[WB_GRAPHIC_RGBA_CNT];
 
     // powerup inactive slots
     wbGameDrawBatchClear(&game->shader);
@@ -831,13 +846,29 @@ void wbGameDrawGui(WBGame* game) {
 
     // level
     uint32_t* colormap = (uint32_t*)((uint8_t*)game->graphic.colormap.red8 + game->gamestate.level % 3 * (sizeof game->graphic.colormap.red8));
-    sprintf(game->graphic.text, "    %01i", game->gamestate.level + 1);
+    sprintf(game->graphic.text, "%01i", game->gamestate.level + 1);
     wbGameDrawText(game, game->graphic.text, WB_TEXT_DIGIT, 3.0f, 2.0f, 0,
-    -1.0f, 2.0f * WB_GRAPHIC_GUI_LEVEL_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
-    colormap, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_GUI_LEVEL_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
+        -1.0f + 2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH,
+                2.0f * WB_GRAPHIC_GUI_LEVEL_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
+        colormap, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_GUI_LEVEL_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
 
     // cauldrons
-
+    glUniform1i(game->shader.loc.key_color_mode, WB_COLORMODE_FILL);
+    float offset_x = -2.0f * WB_GRAPHIC_GUI_CAULDRON_STRIDE / WB_GRAPHIC_WINDOW_WIDTH;
+    for (int i = 0; i < 3; i++) {
+        color = game->graphic.colormap.enemy[WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET + i];
+        ui32toarr4f(rgba, color);
+        glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
+        glUniform1f(game->shader.loc.fill_level, game->gamestate.cauldron_levels[i]);
+        wbGameDrawCauldron(game, offset_x);
+        offset_x += 2.0f * WB_GRAPHIC_GUI_CAULDRON_STRIDE / WB_GRAPHIC_WINDOW_WIDTH;
+    }
+    color = game->graphic.colormap.enemy[WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET];
+    ui32toarr4f(rgba, color);
+    glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
+    glUniform1f(game->shader.loc.fill_level, game->gamestate.cauldron_levels[0]);
+    wbGameDrawCauldron(game, 1.0f - 2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH);
+    glUniform1i(game->shader.loc.key_color_mode, WB_COLORMODE_CYCLE);
 }
 
 void wbGameRender(WBGame* game) {
