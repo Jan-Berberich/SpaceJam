@@ -159,7 +159,6 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
                    - WB_GRAPHIC_SPRITE_SIZE : WB_GRAPHIC_MAP_VIEW_HEIGHT + WB_GRAPHIC_SPRITE_SIZE;
         return;
     }
-
     cat->pos.x += gamestate->delta_time * (cat->vel.x + wiz->vel.x * (wiz->pos.x == map->view.center_x));
     cat->pos.y += gamestate->delta_time *  cat->vel.y;
 
@@ -172,7 +171,10 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
                     * fminf(fabsf(cat->pos_y_buffer[cat->pos_y_buffer_idx] - cat->pos.y), WB_GAMERULE_PLAYER_CAT_VEL * gamestate->delta_time);
         cat->facing = fsgnf(wiz->pos.x - cat->pos.x) ? fsgnf(wiz->pos.x - cat->pos.x) : cat->facing;
     }
-    cat->facing = fsgnf(cat->vel.x) ? fsgnf(cat->vel.x) : cat->facing;
+    static float px_prev = 0.0f;
+    float px = roundf((cat->pos.x - view->center_x) / WB_GRAPHIC_SUBPIXEL_CNT);
+    cat->facing = fsgnf(px - px_prev) ? fsgnf(px - px_prev) : cat->facing;
+    px_prev = px;
 
     cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
     cat->pos.x = fminf(cat->pos.x, view->center_x + WB_GRAPHIC_MAP_VIEW_WIDTH / 2 - WB_GAMERULE_PLAYER_CAT_WIDTH / 2);
