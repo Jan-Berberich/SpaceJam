@@ -1,5 +1,7 @@
 # SpaceJam
 
+![](demo.gif)
+
 ### About
 <b>SpaceJam</b> is a recreation of <b>Wizball (C64 version)</b> for Windows, written in C from scratch, without the use of an external game engine.<br>
 This game aims to resemble the original as close as possible in terms of physics, movement, graphics, sounds and game logic.<br>
