@@ -530,9 +530,9 @@ void wbGameDrawDust(WBGame* game) {
                 offset_x = (-2.0f * roundf(view->center_x / WB_GRAPHIC_MAP_SUBPIXEL_CNT) * WB_GRAPHIC_MAP_SUBPIXEL_CNT
                             -2.0f * roundf(WB_GRAPHIC_MAP_DUST_VELOCITY_FACTOR * layer * view->center_x / WB_GRAPHIC_MAP_DUST_SUBPIXEL_CNT) * WB_GRAPHIC_MAP_DUST_SUBPIXEL_CNT)
                            / WB_GRAPHIC_WINDOW_WIDTH + width_x + 2.0f * col * width_x;
+                offset_x += 2.0f * width_x * row / WB_GRAPHIC_MAP_DUST_ROW_CNT;
                 offset_x = fmodf(offset_x, 2.0f * WB_GRAPHIC_MAP_DUST_COL_CNT * width_x);
-                offset_x += (row / (WB_GRAPHIC_MAP_DUST_ROW_CNT - 1.0f) - 0.5f) * width_x;
-                offset_x += (offset_x < -WB_GRAPHIC_MAP_DUST_COL_CNT * width_x) ? 2.0f * WB_GRAPHIC_MAP_DUST_COL_CNT * width_x : 0.0f;
+                offset_x += offset_x < -WB_GRAPHIC_MAP_DUST_COL_CNT * width_x ? 2.0f * WB_GRAPHIC_MAP_DUST_COL_CNT * width_x : 0.0f;
                 offset_y = 2.0f * (WB_GRAPHIC_MAP_VIEW_OFFSET_Y + WB_GRAPHIC_MAP_VIEW_HEIGHT) / WB_GRAPHIC_WINDOW_HEIGHT - 2.0f * height_y - 2.0f * row * height_y;
                 offset_u = layer * width_u;
                 wbGameDrawBatchAppend(&game->shader,
@@ -831,8 +831,8 @@ void wbGameDrawGui(WBGame* game) {
     uint32_t* colormap = (uint32_t*)((uint8_t*)game->graphic.colormap.red8 + game->gamestate.level % 3 * (sizeof game->graphic.colormap.red8));
     sprintf(game->graphic.text, "%01i", game->gamestate.level + 1);
     wbGameDrawText(game, game->graphic.text, WB_TEXT_DIGIT, 3.0f, 2.0f, 0,
-        -1.0f + 2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH,
-                2.0f * WB_GRAPHIC_GUI_LEVEL_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
+        -2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH,
+         2.0f * WB_GRAPHIC_GUI_LEVEL_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
         colormap, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_GUI_LEVEL_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
 
     // cauldrons
@@ -843,23 +843,23 @@ void wbGameDrawGui(WBGame* game) {
         ui32toarr4f(rgba, color);
         glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
         glUniform1f(game->shader.loc.fill_level, game->gamestate.cauldron_levels[i]);
-    wbGameDraw(&game->shader, game->graphic.sprite_atlas_texture_id,
-        WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
-        WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
-        WB_GRAPHIC_SPRITE_WIDTH_U , WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
-        WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
+        wbGameDraw(&game->shader, game->graphic.sprite_atlas_texture_id,
+            WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
+            WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
+            WB_GRAPHIC_SPRITE_WIDTH_U , WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
+            WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
         offset_x += 2.0f * WB_GRAPHIC_GUI_CAULDRON_STRIDE / WB_GRAPHIC_WINDOW_WIDTH;
     }
-    offset_x = 1.0f - 2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH;
+    offset_x = 2.0f * WB_GRAPHIC_GUI_LOWER_OFFSET_X / WB_GRAPHIC_WINDOW_WIDTH;
     color = game->graphic.colormap.enemy[WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET];
     ui32toarr4f(rgba, color);
     glUniform4fv(game->shader.loc.replace_colors, 1, rgba);
     glUniform1f(game->shader.loc.fill_level, game->gamestate.cauldron_levels[0]);
     wbGameDraw(&game->shader, game->graphic.sprite_atlas_texture_id,
-    WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
-    WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
-    WB_GRAPHIC_SPRITE_WIDTH_U , WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
-    WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
+        WB_GRAPHIC_SPRITE_WIDTH_X , offset_x,
+        WB_GRAPHIC_SPRITE_HEIGHT_Y, 0.0,
+        WB_GRAPHIC_SPRITE_WIDTH_U , WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_X / WB_GRAPHIC_SPRITE_ATLAS_WIDTH,
+        WB_GRAPHIC_SPRITE_HEIGHT_V, WB_GRAPHIC_GUI_CAULDRON_SPRITE_ATLAS_Y / WB_GRAPHIC_SPRITE_ATLAS_HEIGHT);
     glUniform1i(game->shader.loc.key_color_mode, WB_COLORMODE_CYCLE);
 }
 
@@ -870,8 +870,7 @@ void wbGameRender(WBGame* game) {
     
     glUniform1f(game->shader.loc.time, game->gamestate.time);
     glUniform1f(game->shader.loc.window_scale, WB_GRAPHIC_WINDOW_HEIGHT / game->window.height);
-
-    // entity sprite height is centered in atlas. They get shifted up by half a pixel with + 2.0 in offset_y
+    
     switch (game->gamestate.state) {
         case WB_GAMESTATE_TITLESCREEN:
         glUniform1f(game->shader.loc.replace_color_mirror_height, WB_GRAPHIC_WINDOW_HEIGHT - WB_GRAPHIC_TEXT_WIZBALL_OFFSET_Y + 1);
@@ -924,7 +923,7 @@ void wbGameRender(WBGame* game) {
         case WB_GAMESTATE_GETREADY:
         wbGameDrawEntities(game);
         wbGameDrawText(game, "GET READY!", WB_TEXT_LARGE, 1.0f, 1.0f, 0,
-            0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
+            0.0f, 2.0f * WB_GRAPHIC_TEXT_GETREADY_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.blue8, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_TEXT_BLINK_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
         break;
 
@@ -960,10 +959,10 @@ void wbGameRender(WBGame* game) {
         wbGameDrawMap(game, game->graphic.background_atlas_texture_id);
         wbGameDrawGui(game);
         wbGameDrawText(game, "GAME OVER", WB_TEXT_LARGE, 1.0f, 1.0f, 0,
-            0.0f, 2.0f - 2.0f * (WB_GRAPHIC_TEXT_GAMEOVER_OFFSET_Y) / WB_GRAPHIC_WINDOW_HEIGHT,
+            0.0f, 2.0f * WB_GRAPHIC_TEXT_GAMEOVER_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.blue8, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_TEXT_BLINK_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
         wbGameDrawText(game, "player one", WB_TEXT_SMALL, 1.0f, 1.0f, 0,
-            0.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_OFFSET_Y / WB_GRAPHIC_WINDOW_HEIGHT,
+            0.0f, 2.0f * (WB_GRAPHIC_TEXT_GAMEOVER_OFFSET_Y - 11) / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.blue8, WB_GRAPHIC_COLORMAP_RGB8_CNT, WB_GRAPHIC_TEXT_BLINK_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
         break;
     }
@@ -979,9 +978,10 @@ void wbGameRender(WBGame* game) {
                    && (glfwGetKey(game->window.handle, WB_KEY_ALTL) || glfwGetKey(game->window.handle, WB_KEY_ALTR));
     show_fps ^= key_fps_alt && !key_fps_alt_pref;
     if (show_fps) {
-        sprintf(game->graphic.text, "%04i    ", (int)round(fps_filtered));
+        sprintf(game->graphic.text, "%i", (int)round(fps_filtered));
         wbGameDrawText(game, game->graphic.text, WB_TEXT_DIGIT, 1.0, 1.0, 0,
-            1.0f, 2.0f - 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE / WB_GRAPHIC_WINDOW_HEIGHT,
+            1.0f - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE * strlen(game->graphic.text) / WB_GRAPHIC_WINDOW_WIDTH,
+            2.0f - (2.0f + 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE) / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.green8, 6, WB_GRAPHIC_GUI_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
     }
     key_fps_alt_pref = key_fps_alt;

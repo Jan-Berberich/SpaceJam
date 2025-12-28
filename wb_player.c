@@ -128,7 +128,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
         wiz->vel.x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
     }
     wiz->pos.x += wiz->vel.x * gamestate->delta_time;
-    wiz->facing = fsgnf(wiz->vel_x_key) ? fsgnf(wiz->vel_x_key) : wiz->facing;
+    wiz->facing = fabsf(wiz->vel_x_key) >= 0.5f ? fsgnf(wiz->vel_x_key) : wiz->facing;
 
     if (gamestate->powerup.unlocked & WB_POWERUP_ANTIGRAV) {
         float wiz_vel_y_incr = 0.5f * (fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))] - wiz->vel.y);
@@ -162,6 +162,8 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
     cat->pos.x += gamestate->delta_time * (cat->vel.x + wiz->vel.x * (wiz->pos.x == map->view.center_x));
     cat->pos.y += gamestate->delta_time *  cat->vel.y;
 
+    static float px_prev = 0.0f;
+    float px = roundf((cat->pos.x - view->center_x) / WB_GRAPHIC_SUBPIXEL_CNT);
     if (cat->retreat) {
         cat->rest_offset_x -= fminf(fabsf(cat->rest_offset_x + WB_GAMERULE_PLAYER_CAT_REST_OFFSET_X * wiz->facing),
                                     WB_GAMERULE_PLAYER_CAT_REST_OFFSET_VEL * gamestate->delta_time) * wiz->facing;
@@ -169,11 +171,11 @@ void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestat
                     * fminf(fabsf(wiz->pos.x + cat->rest_offset_x - cat->pos.x), WB_GAMERULE_PLAYER_CAT_VEL * gamestate->delta_time);
         cat->pos.y += fsgnf(cat->pos_y_buffer[cat->pos_y_buffer_idx] - cat->pos.y)
                     * fminf(fabsf(cat->pos_y_buffer[cat->pos_y_buffer_idx] - cat->pos.y), WB_GAMERULE_PLAYER_CAT_VEL * gamestate->delta_time);
-        cat->facing = fsgnf(wiz->pos.x - cat->pos.x) ? fsgnf(wiz->pos.x - cat->pos.x) : cat->facing;
+        cat->facing = wiz->facing;
     }
-    static float px_prev = 0.0f;
-    float px = roundf((cat->pos.x - view->center_x) / WB_GRAPHIC_SUBPIXEL_CNT);
-    cat->facing = fsgnf(px - px_prev) ? fsgnf(px - px_prev) : cat->facing;
+    else {
+        cat->facing = fsgnf(px - px_prev) ? fsgnf(px - px_prev) : cat->facing;
+    }
     px_prev = px;
 
     cat->pos.x = fmaxf(cat->pos.x, view->center_x - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + WB_GAMERULE_PLAYER_CAT_WIDTH / 2);

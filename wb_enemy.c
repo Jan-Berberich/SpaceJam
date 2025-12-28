@@ -47,7 +47,7 @@ void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int co
 void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time) {
     uint32_t seed = glfwGetTime() * 1e9;
     WBVec2f pos;
-    static const float pos_y_offset = WB_GRAPHIC_TEXT_OFFSET_Y + 0.5 * WB_GRAPHIC_TEXT_LARGE_SPRITE_SIZE;
+    static const float pos_y_offset = WB_GAMERULE_MAP_HORIZON_HEIGHT + 0.5 * WB_GRAPHIC_TEXT_LARGE_SPRITE_SIZE;
     pos.x = randfin(seed++,                          0.0f, 0.5f * WB_GRAPHIC_WINDOW_WIDTH);
     pos.y = randfin(seed++, 0.5f * WB_GRAPHIC_SPRITE_SIZE, 0.5f * WB_GRAPHIC_WINDOW_HEIGHT / 2) + 0.5f * pos_y_offset;
     WBVec2f vel;
