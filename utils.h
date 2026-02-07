@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <math.h>
 #include <stdint.h>
 
@@ -11,3 +14,5 @@ extern float rsqrtf(float f);
 
 extern void ui32toarr4f(float rgba[4], uint32_t color);
 extern uint32_t arr4ftoui32(float rgba[4]);
+
+#endif // UTILS_H
