@@ -35,13 +35,13 @@ int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
         entity_head = &projectile->head;
         break;
     }
+    buffer_head->cnt++;
+
     entity_head->pos.x = pos->x;
     entity_head->pos.y = pos->y;
     entity_head->type = object_type;
     entity_head->color_key = 0.0f;
     entity_head->animation_key = 0.0f;
-
-    buffer_head->cnt++;
 
     return idx;
 }

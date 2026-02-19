@@ -148,7 +148,7 @@ void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {
 
     view->center_x = wiz->pos.x;
     view->center_x = fmaxf(view->center_x, WB_GRAPHIC_MAP_VIEW_WIDTH / 2);
-    view->center_x = fminf(view->center_x, WB_GRAPHIC_MAP_ATLAS_WIDTH - WB_GRAPHIC_MAP_VIEW_WIDTH / 2 + 1);
+    view->center_x = fminf(view->center_x, WB_GRAPHIC_MAP_ATLAS_WIDTH - WB_GRAPHIC_MAP_VIEW_WIDTH / 2);
 }
 
 void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate) {

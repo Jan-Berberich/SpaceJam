@@ -874,7 +874,7 @@ void wbGameRender(WBGame* game) {
     switch (game->gamestate.state) {
         case WB_GAMESTATE_TITLESCREEN:
         glUniform1f(game->shader.loc.replace_color_mirror_height, WB_GRAPHIC_WINDOW_HEIGHT - WB_GRAPHIC_TEXT_WIZBALL_OFFSET_Y + 1);
-        wbGameDrawText(game, "WIZBALL", WB_TEXT_TITLE, 1.0f, 1.0f, 0.0,
+        wbGameDrawText(game, "WIZBALL", WB_TEXT_TITLE, 2.0f, 1.0f, 0.0,
             0.0f, 2.0f - (2.0f * WB_GRAPHIC_TEXT_WIZBALL_OFFSET_Y + WB_GRAPHIC_TEXT_WIZBALL_SPRITE_HEIGHT) / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.all32, WB_GRAPHIC_COLORMAP_ALL32_CNT, WB_GRAPHIC_TEXT_MIRROR_COLORMAP_SPEED, WB_COLORMODE_SCROLL);
         wbGameDrawText(game, "top scores", WB_TEXT_SMALL, 1.0f, 1.0f, WB_GRAPHIC_TEXT_TOPSCORES_DRAW_TIME,
@@ -980,7 +980,7 @@ void wbGameRender(WBGame* game) {
     if (show_fps) {
         sprintf(game->graphic.text, "%i", (int)round(fps_filtered));
         wbGameDrawText(game, game->graphic.text, WB_TEXT_DIGIT, 1.0, 1.0, 0,
-            1.0f - WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE * strlen(game->graphic.text) / WB_GRAPHIC_WINDOW_WIDTH,
+            1.0f - (2.0f + WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE * strlen(game->graphic.text)) / WB_GRAPHIC_WINDOW_WIDTH,
             2.0f - (2.0f + 2.0f * WB_GRAPHIC_TEXT_DIGIT_SPRITE_SIZE) / WB_GRAPHIC_WINDOW_HEIGHT,
             game->graphic.colormap.green8, 6, WB_GRAPHIC_GUI_COLORMAP_SPEED, WB_COLORMODE_CYCLE);
     }
