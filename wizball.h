@@ -451,6 +451,15 @@
 #define WB_SOUND_WIZDEATH_PATH         "sound/wizdeath.wav"
 #define WB_SOUND_GAMEOVER_PATH         "sound/gameover.wav"
 
+// Input
+#define WB_INPUT_JOYSTICK_DEADZONE   0.2f
+#define WB_INPUT_JOYSTICK_CONFIRM    GLFW_GAMEPAD_BUTTON_A
+#define WB_INPUT_JOYSTICK_BACK       GLFW_GAMEPAD_BUTTON_B
+#define WB_INPUT_JOYSTICK_ESCAPE     GLFW_GAMEPAD_BUTTON_START
+#define WB_INPUT_JOYSTICK_WIZ_MOVE_X GLFW_GAMEPAD_AXIS_LEFT_X
+#define WB_INPUT_JOYSTICK_WIZ_MOVE_Y GLFW_GAMEPAD_AXIS_LEFT_Y
+#define WB_INPUT_JOYSTICK_WIZ_FIRE   GLFW_GAMEPAD_BUTTON_A
+#define WB_INPUT_JOYSTICK_SPRINT     GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER
 // Key Binding
 #define WB_KEY_Ü         GLFW_KEY_LEFT_BRACKET
 #define WB_KEY_MINUS     GLFW_KEY_SLASH
@@ -781,6 +790,19 @@ typedef struct {
 } WBMap;
 
 typedef struct {
+    int joystick_id;
+    const float* axes;
+    int axes_cnt;
+    const uint8_t* buttons;
+    int buttons_cnt;
+    bool connected;
+} WBJoystick;
+
+typedef struct {
+    WBJoystick joystick;
+} WBInput;
+
+typedef struct {
     WBGamestateType state;
     WBPowerup powerup;
     int cauldron_levels[3];
@@ -795,6 +817,7 @@ typedef struct {
 typedef struct {
     WBGamestate gamestate;
     WBWindow window;
+    WBInput input;
     WBMap map;
     WBSound sound;
     WBShader shader;
@@ -842,6 +865,9 @@ extern void wbGraphicUninit(WBGraphic* graphic, WBMap* map);
 
 extern bool wbSoundInit(WBSound* sound);
 extern void wbSoundUninit(WBSound* sound);
+
+extern void wbInputInit(WBInput* input);
+extern void wbInputJoystickUpdate(WBJoystick* joystick);
 
 extern void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound);
 extern void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* view, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer);

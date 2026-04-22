@@ -23,6 +23,9 @@ bool wbGameInit(WBGame* game) {
         glfwTerminate();
         return false;
     }
+
+    // Initialize input
+    wbInputInit(&game->input);
     
     // Initialize the shader program
     wbShaderInit(&game->shader);
@@ -94,23 +97,40 @@ void wbGameProcessInput(WBGame* game) {
     static bool key_wiz_fire_prev           = false;
     static bool key_cat_fire_prev           = false;
 
-    bool key_alt =                glfwGetKey(game->window.handle, WB_KEY_ALTL     )          || glfwGetKey(game->window.handle, WB_KEY_ALTR);
-    bool key_wiz_up =             glfwGetKey(game->window.handle, WB_KEY_WIZ_UP   )          && !key_alt;
-    bool key_wiz_down =           glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN )          && !key_alt;
-    bool key_wiz_left =           glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT )          && !key_alt;
-    bool key_wiz_right =          glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT)          && !key_alt;
-    bool key_wiz_fire =           glfwGetKey(game->window.handle, WB_KEY_WIZ_FIRE )          && !key_alt;
-    bool key_cat_up =             glfwGetKey(game->window.handle, WB_KEY_CAT_UP   )          && !key_alt;
-    bool key_cat_down =           glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN )          && !key_alt;
-    bool key_cat_left =           glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT )          && !key_alt;
-    bool key_cat_right =          glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT)          && !key_alt;
-    bool key_cat_fire =           glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE)           && !key_alt;
-         key_cat_fire |=          glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_FIRE) && !key_alt;
-    bool key_wiz_sprint =         glfwGetKey(game->window.handle, WB_KEY_SPRINT  )           && !key_alt; // TODO: not in real game
+    bool key_alt                = glfwGetKey(game->window.handle, WB_KEY_ALTL              ) || glfwGetKey(game->window.handle, WB_KEY_ALTR);
+    bool key_wiz_up             = glfwGetKey(game->window.handle, WB_KEY_WIZ_UP            ) && !key_alt;
+    bool key_wiz_down           = glfwGetKey(game->window.handle, WB_KEY_WIZ_DOWN          ) && !key_alt;
+    bool key_wiz_left           = glfwGetKey(game->window.handle, WB_KEY_WIZ_LEFT          ) && !key_alt;
+    bool key_wiz_right          = glfwGetKey(game->window.handle, WB_KEY_WIZ_RIGHT         ) && !key_alt;
+    bool key_wiz_fire           = glfwGetKey(game->window.handle, WB_KEY_WIZ_FIRE          ) && !key_alt;
+    bool key_cat_up             = glfwGetKey(game->window.handle, WB_KEY_CAT_UP            ) && !key_alt;
+    bool key_cat_down           = glfwGetKey(game->window.handle, WB_KEY_CAT_DOWN          ) && !key_alt;
+    bool key_cat_left           = glfwGetKey(game->window.handle, WB_KEY_CAT_LEFT          ) && !key_alt;
+    bool key_cat_right          = glfwGetKey(game->window.handle, WB_KEY_CAT_RIGHT         ) && !key_alt;
+    bool key_cat_fire           = glfwGetKey(game->window.handle, WB_KEY_CAT_FIRE          ) && !key_alt;
+         key_cat_fire          |= glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_FIRE) && !key_alt;
+    bool mouse_cat_move         = glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_MOVE) && !key_alt;
+    bool key_wiz_sprint         = glfwGetKey(game->window.handle, WB_KEY_SPRINT            ) && !key_alt; // TODO: not in real game
     bool key_powerup_togglegrav = glfwGetKey(game->window.handle, WB_KEY_POWERUP_TOGGLEGRAV) && !key_alt; // TODO: not in real game
-    bool key_powerup_left =       glfwGetKey(game->window.handle, WB_KEY_POWERUP_LEFT)       && !key_alt; // TODO: not in real game
-    bool key_powerup_right =      glfwGetKey(game->window.handle, WB_KEY_POWERUP_RIGHT)      && !key_alt; // TODO: not in real game
-    bool key_powerup =            glfwGetKey(game->window.handle, WB_KEY_POWERUP      )      && !key_alt; // TODO: not in real game
+    bool key_powerup_left       = glfwGetKey(game->window.handle, WB_KEY_POWERUP_LEFT      ) && !key_alt; // TODO: not in real game
+    bool key_powerup_right      = glfwGetKey(game->window.handle, WB_KEY_POWERUP_RIGHT     ) && !key_alt; // TODO: not in real game
+    bool key_powerup            = glfwGetKey(game->window.handle, WB_KEY_POWERUP           ) && !key_alt; // TODO: not in real game
+    
+    float axis_x = key_wiz_left ? -1.0f : key_wiz_right ? 1.0f : 0.0f;
+    float axis_y = key_wiz_up   ? -1.0f : key_wiz_down  ? 1.0f : 0.0f;
+    WBJoystick* joystick = &game->input.joystick;
+    if(joystick->connected) {
+        key_wiz_sprint |= joystick->buttons_cnt > 0 && joystick->buttons[WB_INPUT_JOYSTICK_SPRINT  ];
+        key_wiz_fire   |= joystick->buttons_cnt > 0 && joystick->buttons[WB_INPUT_JOYSTICK_WIZ_FIRE];
+        key_wiz_left   |= joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_X] < -WB_INPUT_JOYSTICK_DEADZONE;
+        key_wiz_right  |= joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_X] >  WB_INPUT_JOYSTICK_DEADZONE;
+        key_wiz_up     |= joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_Y] < -WB_INPUT_JOYSTICK_DEADZONE;
+        key_wiz_down   |= joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_Y] >  WB_INPUT_JOYSTICK_DEADZONE;
+        axis_x          = fabsf(joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_X]) >  WB_INPUT_JOYSTICK_DEADZONE ? joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_X] : axis_x;
+        axis_y          = fabsf(joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_Y]) >  WB_INPUT_JOYSTICK_DEADZONE ? joystick->axes[WB_INPUT_JOYSTICK_WIZ_MOVE_Y] : axis_y;
+    }
+    float wiz_vel_x_key_set = (WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint) * (axis_x - fsgnf(axis_x) * WB_INPUT_JOYSTICK_DEADZONE) / (1.0 - WB_INPUT_JOYSTICK_DEADZONE);
+    float wiz_vel_y_key_set = (WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT - 1                  ) * (axis_y - fsgnf(axis_y) * WB_INPUT_JOYSTICK_DEADZONE) / (1.0 - WB_INPUT_JOYSTICK_DEADZONE);
 
     WBWiz* wiz   = &game->player.wiz;
     WBCat* cat   = &game->player.cat;
@@ -215,33 +235,35 @@ void wbGameProcessInput(WBGame* game) {
         key_cat_left  |= key_wiz_left;
         key_cat_up    |= key_wiz_up;
         key_cat_down  |= key_wiz_down;
-        key_wiz_right  = false;
-        key_wiz_left   = false;
-        key_wiz_up     = false;
-        key_wiz_down   = false;
+        wiz_vel_x_key_set = 0.0f;
+        wiz_vel_y_key_set = 0.0f;
     }
-    if (key_wiz_right) {
+    if (wiz_vel_x_key_set > 0.0f && wiz->vel_x_key < wiz_vel_x_key_set) {
         wiz->vel_x_key += WB_GAMERULE_PLAYER_WIZ_ACC_X * process_input_time;
-        wiz->vel_x_key = fminf(wiz->vel_x_key,   WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint);
+        wiz->vel_x_key  = fminf(wiz->vel_x_key, wiz_vel_x_key_set);
     }
-    if (key_wiz_left) {
+    if (wiz_vel_x_key_set < 0.0f && wiz->vel_x_key > wiz_vel_x_key_set) {
         wiz->vel_x_key -= WB_GAMERULE_PLAYER_WIZ_ACC_X * process_input_time;
-        wiz->vel_x_key = fmaxf(wiz->vel_x_key, -(WB_GAMERULE_PLAYER_WIZ_VEL_X_CNT - 1 - !key_wiz_sprint));
+        wiz->vel_x_key  = fmaxf(wiz->vel_x_key, wiz_vel_x_key_set);
     }
 
     if (powerup->unlocked & WB_POWERUP_ANTIGRAV) {
-        if (key_wiz_down) {
+        if (wiz_vel_y_key_set > 0.0f && wiz->vel_y_key < wiz_vel_y_key_set) {
             wiz->vel_y_key += WB_GAMERULE_PLAYER_WIZ_ACC_Y * process_input_time;
-            wiz->vel_y_key = fminf(wiz->vel_y_key,  WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT - 1);
+            wiz->vel_y_key = fminf(wiz->vel_y_key,  wiz_vel_y_key_set);
         }
-        if (key_wiz_up) {
+        if (wiz_vel_y_key_set < 0.0f && wiz->vel_y_key > wiz_vel_y_key_set) {
             wiz->vel_y_key -= WB_GAMERULE_PLAYER_WIZ_ACC_Y * process_input_time;
-            wiz->vel_y_key = fmaxf(wiz->vel_y_key, -WB_GAMERULE_PLAYER_WIZ_VEL_Y_CNT + 1);
+            wiz->vel_y_key = fmaxf(wiz->vel_y_key, wiz_vel_y_key_set);
         }
         float vel_x = fsgnf(wiz->vel_x_key) * wiz->vel_x_values[(int)roundf(fabsf(wiz->vel_x_key))];
-        wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * process_input_time * (!key_wiz_left && !key_wiz_right);
+        if (fabsf(wiz->vel_x_key) > fabsf(wiz_vel_x_key_set)) {
+            wiz->vel_x_key -= fsgnf(vel_x) * WB_GAMERULE_PLAYER_WIZ_DEC_X * process_input_time;
+        }
         float vel_y = fsgnf(wiz->vel_y_key) * wiz->vel_y_values[(int)roundf(fabsf(wiz->vel_y_key))];
-        wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * process_input_time * (!key_wiz_up && !key_wiz_down);
+        if (fabsf(wiz->vel_y_key) > fabsf(wiz_vel_y_key_set)) {
+            wiz->vel_y_key -= fsgnf(vel_y) * WB_GAMERULE_PLAYER_WIZ_DEC_Y * process_input_time;
+        }
     }
 
     bool mute_wiz_fire = wiz_fire_prev && !cat_fire_prev;
@@ -299,7 +321,7 @@ void wbGameProcessInput(WBGame* game) {
         return;
     }
     
-    if (glfwGetMouseButton(game->window.handle, WB_MOUSE_CAT_MOVE)) {
+    if (mouse_cat_move) {
         double mouse_pos_x, mouse_pos_y;
         glfwGetCursorPos(game->window.handle, &mouse_pos_x, &mouse_pos_y);
         mouse_pos_x -= game->window.viewport.pos_x;
@@ -1043,9 +1065,14 @@ int wbGameRun() {
         key_vsync_alt_prev = key_vsync_alt;
         // --- End VSync toggle ---
 
+        // Update Input
+        wbInputJoystickUpdate(&game.input.joystick);
         static bool key_confirm_prev = false;
         bool key_confirm = glfwGetKey(game.window.handle, WB_KEY_CONFIRM_0) || glfwGetKey(game.window.handle, WB_KEY_CONFIRM_1);
         key_confirm &= !key_alt;
+        if (game.input.joystick.connected) {
+            key_confirm |= game.input.joystick.buttons[WB_INPUT_JOYSTICK_CONFIRM];
+        }
 
         switch (game.gamestate.state) {
             case WB_GAMESTATE_TITLESCREEN: // TODO: also switch to other titlescreens (player select, wiztips, ...)
