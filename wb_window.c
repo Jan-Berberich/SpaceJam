@@ -13,7 +13,6 @@ bool wbWindowInit(WBWindow* window) {
     window->handle = glfwCreateWindow(WB_GRAPHIC_WINDOW_WIDTH, WB_GRAPHIC_WINDOW_HEIGHT, "Wizball", NULL, NULL);
     if (!window->handle) {
         fprintf(stderr, "Failed to create GLFW window\n"); // Print error if window creation fails
-        glfwTerminate(); // Terminate GLFW before exiting
         return false;
     }
 
@@ -25,7 +24,6 @@ bool wbWindowInit(WBWindow* window) {
     // Load all OpenGL function pointers through GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         fprintf(stderr, "Failed to initialize GLAD\n");
-        glfwTerminate(); // Terminate GLFW before exiting
         return false;
     }
 
@@ -41,6 +39,7 @@ bool wbWindowInit(WBWindow* window) {
     // VSync
     window->vsync = WB_GRAPHIC_VSYNC;
     glfwSwapInterval(window->vsync);
+    return true;
 }
 
 void wbWindowLockAspectRatio(WBWindow* window) {

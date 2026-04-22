@@ -18,7 +18,11 @@ bool wbGameInit(WBGame* game) {
     }
 
     // Initialize the window
-    wbWindowInit(&game->window);
+    if (!wbWindowInit(&game->window)) {
+        fprintf(stderr, "Failed to initialize window\n");
+        glfwTerminate();
+        return false;
+    }
     
     // Initialize the shader program
     wbShaderInit(&game->shader);
