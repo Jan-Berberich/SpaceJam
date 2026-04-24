@@ -1,5 +1,11 @@
 #include "wizball.h"
 
+void wbBufferInit(void* buffer, uint8_t type) {
+    WBBufferHead* buffer_head = buffer;
+    buffer_head->cnt = 0;
+    buffer_head->type = type;
+}
+
 int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos) {
     WBBufferHead* buffer_head = buffer;
     WBEntityHead* entity_head;
@@ -68,12 +74,12 @@ void wbBufferClear(void* buffer) {
     WBBufferHead* buffer_head = buffer;
     switch (buffer_head->type) {
         case WB_BUFFER_ENEMY:
-        WBEnemy* entity = ((WBEnemyBuffer*)buffer_head)->entries;
+        WBEnemy* enemy = ((WBEnemyBuffer*)buffer_head)->entries;
         for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
-            entity->head.color_key = 0.0f;
-            entity->head.animation_key = 0.0f;
-            entity->head.type = WB_ENEMY_NONE;
-            entity++;
+            enemy->head.color_key = 0.0f;
+            enemy->head.animation_key = 0.0f;
+            enemy->head.type = WB_ENEMY_NONE;
+            enemy++;
         }
         break;
 

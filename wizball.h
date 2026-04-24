@@ -839,6 +839,7 @@ extern void wbPlayerWizUpdate(WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 extern void wbPlayerCatInit(WBCat* cat);
 extern void wbPlayerCatUpdate(WBCat* cat, WBWiz* wiz, WBMap* map, WBGamestate* gamestate);
 
+extern void wbBufferInit(void* buffer, uint8_t type);
 extern int wbBufferAppend(void* buffer, uint8_t object_type, WBVec2f* pos);
 extern void wbBufferRemove(void* buffer, int idx);
 extern void wbBufferClear(void* buffer);

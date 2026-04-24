@@ -23,17 +23,10 @@ bool wbGameInit(WBGame* game) {
         glfwTerminate();
         return false;
     }
-
-    // Initialize input
-    wbInputInit(&game->input);
-    
-    // Initialize the shader program
-    wbShaderInit(&game->shader);
     
     // Initialize graphic
     if (!wbGraphicInit(&game->graphic, &game->map)) {
         fprintf(stderr, "Failed to initialize graphic\n");
-        wbShaderUninit(&game->shader);
         glfwDestroyWindow(game->window.handle);
         glfwTerminate();
         return false;
@@ -43,28 +36,25 @@ bool wbGameInit(WBGame* game) {
     if (!wbSoundInit(&game->sound)) {
         fprintf(stderr, "Failed to initialize sound\n");
         wbGraphicUninit(&game->graphic, &game->map);
-        wbShaderUninit(&game->shader);
         glfwDestroyWindow(game->window.handle);
         glfwTerminate();
         return false;
     }
 
+    // Initialize the shader program
+    wbShaderInit(&game->shader);
+
+    // Initialize input
+    wbInputInit(&game->input);
+    
+    // Initialize buffers
+    wbBufferInit(&game->enemy_buffer.head, WB_BUFFER_ENEMY);
+    wbBufferInit(&game->particle_buffer.head, WB_BUFFER_PARTICLE);
+    wbBufferInit(&game->projectile_buffer.head, WB_BUFFER_PROJECTILE);
+
     // Initialize gamestate
-    game->gamestate.state = -1; // avoid reading uninitialized memory
-    game->gamestate.delta_time = 0.0;
+    game->gamestate.delta_time = 1.0 / WB_FPS_MAX;
     wbGamestateSetupTitlescreen(&game->gamestate, &game->sound);
-
-    // Initialize enemies
-    game->enemy_buffer.head.cnt = 0;
-    game->enemy_buffer.head.type = WB_BUFFER_ENEMY;
-
-    // Initialize particles
-    game->particle_buffer.head.cnt = 0;
-    game->particle_buffer.head.type = WB_BUFFER_PARTICLE;
-
-    // Initialize projectiles
-    game->projectile_buffer.head.cnt = 0;
-    game->projectile_buffer.head.type = WB_BUFFER_PROJECTILE;
 
     return true;
 }
@@ -1022,7 +1012,6 @@ int wbGameRun() {
     WBGame game;
     if(!wbGameInit(&game)) {
         fprintf(stderr, "Failed to initialize game\n");
-        wbGameUninit(&game);
         return -1;
     }
 
