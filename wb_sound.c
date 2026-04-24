@@ -2,7 +2,7 @@
 
 bool wbSoundInit(WBSound* sound) {
     if (ma_engine_init(NULL, &sound->_engine) != MA_SUCCESS)
-        {fprintf(stderr, "Failed to initialize sound engine\n"); wbSoundUninit(sound); return false;}
+        {fprintf(stderr, "Failed to initialize sound engine\n"); return false;}
     if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_TITLESCREEN_PATH, MA_SOUND_FLAG_LOOPING, NULL, NULL, &sound->titlescreen) != MA_SUCCESS)
         {fprintf(stderr, "Failed to load titlescreen sound\n"); wbSoundUninit(sound); return false;}
     if (ma_sound_init_from_file(&sound->_engine, WB_SOUND_GETREADY_PATH, 0, NULL, NULL, &sound->getready) != MA_SUCCESS)
