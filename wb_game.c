@@ -33,13 +33,7 @@ bool wbGameInit(WBGame* game) {
     }
 
     // Initialize sound
-    if (!wbSoundInit(&game->sound)) {
-        fprintf(stderr, "Failed to initialize sound\n");
-        wbGraphicUninit(&game->graphic, &game->map);
-        glfwDestroyWindow(game->window.handle);
-        glfwTerminate();
-        return false;
-    }
+    wbAudioInit(&game->audio);
 
     // Initialize the shader program
     wbShaderInit(&game->shader);
@@ -54,14 +48,14 @@ bool wbGameInit(WBGame* game) {
 
     // Initialize gamestate
     game->gamestate.delta_time = 1.0 / WB_FPS_MAX;
-    wbGamestateSetupTitlescreen(&game->gamestate, &game->sound);
+    wbGamestateSetupTitlescreen(&game->gamestate, &game->audio);
 
     return true;
 }
 
 void wbGameUninit(WBGame* game) {
     // Cleanup resources
-    wbSoundUninit(&game->sound);
+    wbAudioUninit(&game->audio);
     wbGraphicUninit(&game->graphic, &game->map);
     wbShaderUninit(&game->shader);
     glfwDestroyWindow(game->window.handle);
@@ -175,8 +169,7 @@ void wbGameProcessInput(WBGame* game) {
     if (key_powerup && game->gamestate.state == WB_GAMESTATE_PLAY && powerup->slot >= 0 &&
         (powerup_slotstate < WB_POWERUP_SLOTMASK - 1 || powerup->slot == (int)(0.5f * log2f(WB_POWERUP_WIZSPRAY + 1)))) {
         
-        ma_sound_seek_to_pcm_frame(&game->sound.powerup_activate, 0);
-        ma_sound_start(&game->sound.powerup_activate);
+        wbAudioStart(&game->audio, &game->audio.sound.powerup_activate);
 
         int incr = powerup->slot == (int)(0.5f * log2f(WB_POWERUP_CAT + 1)) ||
                    powerup->slot == (int)(0.5f * log2f(WB_POWERUP_BLAZERS + 1))||
@@ -190,8 +183,7 @@ void wbGameProcessInput(WBGame* game) {
         }
         else if (powerup->slot == (int)(0.5f * log2f(WB_POWERUP_BOMB + 1))) {
             //TODO: activate bomb
-            ma_sound_seek_to_pcm_frame(&game->sound.bomb, 0);
-            ma_sound_start(&game->sound.bomb);
+            wbAudioStart(&game->audio, &game->audio.sound.bomb);
         }
         else {
             powerup->unlocked += incr << 2 * powerup->slot;
@@ -264,8 +256,7 @@ void wbGameProcessInput(WBGame* game) {
         WBVec2f vel;
         if (view->bullet_wiz_cnt < WB_GAMERULE_VIEW_BULLET_WIZ_CNT_MAX) {
             if (!mute_wiz_fire) {
-                ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
-                ma_sound_start(&game->sound.fire);
+                wbAudioStart(&game->audio, &game->audio.sound.fire);
             }
             vel.x = powerup->unlocked & WB_POWERUP_DOUBLE ?
                 WB_GAMERULE_PROJECTILE_VEL * wiz->next_bullet_direction : WB_GAMERULE_PROJECTILE_VEL * wiz->facing;
@@ -355,8 +346,7 @@ void wbGameProcessInput(WBGame* game) {
         WBVec2f vel;
         if (view->bullet_cat_cnt < WB_GAMERULE_VIEW_BULLET_CAT_CNT_MAX) {
             if (!mute_cat_fire) {
-                ma_sound_seek_to_pcm_frame(&game->sound.fire, 0);
-                ma_sound_start(&game->sound.fire);
+                wbAudioStart(&game->audio, &game->audio.sound.fire);
             }
             vel.x = WB_GAMERULE_PROJECTILE_VEL * cat->facing;
             vel.y = 0.0f;
@@ -1067,7 +1057,7 @@ int wbGameRun() {
             case WB_GAMESTATE_TITLESCREEN: // TODO: also switch to other titlescreens (player select, wiztips, ...)
             wbGameRender(&game);
             if (key_confirm && !key_confirm_prev) {
-                wbGamestateSetupGetready(&game.gamestate, &game.sound, &game.map.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer);
+                wbGamestateSetupGetready(&game.gamestate, &game.map.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer, &game.audio);
             }
             break;
 
@@ -1077,9 +1067,9 @@ int wbGameRun() {
                 wbEnemyInsertRandoms(&game.enemy_buffer, game.gamestate.time);
             }
             wbGameRender(&game);
-            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.audio);
             if (key_confirm && !key_confirm_prev) {
-                ma_sound_stop(&game.sound.getready);
+                wbAudioStop(&game.audio, &game.audio.sound.getready);
                 game.gamestate.powerup.slot = -1;
                 game.gamestate.powerup.unlocked = game.gamestate.powerup.permanent;
                 int pos_x_min = WB_GRAPHIC_MAP_VIEW_WIDTH / 2 - 1;
@@ -1098,9 +1088,9 @@ int wbGameRun() {
             wbGameProcessInput(&game);
             wbPlayerWizUpdate(&game.player.wiz, &game.map, &game.gamestate);
             wbPlayerCatUpdate(&game.player.cat, &game.player.wiz, &game.map, &game.gamestate);
-            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.sound);
-            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.sound);
-            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.audio);
+            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.audio);
+            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.audio);
             if (game.gamestate.time * WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_SPEED < WB_GRAPHIC_PLAYER_WIZ_SPAWN_ANIMATION_FRAME_CNT) {
                 wbGameRender(&game);
             } else {
@@ -1112,8 +1102,7 @@ int wbGameRun() {
 
             case WB_GAMESTATE_PLAY:
             if (game.gamestate.enemy_cnt == 0) { // TODO: and no powerup in gamestate
-                ma_sound_seek_to_pcm_frame(&game.sound.clear, 0);
-                ma_sound_start(&game.sound.clear);
+                wbAudioStart(&game.audio, &game.audio.sound.clear);
                 wbEnemyPopulate(&game.enemy_buffer, WB_ENEMY_CIRCLE, WB_GRAPHIC_ENEMY_COLORMAP_OFFSET, WB_MOVEPATTERN_CIRCLE, &game.map.view);
                 wbEnemyPopulate(&game.enemy_buffer, WB_ENEMY_DROPLET, WB_GRAPHIC_ENEMY_COLORMAP_RED_OFFSET, WB_MOVEPATTERN_CIRCLE, &game.map.view);
             }
@@ -1121,9 +1110,9 @@ int wbGameRun() {
             wbPlayerWizHandleCollision(&game.player.wiz, &game.map, &game.gamestate);
             wbPlayerWizUpdate(&game.player.wiz, &game.map, &game.gamestate);
             wbPlayerCatUpdate(&game.player.cat, &game.player.wiz, &game.map, &game.gamestate);
-            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.sound);
-            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.sound);
-            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.audio);
+            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.audio);
+            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.audio);
             wbGameRender(&game);
             if (!game.player.cat.health) {
                 game.gamestate.powerup.unlocked &= ~WB_POWERUP_CAT;
@@ -1131,14 +1120,13 @@ int wbGameRun() {
                 wbPlayerCatInit(&game.player.cat);
             }
             if (!game.player.wiz.health) {
-                ma_sound_stop(&game.sound.fire);
-                ma_sound_stop(&game.sound.powerup_activate);
-                ma_sound_stop(&game.sound.powerup_collect);
-                ma_sound_stop(&game.sound.powerup_drop);
-                ma_sound_stop(&game.sound.decay);
-                ma_sound_stop(&game.sound.cathit);
-                ma_sound_seek_to_pcm_frame(&game.sound.wizdeath, 0);
-                ma_sound_start(&game.sound.wizdeath);
+                wbAudioStop(&game.audio, &game.audio.sound.fire);
+                wbAudioStop(&game.audio, &game.audio.sound.powerup_activate);
+                wbAudioStop(&game.audio, &game.audio.sound.powerup_collect);
+                wbAudioStop(&game.audio, &game.audio.sound.powerup_drop);
+                wbAudioStop(&game.audio, &game.audio.sound.decay);
+                wbAudioStop(&game.audio, &game.audio.sound.cathit);
+                wbAudioStart(&game.audio, &game.audio.sound.wizdeath);
                 game.player.wiz.vel.x = 0.0f;
                 game.gamestate.lifes--;
                 game.gamestate.time = -game.gamestate.delta_time;
@@ -1149,18 +1137,17 @@ int wbGameRun() {
             case WB_GAMESTATE_DEATH:
             wbGameProcessInput(&game);
             wbPlayerCatUpdate(&game.player.cat, &game.player.wiz, &game.map, &game.gamestate);
-            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.sound);
-            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.sound);
-            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.sound);
+            wbParticleUpdate(&game.particle_buffer, &game.player, &game.gamestate, &game.audio);
+            wbEnemyUpdate(&game.enemy_buffer, &game.map, &game.player, &game.particle_buffer, &game.gamestate, &game.audio);
+            wbProjectileUpdate(&game.projectile_buffer, &game.map, &game.player.wiz, &game.enemy_buffer, &game.particle_buffer, &game.gamestate, &game.audio);
             game.gamestate.lifes++;
             wbGameRender(&game);
             game.gamestate.lifes--;
             if (game.gamestate.time >= WB_GAMERULE_GAMESTATE_HIT_TIME) {
                 if (game.gamestate.lifes) {
-                    wbGamestateSetupGetready(&game.gamestate, &game.sound, &game.map.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer);
+                    wbGamestateSetupGetready(&game.gamestate, &game.map.view, &game.enemy_buffer, &game.particle_buffer, &game.projectile_buffer, &game.audio);
                 } else {
-                    ma_sound_seek_to_pcm_frame(&game.sound.gameover, 0);
-                    ma_sound_start(&game.sound.gameover);
+                    wbAudioStart(&game.audio, &game.audio.sound.gameover);
                     game.gamestate.time = -game.gamestate.delta_time;
                     game.gamestate.state = WB_GAMESTATE_GAMEOVER;
                 }
@@ -1170,7 +1157,7 @@ int wbGameRun() {
             case WB_GAMESTATE_GAMEOVER:
             wbGameRender(&game);
             if (game.gamestate.time >= WB_GAMERULE_GAMESTATE_GAMEOVER_TIME) {
-                wbGamestateSetupTitlescreen(&game.gamestate, &game.sound);
+                wbGamestateSetupTitlescreen(&game.gamestate, &game.audio);
             }
             break;
         }

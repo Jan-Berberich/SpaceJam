@@ -12,7 +12,7 @@
 #include "stb_image.h"
 
 // for faster build
-#define WB_NO_SOUND
+//#define WB_NO_SOUND
 #ifdef WB_NO_SOUND
 #define MA_SUCCESS 0
 #define ma_engine_init(_1,_2) MA_SUCCESS
@@ -738,7 +738,6 @@ typedef struct {
 } WBWindow;
 
 typedef struct {
-    ma_engine _engine;
     ma_sound titlescreen;
     ma_sound getready;
     ma_sound fire;
@@ -753,6 +752,12 @@ typedef struct {
     ma_sound wizdeath;
     ma_sound gameover;
 } WBSound;
+
+typedef struct {
+    ma_engine engine;
+    WBSound sound;
+    bool available;
+} WBAudio;
 
 typedef  struct {
     uint32_t beam[WB_GRAPHIC_COLORMAP_BEAM_CNT];
@@ -819,7 +824,7 @@ typedef struct {
     WBWindow window;
     WBInput input;
     WBMap map;
-    WBSound sound;
+    WBAudio audio;
     WBShader shader;
     WBGraphic graphic;
     WBPlayer player;
@@ -846,14 +851,14 @@ extern void wbBufferClear(void* buffer);
 
 extern void wbEnemyPopulate(WBEnemyBuffer* enemy_buffer, WBEnemyType enemy_tpye, int colormap_offset, WBMovepatternType movepattern_type, WBView* view);
 extern void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time);
-extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
-extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
+extern void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBAudio* audio);
+extern void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBAudio* audio);
 
-extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGamestate* gamestate, WBSound* sound);
+extern void wbParticleUpdate(WBParticleBuffer* particle_buffer, WBPlayer* player, WBGamestate* gamestate, WBAudio* audio);
 
 extern void wbProjectileBufferInit(WBProjectileBuffer* projectile_buffer);
 extern int wbProjectileAppend(WBProjectileBuffer* projectile_buffer, WBProjectileType type, WBVec2f* pos, WBVec2f* vel);
-extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound);
+extern void wbProjectileUpdate(WBProjectileBuffer* projectile_buffer, WBMap* map, WBWiz* wiz, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBAudio* audio);
 
 extern void wbShaderInit(WBShader* shader);
 extern void wbShaderUninit(WBShader* shader);
@@ -864,14 +869,16 @@ extern bool wbMapGetCollision(WBMap* map, int x, int y, int level);
 extern bool wbGraphicInit(WBGraphic* graphic, WBMap* map);
 extern void wbGraphicUninit(WBGraphic* graphic, WBMap* map);
 
-extern bool wbSoundInit(WBSound* sound);
-extern void wbSoundUninit(WBSound* sound);
+extern void wbAudioInit(WBAudio* audio);
+extern void wbAudioStart(WBAudio* audio, ma_sound* sound);
+extern void wbAudioStop(WBAudio* audio, ma_sound* sound);
+extern void wbAudioUninit(WBAudio* audio);
 
 extern void wbInputInit(WBInput* input);
 extern void wbInputJoystickUpdate(WBJoystick* joystick);
 
-extern void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBSound* sound);
-extern void wbGamestateSetupGetready(WBGamestate* gamestate, WBSound* sound, WBView* view, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer);
+extern void wbGamestateSetupTitlescreen(WBGamestate* gamestate, WBAudio* audio);
+extern void wbGamestateSetupGetready(WBGamestate* gamestate, WBView* view, WBEnemyBuffer* enemy_buffer, WBParticleBuffer* particle_buffer, WBProjectileBuffer* projectile_buffer, WBAudio* audio);
 
 extern int wbGameRun();
 

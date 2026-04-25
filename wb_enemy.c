@@ -67,15 +67,14 @@ void wbEnemyInsertRandoms(WBEnemyBuffer* enemy_buffer, double time) {
     }
 }
 
-void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBAudio* audio) {
     WBEnemy* enemies = enemy_buffer->entries;
     int particle_idx;
     switch (enemies[idx].head.type) {
         case WB_ENEMY_SPINNERCYAN:
         wbBufferAppend(particle_buffer, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
-        ma_sound_stop(&sound->fire);
-        ma_sound_seek_to_pcm_frame(&sound->powerup_drop, 0);
-        ma_sound_start(&sound->powerup_drop);
+        wbAudioStop(audio, &audio->sound.fire);
+        wbAudioStart(audio, &audio->sound.powerup_drop);
         break;
 
         case WB_ENEMY_DROPLET:
@@ -87,14 +86,12 @@ void wbEnemyRemove(WBEnemyBuffer* enemy_buffer, int idx, WBParticleBuffer* parti
         default:
         if (randfin(time(NULL), 0.0f, 1.0f) < WB_GAMERULE_PARTICLE_POWERUP_DROP_CHANCE) {
             wbBufferAppend(particle_buffer, WB_PARTICLE_POWERUP, &enemies[idx].head.pos);
-            ma_sound_stop(&sound->fire);
-            ma_sound_seek_to_pcm_frame(&sound->powerup_drop, 0);
-            ma_sound_start(&sound->powerup_drop);
+            wbAudioStop(audio, &audio->sound.fire);
+            wbAudioStart(audio, &audio->sound.powerup_drop);
         } else {
             particle_idx = wbBufferAppend(particle_buffer, WB_PARTICLE_DECAY, &enemies[idx].head.pos);
             particle_buffer->entries[particle_idx].head.color_key = enemies[idx].head.color_key;
-            ma_sound_seek_to_pcm_frame(&sound->decay, 0);
-            ma_sound_start(&sound->decay);
+            wbAudioStart(audio, &audio->sound.decay);
         }
         break;
     }
@@ -129,7 +126,7 @@ bool wbEnemyMovepatternUpdate(WBEnemy* enemy) {
     }
 }
 
-void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBSound* sound) {
+void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WBParticleBuffer* particle_buffer, WBGamestate* gamestate, WBAudio* audio) {
     WBEnemy* enemy;
     gamestate->enemy_cnt = WB_ENEMY_CNT_MAX;
     for (int i = 0; i < WB_ENEMY_CNT_MAX; i++) {
@@ -179,10 +176,9 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
             enemy->head.pos.x > player->cat.pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= player->cat.pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > player->cat.pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= player->cat.pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
             
-            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
+            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, audio);
             if (--player->cat.health) {
-                ma_sound_seek_to_pcm_frame(&sound->cathit, 0);
-                ma_sound_start(&sound->cathit);
+                wbAudioStart(audio, &audio->sound.cathit);
             }
             continue;
         }
@@ -191,7 +187,7 @@ void wbEnemyUpdate(WBEnemyBuffer* enemy_buffer, WBMap* map, WBPlayer* player, WB
             enemy->head.pos.x > player->wiz.pos.x - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.x <= player->wiz.pos.x + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 &&
             enemy->head.pos.y > player->wiz.pos.y - WB_GAMERULE_ENEMY_HITBOX_SIZE / 2 && enemy->head.pos.y <= player->wiz.pos.y + WB_GAMERULE_ENEMY_HITBOX_SIZE / 2) {
             
-            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, sound);
+            wbEnemyRemove(enemy_buffer, i, particle_buffer, gamestate, audio);
             player->wiz.health--;
         }
     }
